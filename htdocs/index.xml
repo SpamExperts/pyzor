@@ -11,8 +11,8 @@
     <h2>Introduction</h2>
     
     <p>
-      Pyzor is a Python implementation of a spam-blocking
-      networked system that use spam signatures to identify them.
+      Pyzor is a collaborative, networked system to detect
+      and block spam using identifying digests of messages.
     </p>
     
     <p>
