@@ -1,3 +1,11 @@
+-----------------------------------------------------------------
+
+    *	Moved code around so that it can be used with
+	ReadyExec: http://readyexec.sourceforge.net/
+	Documentation on how to use ReadyExec is
+	in the pyzor documentation.
+
+
 Noteworthy changes in 0.1.1
 -----------------------------------------------------------------
 
