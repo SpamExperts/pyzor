@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.37 2002-09-07 06:12:53 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.38 2002-09-07 07:28:00 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -510,12 +510,11 @@ class DataDigester(object):
             if self.seekable:
                 moved = len(line)
             elif should_handle:
+                norm += "\n"
                 moved = len(norm)
+                newfp.write(norm)
 
             cur_offset += moved
-
-            if should_handle and not self.seekable:
-                newfp.write("%s\n" % norm)
 
         if not self.seekable:
             fp = newfp
@@ -630,7 +629,7 @@ class rfc822BodyCleaner(BasicIterator):
         if self.type == 'text':
             encoding = msg.getencoding()
             if encoding == '7bit':
-                self.curfile = fp
+                self.curfile = msg.fp
             else:
                 self.curfile = tempfile.TemporaryFile()
                 mimetools.decode(fp, self.curfile, encoding)
@@ -638,7 +637,7 @@ class rfc822BodyCleaner(BasicIterator):
                 
         elif self.type == 'multipart':
             import multifile
-            self.multifile = multifile.MultiFile(fp, seekable=0)
+            self.multifile = multifile.MultiFile(msg.fp, seekable=False)
             self.multifile.push(msg.getparam('boundary'))
             self.multifile.next()
             self.curfile = self.__class__(self.multifile)
@@ -651,16 +650,15 @@ class rfc822BodyCleaner(BasicIterator):
 
         
     def readline(self):
-        l = None
+        l = ''
         if self.type in ('text', 'multipart'):
             l = self.curfile.readline()
 
-        if self.type == 'multipart':
-            if not l and self.multifile.next():
-                self.curfile = self.__class__(self.multifile)
-                # recursion.  Could get messy if
-                # we get a bunch of empty multifile parts
-                l = self.readline()
+        if self.type == 'multipart' and not l and self.multifile.next():
+            self.curfile = self.__class__(self.multifile)
+            # recursion.  Could get messy if
+            # we get a bunch of empty multifile parts
+            l = self.readline()
         return l
 
 
