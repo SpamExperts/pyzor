@@ -165,8 +165,8 @@ http://www.gnu.org/copyleft/gpl.html
 """
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
-__version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.13 2002-04-22 00:38:01 ftobin Exp $"
+__version__  = "0.2.1"
+__revision__ = "$Id: __init__.py,v 1.13.2.1 2002-04-29 21:08:25 ftobin Exp $"
 
 import os
 import os.path

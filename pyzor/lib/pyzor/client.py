@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.11 2002-04-22 00:38:01 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.11.2.1 2002-04-29 21:08:25 ftobin Exp $"
 
 
 class Client(object):
@@ -253,7 +253,7 @@ class ExecCall(object):
                 result = self.client.check(digest, server)
                 if result[0] == 200:
                     output = result[1]
-                    if output > 0: found_hit = 1
+                    if int(output) > 0: found_hit = 1
                 else:
                     output = result
             except TimeoutError:

@@ -1,3 +1,10 @@
+Noteworthy changes in 0.2.1
+-----------------------------------------------------------------
+
+    *	Fixed major bug where the incorrect exit
+	code is given.
+
+
 Noteworthy changes in 0.2.0
 -----------------------------------------------------------------
 
