@@ -16,7 +16,8 @@ The gdbm module is available at:
 		Will be built with Python if the gdbm library is found.
 		If it isn't there with your Python, try stealing
 		the FreeBSD setup.py patchfile in their ports to
-		install just the gdbm module.
+		install just the gdbm module, or simply re-install
+		Python.
 	FreeBSD:
 		ports/databases/py-gdbm
 	tar.gz:
@@ -25,4 +26,5 @@ The gdbm module is available at:
 		the gdbm module; try stealing the FreeBSD setup.py patchfile
 		in their ports).
 
-See 'pydoc pyzor' for command-line usage and module documentation.
+
+See docs/index.html for command-line usage documentation.
