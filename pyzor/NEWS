@@ -16,8 +16,8 @@ Noteworthy changes in 0.3.0
 
     *	Messages are authenticated using digest-signing, similar
 	to HTTP-digest authentication.  This is a
-	is a shared-secret scheme, but no part of the
-	secret is not passed in the message.
+	is a shared-secret scheme, but the secret is very
+	hard to recover from what is passed in the signature.
 
     *	Whitelisting messages is now possible.
 
