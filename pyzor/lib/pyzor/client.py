@@ -1,34 +1,34 @@
-"""networked spam-signature detection client
+"""networked spam-signature detection client"""
 
-Copyright (C) 2002 Frank J. Tobin <ftobin@neverending.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, visit the following URL:
-http://www.gnu.org/copyleft/gpl.html
-"""
+# Copyright (C) 2002 Frank J. Tobin <ftobin@neverending.org>
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, visit the following URL:
+# http://www.gnu.org/copyleft/gpl.html
 
 import os
 import os.path
 import socket
 import signal
 import StringIO
+import getopt
 
 import pyzor
 from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.6 2002-04-14 22:08:08 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.7 2002-04-16 18:02:04 ftobin Exp $"
 
 
 class ConfigError(Exception):
@@ -168,6 +168,115 @@ class Config(object):
         self.servers.append((ip, port))
 
 
+class ExecCall(object):
+    __slots__ = ['client', 'config']
+    # hard-coded for the moment
+    digest_spec = PiecesDigestSpec([(20, 3), (60, 3)])
+
+    def run(self):
+        debug = 0
+        (options, args) = getopt.getopt(sys.argv[1:], 'dh')
+        if len(args) < 1:
+           self.usage()
+
+        for (o, v) in options:
+            if o == '-d':
+                debug = 1
+            elif o == '-h':
+               self.usage()
+    
+        command = args[0]
+    
+        self.client = Client(debug=debug)
+        
+        self.config = Config()
+        config_fn = self.config.get_default_filename()
+        
+        if not os.path.exists(config_fn) or command == 'discover':
+            self.discover(args)
+        self.config.load(config_fn)
+
+        if len(self.config.servers) == 0:
+            sys.stderr.write("No servers available!  Maybe try the 'discover' command\n")
+            sys.exit(1)
+
+        try: 
+            if command == 'discover':
+                # already completed above
+                pass
+            elif command == 'check':
+                self.check(args)
+            elif command == 'report':
+                self.report(args)
+            elif command == 'ping':
+                self.ping(args)
+            else:
+               self.usage()
+        except TimeoutError, e:
+            sys.stderr.write("timeout from server\n")
+            sys.exit(1)
+
+        return
+
+    def usage(self):
+        sys.stderr.write("usage: %s [-d] check|report|discover|ping [cmd_options]\nData is read on standard input.\n"
+                         % sys.argv[0])
+        sys.exit(1)
+        return
+
+    def discover(self, args):
+        self.config.get_informed(self.config.default_inform_url, config_fn)
+        return
+    
+    def ping(self, args):
+        print repr(self.client.ping(self.config.servers[0]))
+        return
+
+    def check(self, args):
+        import rfc822
+        fp = rfc822.Message(sys.stdin, seekable=0).fp
+        
+        digest = PiecesDigest.compute_from_file(fp,
+                                                self.digest_spec,
+                                                seekable=0)
+
+        result = self.client.check(digest, self.config.servers[0])
+        if result[0] == 200:
+            print result[1]
+            sys.exit(result[1] == 0)
+        sys.exit(1)
+        return
+
+    def report(self, args):
+        (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+        do_mbox = 0
+        for (o, v) in options:
+            if o == '--mbox':
+                do_mbox = 1
+                
+        if do_mbox:
+            import mailbox
+            mbox = mailbox.PortableUnixMailbox(sys.stdin)
+            for msg in mbox:
+                self.report_fp(msg.fp)
+        else:
+            import rfc822
+            self.report_fp(rfc822.Message(sys.stdin).fp)
+        return
+
+
+    def report_fp(self, fp):
+        digest = PiecesDigest.compute_from_file(fp,
+                                                self.digest_spec,
+                                                seekable=0)
+
+        print repr(self.client.report(digest, self.digest_spec,
+                                      self.config.servers[0]))
+        return
+
+
+def run():
+    ExecCall().run()
+
 def timeout(signum, handler):
     raise TimeoutError
-
