@@ -45,6 +45,9 @@ echo "counting reports"
 echo "pinging"
 ./$PYZOR ping || fail
 
+echo "checking for logfile"
+[ -s .pyzor/pyzord.log ] || fail
+
 echo "killing server"
 kill `cat .pyzor/pyzord.pid` || fail
 
