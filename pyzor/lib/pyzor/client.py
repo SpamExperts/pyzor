@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.32 2002-09-04 22:41:48 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.33 2002-09-05 02:17:10 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -373,7 +373,7 @@ Data is read on standard input (stdin)."""
 
 
 
-class FileDigester(object):
+class FileDigester(BasicIterator):
     __slots__ = ['mbox', 'fp', 'spec', 'stop',
                  'mbox_digester', 'output']
     
@@ -391,10 +391,6 @@ class FileDigester(object):
             self.mbox_digester = MailboxDigester(mailbox.PortableUnixMailbox(self.fp,
                                                                              factory),
                                                  self.spec)
-
-
-    def __iter__(self):
-        return self
 
 
     def next(self):
@@ -417,6 +413,23 @@ class FileDigester(object):
 
         self.output.debug("calculated digest: %s" % digest)
         return digest
+
+
+
+class MailboxDigester(BasicIterator):
+    __slots__ = ['mbox', 'digest_spec']
+    
+    def __init__(self, mbox, digest_spec):
+        self.mbox        = mbox
+        self.digest_spec = digest_spec
+
+    def next(self):
+        next_msg = self.mbox.next()
+        if next_msg is None:
+            raise StopIteration
+        return DataDigester(next_msg.fp,
+                            self.digest_spec,
+                            seekable=False).get_digest()
 
 
 
@@ -525,11 +538,11 @@ class DataDigester(object):
         norm_line = self.normalize(line)
         if self.should_handle_line(norm_line):
             self._used_line = True
-            self.__really_handle_line(norm_line)
+            self._really_handle_line(norm_line)
         self._used_line = False
         assert self._used_line is not None
 
-    def __really_handle_line(self, line):
+    def _really_handle_line(self, line):
         self._digest.update(line)
 
     def is_atomic(self):
@@ -569,6 +582,15 @@ class DataDigester(object):
     def should_handle_line(self, s):
         return bool(self.min_line_length <= len(s))
     should_handle_line = classmethod(should_handle_line)
+
+
+
+class PrintingDataDigester(DataDigester):
+    """extends DataDigester: prints out what we're digesting"""
+
+    def _really_handle_line(self, line):
+        sys.stdout.write("%s\n" % line)
+        super(PrintingDataDigester, self)._really_handle_line(self)
 
 
 
@@ -668,7 +690,7 @@ class InfoClientRunner(ClientRunner):
 
 
 
-class rfc822BodyCleaner(object):
+class rfc822BodyCleaner(BasicIterator):
     __slots__ = ['fp', 'multifile', 'curfile', 'type']
     
     def __init__(self, fp):
@@ -717,8 +739,6 @@ class rfc822BodyCleaner(object):
             l = ''
         return l
 
-    def __iter__(self):
-        return self
 
     def next(self):
         l = self.readline()
@@ -726,25 +746,6 @@ class rfc822BodyCleaner(object):
             raise StopIteration
         return l
         
-
-class MailboxDigester(object):
-    __slots__ = ['mbox', 'digest_spec']
-    
-    def __init__(self, mbox, digest_spec):
-        self.mbox         = mbox
-        self.digest_spec = digest_spec
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        next_msg = self.mbox.next()
-        if next_msg is None:
-            raise StopIteration
-        return DataDigester(next_msg.fp,
-                            self.digest_spec,
-                            seekable=False).get_digest()
-
 
 
 class Account(tuple):

@@ -2,7 +2,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.4.0"
-__revision__ = "$Id: __init__.py,v 1.39 2002-09-04 20:34:48 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.40 2002-09-05 02:17:09 ftobin Exp $"
 
 import os
 import os.path
@@ -61,6 +61,15 @@ class Singleton(object):
         if it is None:
             cls.__it__ = object.__new__(cls)
         return cls.__it__
+
+
+
+class BasicIterator(object):
+    def __iter__(self):
+        return self
+
+    def next(self):
+        raise NotImplementedError
 
 
 

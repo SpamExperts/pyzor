@@ -17,7 +17,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.23 2002-09-04 17:55:03 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.24 2002-09-05 02:17:10 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -167,7 +167,7 @@ class Passwd(dict):
 
 
             
-class PasswdFile(object):
+class PasswdFile(BasicIterator):
     """Iteration gives (Username, long) objects
 
     Format of file is:
@@ -180,8 +180,6 @@ class PasswdFile(object):
         self.output = Output()
         self.lineno = 0
 
-    def __iter__(self):
-        return self
 
     def next(self):
         while True:
