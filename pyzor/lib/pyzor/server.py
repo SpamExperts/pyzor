@@ -31,7 +31,34 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.8 2002-04-16 18:17:02 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.9 2002-04-21 22:56:30 ftobin Exp $"
+
+
+class AuthenticationError(Exception):
+    """user/auth combo is invalid"""
+    pass
+
+class AuthorizationError(Exception):
+    """user/auth combo was valid, but not permitted to
+    do the requested action"""
+    pass
+
+
+class Log(object):
+    __slots__ = ['fp']
+    
+    def __init__(self, fp=None):
+        self.fp = fp
+
+    def log(self, user, address, command, arg=''):
+        if self.fp is not None:
+            self.fp.write("%s\n" %
+                          ','.join((str(int(time.time())),
+                                    user,
+                                    address[0],
+                                    command,
+                                    repr(arg))))
+            self.fp.flush()
 
 
 class Record(object):
@@ -111,11 +138,15 @@ class Server(SocketServer.ThreadingUDPServer, object):
     timeout = 3
     max_packet_size = 8192
 
-    def __init__(self, address, debug=None):
-        RequestHandler.output = Output(debug=debug)
+    def __init__(self, address, log):
+        self.output = Output()
+        RequestHandler.output = self.output
+        RequestHandler.log    = log
+
+        self.output.debug('listening on %s' % str(address))
         super(Server, self).__init__(address, RequestHandler)
+
         self.ensure_db_exists()
-        
 
     def ensure_db_exists(self):
         db = DBHandle('c')
@@ -125,22 +156,36 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
     def setup(self):
         super(RequestHandler, self).setup()
 
-        # This is to mask what I think is a bug in
-        # SocketServer.DatagramRequestHandler.setup, where it
-        # initializes the wfile from self.packet
+        # This is to work around a bug in current versions
+        # of Python.  The bug has been reported, and fixed
+        # in CVS.
         self.wfile = StringIO.StringIO()
+
+        self.client_address = Address(self.client_address)
         self.msg = Message(thread=0)
 
     def handle(self):
+        # we initialize there here so we can for sure use
+        # them in our log message below
+        self.op_arg = ''
+        op = ''
+        user = ''
+        self.output.debug("received: %s" % repr(self.packet))
+        
         try:
-            self.expect(proto_name, read_netstring)
-            self.expect(proto_version, read_netstring)
+            self.expect(proto_name,    read_netstring, "protocol name")
+            self.expect(proto_version, read_netstring, "protocol version")
             thread_id = self.read_thread()
             self.msg.thread = thread_id
+
+            user = self.read_string()
+            auth = self.read_string()
+            self.authenticate(user, auth)
 
             op = self.read_string()
             self.output.debug("got a %s command from %s" %
                               (op, self.client_address))
+            
             if op == 'ping':
                 pass
             elif op == 'check':
@@ -159,12 +204,20 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         except Exception, e:
             self.handle_error(500, "Internal Server Error: %s" % e)
             traceback.print_exc()
+        except AuthenticationError:
+            self.handle_error(401, "Unauthorized")
         else:
             if not self.msg:
                 self.handle_error(200, "OK")
 
+        self.log.log(user, self.client_address, op, self.op_arg)
+
         self.output.debug("sending: %s" % repr(str(self.msg)))
         self.wfile.write(str(self.msg))
+
+    def authenticate(self, user, auth):
+        """raises AuthenticationError if invalid user/auth combo"""
+        pass
 
     def handle_error(self, code, s):
         self.msg.clear()
@@ -174,6 +227,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
     def handle_check(self):
         ttl    = self.read_ttl()
         digest = self.read_digest()
+        self.op_arg = digest
         self.output.debug("request is for digest %s" % digest)
         self.msg.add_int(200)
 
@@ -187,6 +241,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         ttl    = self.read_ttl()
         spec   = self.read_digest_spec()
         digest = self.read_digest()
+        self.op_arg = digest
         self.output.debug("request is for digest %s" % digest)
 
         db = DBHandle('c')
@@ -242,8 +297,5 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         #self.output.debug("read list %s" % repr(l))
         return l
 
-    def expect(self, expected, factory):
-        got = apply(factory, (self.rfile,))
-        if got != expected:
-            raise ProtocolError, \
-                  "expected %s, got %s" % (repr(expected), repr(got))
+    def expect(self, expected, factory, descr=None):
+        pyzor.expect(self.rfile, expected, factory, descr)

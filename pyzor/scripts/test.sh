@@ -3,42 +3,49 @@
 # HOME so it finds the right .pyzor
 export HOME=.
 export PYTHONPATH=../lib
-port=9999
-db='test.db'
+PYZOR="pyzor -c config"
+PYZORD="pyzord -c config"
 
 fail()
 {
-    [ ${server_pid:-0} != 0 ] && kill $server_pid
+    kill `cat .pyzor/pyzord.pid`
     echo "failed"
     exit 1;
 }
 
 setcount()
 {
-  count=`./pyzor check < test.in.0 | cut -d : -f 2 | cut -d ' ' -f 2`
+  count=`./$PYZOR check < test.in.0 | cut -f 2`
 }
 
-rm -f $db
-./pyzord -d $db $port 2>/dev/null &
-server_pid=$!
+rm -rf .pyzor
 
-# time to grab the socket
-sleep 1
+echo "starting server"
+./$PYZORD || fail
 
 setcount
+echo "ensuring a count of 0 at start"
 [ ${count:--1} = 0 ] || fail
 
-./pyzor report < test.in.0 || fail
-./pyzor report < test.in.0 || fail
+echo "reporting"
+./$PYZOR report < test.in.0 || fail
+echo "reporting"
+./$PYZOR report < test.in.0 || fail
 
 setcount
+echo "counting reports"
 [ ${count:--1} = 2 ] || fail
 
-./pyzor report --mbox < test.in.mbox || fail
+echo "reporting a mailbox"
+./$PYZOR report --mbox < test.in.mbox || fail
 setcount
+echo "counting reports"
 [ ${count:--1} = 3 ] || fail
 
-./pyzor ping || fail
+echo "pinging"
+./$PYZOR ping || fail
 
-kill $server_pid
+echo "killing server"
+kill `cat .pyzor/pyzord.pid` || fail
+
 echo "passed"

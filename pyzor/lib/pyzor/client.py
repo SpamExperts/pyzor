@@ -28,24 +28,29 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.8 2002-04-17 00:46:26 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.9 2002-04-21 22:56:30 ftobin Exp $"
 
-
-class ConfigError(Exception):
-    pass
 
 class Client(object):
-    __slots__ = ['socket', 'output']
+    __slots__ = ['socket', 'output', 'user', 'auth']
     ttl = 4
     timeout = 4
     max_packet_size = 8192
+    user = ''
+    auth = ''
     
-    def __init__(self, debug):
-        self.output = Output(debug=debug)
+    def __init__(self, user=None, auth=None):
+        if user is not None:
+            self.user = user
+        if auth is not None:
+            self.auth = auth
+        self.output = Output()
         self.build_socket()
 
     def ping(self, address):
         msg = Message()
+        msg.add_string(self.user)
+        msg.add_string(self.auth)
         msg.add_string('ping')
         thread_id = msg.thread
         self.send(msg, address)
@@ -54,6 +59,8 @@ class Client(object):
     def report(self, digest, spec, address):
         msg = Message()
         thread_id = msg.thread
+        msg.add_string(self.user)
+        msg.add_string(self.auth)
         msg.add_string('report')
         msg.add_int(self.ttl)
         msg.add_netenc(spec.netenc())
@@ -64,6 +71,8 @@ class Client(object):
     def check(self, digest, address):
         msg = Message()
         thread_id = msg.thread
+        msg.add_string(self.user)
+        msg.add_string(self.auth)
         msg.add_string('check')
         msg.add_int(self.ttl)
         msg.add_string(digest)
@@ -95,110 +104,91 @@ class Client(object):
         (packet, address) = self.recv()
         self.output.debug("received: %s" % repr(packet))
         fp = StringIO.StringIO(packet)
-        self.expect(fp, proto_name,    read_netstring)
-        self.expect(fp, proto_version, read_netstring)
-        self.expect(fp, expect_id,     read_netint)
+        self.expect(fp, proto_name,    read_netstring, "protocol name")
+        self.expect(fp, proto_version, read_netstring, "protocol version")
+
+        thread_id = pyzor.ThreadID(read_netint(fp))
+        if not thread_id.in_ok_range():
+            self.output.warn("received error thread id of %d" % thread_id)
+        elif thread_id != expect_id:
+            raise ProtocolError, \
+                  "received unexpected thread id %d (expected %d)" \
+                  % (thread_id, expect_id)
 
         error_code = read_netint(fp)
         message    = read_netstring(fp)
         return (error_code, message)
 
-    def expect(self, fp, expected, factory):
-        got = apply(factory, (fp,))
-        if got != expected:
-            raise ProtocolError, \
-                  "expected %s, got %s" % (repr(expected), repr(got))
+    def expect(self, fp, expected, factory, descr=None):
+        pyzor.expect(fp, expected, factory, descr)
 
 
-class Config(object):
-    __slots__ = ['servers', 'output']
-    config_basename    = '.pyzor'
-    default_inform_url = 'http://pyzor.sourceforge.net/cgi-bin/inform'
+class ServerList(list):
+    inform_url = 'http://pyzor.sourceforge.net/cgi-bin/inform-servers'
     
-    def __init__(self):
-        self.output = Output()
-        self.servers = []
-
-    def get_default_filename(self):
-        homedir = os.getenv('HOME')
-        if homedir is None:
-            raise RuntimeError, "no HOME environment variable set"
-
-        return os.path.join(homedir, self.config_basename)
-    
-    def get_informed(self, url, outfile):
-        import urllib
-        self.output.debug("retrieving servers from %s" % url)
-        urllib.urlretrieve(url, outfile)
-
-    def load(self, configfile):
-        cf = open(configfile)
-        for line in cf:
+    def read(self, serverfile):
+        for line in serverfile:
             orig_line = line
             line = line.strip()
-            if not line or line.startswith('#'):
-                continue
-            
-            fields = line.split()
-            try:
-                if fields[0] == 'server':
-                    self.handle_server(fields)
-                else:
-                    raise ConfigError, \
-                          "invalid setting %s" % repr(fields[0])
-
-            except ConfigError, e:
-                self.output.warn("%s is not a valid config line: %s"
-                                 % (repr(orig_line), e))
-                
-    def handle_server(self, fields):
-        if len(fields) != 2:
-            raise ConfigError, "invalid number of fields"
-        
-        address = fields[1].split(':')
-        if len(address) != 2:
-            raise ConfigError, "invalid address; must be of form ip:port"
-        
-        (ip, port) = address
-        try:
-            port = int(port)
-        except ValueError, e:
-            raise ConfigError, "%s is not a valid port" % repr(port)
-        self.output.debug("loading in server %s" % str((ip, port)))
-        self.servers.append((ip, port))
+            if line and not line.startswith('#'):
+                self.append(pyzor.Address.from_str(line))
 
 
 class ExecCall(object):
-    __slots__ = ['client', 'config']
+    __slots__ = ['client', 'servers', 'output']
+    
     # hard-coded for the moment
     digest_spec = PiecesDigestSpec([(20, 3), (60, 3)])
 
     def run(self):
         debug = 0
-        (options, args) = getopt.getopt(sys.argv[1:], 'dh')
+        (options, args) = getopt.getopt(sys.argv[1:], 'dhc:')
         if len(args) < 1:
            self.usage()
+
+        config_fn = None
 
         for (o, v) in options:
             if o == '-d':
                 debug = 1
             elif o == '-h':
                self.usage()
-    
-        command = args[0]
-    
-        self.client = Client(debug=debug)
+            elif o == '-c':
+                config_fn = v
         
-        self.config = Config()
-        config_fn = self.config.get_default_filename()
-        
-        if not os.path.exists(config_fn) or command == 'discover':
-            self.discover(args)
-        self.config.load(config_fn)
+        self.output = Output(debug=debug)
 
-        if len(self.config.servers) == 0:
+        config = pyzor.Config()
+        config.add_section('client')
+        config.set('client', 'serversfile',
+                   os.path.join(pyzor.get_homedir(), 'servers'))
+
+        if config_fn is None:
+            config_fn = pyzor.Config.get_default_filename()
+        config.read(config_fn)
+        
+        servers_fn = config.get_filename('client', 'ServersFile')
+    
+        homedir = pyzor.get_homedir()
+        # We really shouldn't need to make this unless
+        # the user wants to use it...
+        if not os.path.exists(homedir):
+            os.mkdir(homedir)
+
+        command = args[0]
+        if not os.path.exists(servers_fn) or command == 'discover':
+            sys.stderr.write("downloading servers from %s\n"
+                             % ServerList.inform_url)
+            download(ServerList.inform_url, servers_fn)
+        
+        self.servers = ServerList()
+        self.servers.read(open(servers_fn))
+
+        if len(self.servers) == 0:
             sys.stderr.write("No servers available!  Maybe try the 'discover' command\n")
             sys.exit(1)
+
+        self.client = Client()
 
         try: 
             if command == 'discover':
@@ -221,18 +211,15 @@ class ExecCall(object):
         return
 
     def usage(self):
-        sys.stderr.write("usage: %s [-d] check|report|discover|ping [cmd_options]\nData is read on standard input.\n"
+        sys.stderr.write("usage: %s [-d] [-c config_file] check|report|discover|ping [cmd_options]\nData is read on standard input.\n"
                          % sys.argv[0])
         sys.exit(1)
         return
 
-    def discover(self, args):
-        self.config.get_informed(self.config.default_inform_url, config_fn)
-        return
-    
     def ping(self, args):
-        for server in self.config.servers:
+        for server in self.servers:
             try:
+                self.output.debug("pinging %s" % str(server))
                 result = self.client.ping(server)
             except TimeoutError:
                 result = 'timeout'
@@ -243,13 +230,16 @@ class ExecCall(object):
         import rfc822
         fp = rfc822.Message(sys.stdin, seekable=0).fp
         
+        self.output.debug("digest spec is %s" % self.digest_spec)
         digest = PiecesDigest.compute_from_file(fp,
                                                 self.digest_spec,
                                                 seekable=0)
+        self.output.debug("calculated digest: %s" % digest)
 
         found_hit = 0
-        for server in self.config.servers:
+        for server in self.servers:
             try:
+                self.output.debug("sending to %s" % str(server))
                 result = self.client.check(digest, server)
                 if result[0] == 200:
                     output = result[1]
@@ -258,7 +248,7 @@ class ExecCall(object):
                     output = result
             except TimeoutError:
                 output = 'timeout'
-            sys.stdout.write("%s: %s\n" % (server, output))
+            sys.stdout.write("%s\t%s\n" % (server, output))
         sys.exit(not found_hit)
         return
 
@@ -281,11 +271,14 @@ class ExecCall(object):
 
 
     def report_fp(self, fp):
+        self.output.debug("digest spec is %s" % self.digest_spec)
         digest = PiecesDigest.compute_from_file(fp,
                                                 self.digest_spec,
                                                 seekable=0)
-        for server in self.config.servers:
+        self.output.debug("calculated digest: %s" % digest)
+        for server in self.servers:
             try:
+                self.output.debug("sending to %s" % str(server))
                 result = self.client.report(digest, self.digest_spec,
                                             server)
             except TimeoutError:
@@ -299,3 +292,8 @@ def run():
 
 def timeout(signum, frame):
     raise TimeoutError
+
+
+def download(url, outfile):
+    import urllib
+    urllib.urlretrieve(url, outfile)

@@ -1,38 +1,80 @@
 #!/usr/local/bin/python
 
 import os
+import os.path
 import sys
 import signal
 import getopt
+import pyzor
 import pyzor.server
+import ConfigParser
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.4 2002-04-14 20:33:05 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.5 2002-04-21 22:56:30 ftobin Exp $"
 
 def cleanup_server_handler(signum, frame):
     pyzor.server.DBHandle('c').cleanup()
 
 def usage():
-    sys.stderr.write("usage: %s [-d] dbfile port\n" % sys.argv[0])
+    sys.stderr.write("usage: %s [-d] [-c config_file]\n" % sys.argv[0])
     sys.exit(1)
 
 debug = 0
-(options, args) = getopt.getopt(sys.argv[1:], 'dh')
-if len(args) != 2:
+(options, args) = getopt.getopt(sys.argv[1:], 'dhc:')
+if len(args) != 0:
     usage()
-    
+
+config_fn = None
+
 for (o, v) in options:
     if o == '-d':
         debug = 1
     elif o == '-h':
         usage()
+    elif o == '-c':
+        config_fn = v
 
-(dbfile, port) = args
+if config_fn is None:
+    config_fn = pyzor.Config.get_default_filename()
 
-port = int(port)
+homedir = pyzor.get_homedir()
+# We really shouldn't need to make this unless
+# the user wants to use it...
+if not os.path.exists(homedir):
+    os.mkdir(homedir)
+
+defaults = {'port':          '24441',
+            'listenaddress': '0.0.0.0',
+            'logfile':       os.path.join(homedir, 'pyzord.log'),
+            'pidfile':       os.path.join(homedir, 'pyzord.pid'),
+            'digestdb':      os.path.join(homedir, 'pyzord.db'),
+            }
+
+config = pyzor.Config()
+config.add_section('server')
+
+for k, v in defaults.items():
+    config.set('server', k, v)
+
+config.read(config_fn)
+
+
+port   = config.getint('server', 'port')
+assert port == 9999
+listen_adr = config.get('server', 'ListenAddress')
+
+log_fn = config.get_filename('server', 'logfile')
+pid_fn = config.get_filename('server', 'pidfile')
+dbfile = config.get_filename('server', 'DigestDB')
+
+logfile = open(log_fn, 'a')
+
 pyzor.server.DBHandle.dbfile = dbfile
-server = pyzor.server.Server(('0.0.0.0', port), debug=debug)
+output = pyzor.Output(debug=debug)
+
+server = pyzor.server.Server((listen_adr, port),
+                             pyzor.server.Log(logfile))
 
 if not debug:
     # This step is required so that the new process is guaranteed
@@ -54,6 +96,11 @@ if not debug:
     #sys.stdin.close()
     #sys.stdout.close()
     #sys.stderr.close()
+
+if pid_fn is not None:
+    f = open(pid_fn, 'w')
+    f.write("%d\n" % os.getpid())
+    f.close()
 
 signal.signal(signal.SIGUSR1, cleanup_server_handler)
 server.serve_forever()

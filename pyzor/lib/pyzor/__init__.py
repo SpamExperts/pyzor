@@ -134,16 +134,19 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.1.1"
-__revision__ = "$Id: __init__.py,v 1.10 2002-04-21 01:56:09 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.11 2002-04-21 22:56:30 ftobin Exp $"
 
+import os
+import os.path
 import re
 import sys
 import sha
 import tempfile
 import random
+import ConfigParser
 
 proto_name    = 'pyzor'
-proto_version =  '0.0'
+proto_version =  '1.0'
 
 class ProtocolError(Exception):
     pass
@@ -344,6 +347,58 @@ class ThreadID(int):
         return apply(self, (apply(random.randrange, self.ok_range),))
     generate = classmethod(generate)
 
+    def in_ok_range(self):
+        return (self >= self.ok_range[0] and self < self.ok_range[1])
+    
+
+class Address(tuple):
+    def __init__(self, *varargs, **kwargs):
+        super(Address, self).__init__(*varargs, **kwargs)
+
+        if len(self) != 2:
+            ValueError, "invalid address: %s" % str(self)
+    
+    def __str__(self):
+        return (self[0] + ':' + str(self[1]))
+
+    def from_str(self, s):
+        fields = s.split(':')
+
+        try:
+            fields[1] = int(fields[1])
+            return apply(self, (fields,))
+        except ValueError:
+            ValueError, "invalid address: %s" % repr(s)
+
+    from_str = classmethod(from_str)
+
+
+class Config(ConfigParser.ConfigParser, object):
+    
+    def get_filename(self, section, option):
+        return os.path.expanduser(self.get(section, option))
+
+    def get_default_filename(self):
+        homedir = get_homedir()
+        
+        if os.path.isfile(homedir):
+            sys.stderr.write("In new versions of Pyzor, %s is a directory,\nand your current file %s\nneeds to be removed and re-generated with 'pyzor discover'.\n" \
+                                 % (homedir, homedir))
+            sys.exit(1)
+        
+        return os.path.join(homedir, 'config')
+        
+    get_default_filename = classmethod(get_default_filename)
+
+
+def get_homedir():
+    userhome = os.getenv('HOME')
+    if userhome is None:
+        sys.stderr.write('environment variable HOME is unset; please set it\n')
+        sys.exit(1)
+
+    return os.path.join(userhome, '.pyzor')
+
 
 def netint(i):
     return "%u\n" % i
@@ -379,3 +434,11 @@ def read_netlist(fp, factory):
         l.append(apply(factory, (fp,)))
 
     return l
+
+def expect(fp, expected, factory, descr=None):
+    got = apply(factory, (fp,))
+    if got != expected:
+        msg = "expected %s, got %s" % (repr(expected), repr(got))
+        if descr is not None:
+            msg += " while trying to read %s" % descr
+        raise ProtocolError, msg
