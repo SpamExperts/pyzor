@@ -2,7 +2,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.4.0"
-__revision__ = "$Id: __init__.py,v 1.42 2002-09-12 01:17:27 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.43 2002-09-17 15:12:58 ftobin Exp $"
 
 import os
 import os.path
@@ -506,10 +506,11 @@ def modglobal_apply(globs, repl, obj, varargs=(), kwargs=None):
     for (k, v) in repl.items():
         saved[k] = globs[k]
         globs[k] = v
-
-    r = apply(obj, varargs, kwargs)
-
-    globs.update(saved)
+        
+    try:
+        r = apply(obj, varargs, kwargs)
+    finally:
+        globs.update(saved)
 
     return r
 
