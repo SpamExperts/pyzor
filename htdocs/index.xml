@@ -137,7 +137,7 @@
 	  digest was calculated.  Not fully specified yet.
 	</p>
 	<pre>
-"check",<var>time-to-live</var>,"<var>digest-meta</var>", "<var>signature</var>"
+"check",<var>time-to-live</var>,"<var>digest-meta</var>", "<var>digest</var>"
 	</pre>
       </dd>
       
