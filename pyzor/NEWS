@@ -1,10 +1,26 @@
+Noteworthy changes in 0.2.0
 -----------------------------------------------------------------
 
-    *	Client now contacts each server listed in .pyzor
-	for each check/report/ping.
+    *	Protocol break.  Old clients will not work
+	with new servers, and vice versa.
 
-    *	Moved code around so that it can be used with
-	ReadyExec: http://readyexec.sourceforge.net/
+    *	~/.pyzor is now a directory, with ~/.pyzor/config
+	containing configuration directives.
+	~/.pyzor/servers contains a list of servers.
+
+    *	pyzord's command-line interface has changed,
+	now being primarily configured in ~/.pyzor/config.
+
+    *	pyzord now does logging (~/.pyzor/pyzord.log) and has
+	a pidfile (~/.pyzor/pyzord.pid).
+
+    *	Debugging for client and server improved.
+
+    *	Client now contacts each server listed
+	when doing a check/report/ping.
+
+    *	Can now be used with ReadyExec,
+	http://readyexec.sourceforge.net/
 	Documentation on how to use ReadyExec is
 	in the pyzor documentation.
 

@@ -31,7 +31,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.9 2002-04-21 22:56:30 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.10 2002-04-22 00:17:40 ftobin Exp $"
 
 
 class AuthenticationError(Exception):
@@ -91,6 +91,7 @@ class DBHandle(object):
     __slots__ = ['db', 'output']
     dbfile = None
     db_lock = threading.Lock()
+    max_age = 72*3600
 
     def __init__(self, mode='r'):
         self.output = Output()
@@ -113,11 +114,10 @@ class DBHandle(object):
     def __contains__(self, key):
         return self.db.has_key(key)
 
-    def cleanup(self, max_age=(48*3600)):
-        """max_age is in seconds"""
+    def cleanup(self):
         self.output.debug("cleaning up the database")
         key = self.db.firstkey()
-        breakpoint = time.time() - max_age*3600
+        breakpoint = time.time() - self.max_age
 
         while key is not None:
             rec = Record.from_str(self[key])

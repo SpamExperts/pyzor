@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.9 2002-04-21 22:56:30 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.10 2002-04-22 00:17:40 ftobin Exp $"
 
 
 class Client(object):
@@ -160,11 +160,18 @@ class ExecCall(object):
 
         config = pyzor.Config()
         config.add_section('client')
-        config.set('client', 'serversfile',
-                   os.path.join(pyzor.get_homedir(), 'servers'))
 
+        defaults = {'serversfile': os.path.join(pyzor.get_homedir(),
+                                                'servers'),
+                    'DiscoverServersURL': ServerList.inform_url
+                    }
+
+        for k, v in defaults.items():
+            config.set('client', k, v)
+            
         if config_fn is None:
             config_fn = pyzor.Config.get_default_filename()
+        
         config.read(config_fn)
         
         servers_fn = config.get_filename('client', 'ServersFile')
@@ -178,8 +185,8 @@ class ExecCall(object):
         command = args[0]
         if not os.path.exists(servers_fn) or command == 'discover':
             sys.stderr.write("downloading servers from %s\n"
-                             % ServerList.inform_url)
-            download(ServerList.inform_url, servers_fn)
+                             % config.get('client', 'DiscoverServersURL'))
+            download(config.get('client', 'DiscoverServersURL'), servers_fn)
         
         self.servers = ServerList()
         self.servers.read(open(servers_fn))

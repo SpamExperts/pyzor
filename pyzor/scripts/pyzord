@@ -11,7 +11,7 @@ import ConfigParser
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.5 2002-04-21 22:56:30 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.6 2002-04-22 00:17:40 ftobin Exp $"
 
 def cleanup_server_handler(signum, frame):
     pyzor.server.DBHandle('c').cleanup()
@@ -49,6 +49,7 @@ defaults = {'port':          '24441',
             'logfile':       os.path.join(homedir, 'pyzord.log'),
             'pidfile':       os.path.join(homedir, 'pyzord.pid'),
             'digestdb':      os.path.join(homedir, 'pyzord.db'),
+            'CleanupAge':    str(pyzor.server.DBHandle.max_age),
             }
 
 config = pyzor.Config()
@@ -60,13 +61,13 @@ for k, v in defaults.items():
 config.read(config_fn)
 
 
-port   = config.getint('server', 'port')
-assert port == 9999
+port       = config.getint('server', 'port')
 listen_adr = config.get('server', 'ListenAddress')
 
 log_fn = config.get_filename('server', 'logfile')
 pid_fn = config.get_filename('server', 'pidfile')
 dbfile = config.get_filename('server', 'DigestDB')
+pyzor.server.DBHandle.max_age = config.getint('server', 'CleanupAge')
 
 logfile = open(log_fn, 'a')
 

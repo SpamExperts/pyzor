@@ -2,10 +2,18 @@
 
 CLIENT (pyzor):
 
-usage: pyzor [-d] check|report|discover|ping [cmd_options]
+usage: pyzor [-d] [-c config] check|report|discover|ping [cmd_options]
+
+options:
 
 -d:
     turn on debugging
+
+-c config:
+    use file 'config' instead of the default ~/.pyzor/config.
+
+
+commands:
 
 check:
     Reads on standard input an rfc822 (email) message.
@@ -99,20 +107,44 @@ in it cleaning out digests not updated within the last 48 hours.
 
 FILES:
 
-~/pyzor:
-    Configuration file.  Format is "option-name value".
-    Comments (lines starting with #) and empty lines are ignored.
-    Current options are:
-        server ip:port
-            Add the ip:port host to the list of servers.
-            This option may be repeated.
+~/pyzor/config:
+    Format is INI-style (name=value, divided into [section]'s).
+    All filenames can have shell-style ~'s in them.
+    Defaults are shown below.
+
+    [client]
+      ServersFile = ~/.pyzor/servers
+        Location of file which contains a list of servers,
+        host:ip per line
+        .
+      DiscoverServersURL = http://pyzor.sourceforge.net/cgi-bin/inform-servers
+        URL to discover servers from.
+
+    [server]
+      Port=24441
+        Port to listen on.
+
+      ListenAddress = 0.0.0.0
+        Address to listen on.
+
+      LogFile = ~/.pyzor/pyzord.log
+        Location of logfile.
+
+      PidFile = ~/.pyzor/pyzord.pid
+        Location of file containing PID of server.
+
+      DigestDB = ~/.pyzor/pyzord.db
+        Location of digest database.
+
+      CleanupAge = 259200
+        When cleaning the database, entries older than this number
+        of seconds are removed.
 
 
 TODO:
-    Currently only the first server in the configuration file
-    is communicated with.
-
     The portions of mail which are digested should be dynamic.
+
+    P2P between servers.
 
 
 Copyright (C) 2002 Frank J. Tobin <ftobin@neverending.org>
@@ -133,8 +165,8 @@ http://www.gnu.org/copyleft/gpl.html
 """
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
-__version__  = "0.1.1"
-__revision__ = "$Id: __init__.py,v 1.11 2002-04-21 22:56:30 ftobin Exp $"
+__version__  = "0.2.0"
+__revision__ = "$Id: __init__.py,v 1.12 2002-04-22 00:17:40 ftobin Exp $"
 
 import os
 import os.path
