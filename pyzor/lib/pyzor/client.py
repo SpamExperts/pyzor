@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.5 2002-04-14 22:02:21 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.6 2002-04-14 22:08:08 ftobin Exp $"
 
 
 class ConfigError(Exception):
@@ -155,7 +155,11 @@ class Config(object):
         if len(fields) != 2:
             raise ConfigError, "invalid number of fields"
         
-        (ip, port) = fields[1].split(':', 1)
+        address = fields[1].split(':')
+        if len(address) != 2:
+            raise ConfigError, "invalid address; must be of form ip:port"
+        
+        (ip, port) = address
         try:
             port = int(port)
         except ValueError, e:
