@@ -34,7 +34,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.19 2002-07-04 20:59:35 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.20 2002-07-12 20:02:29 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -466,11 +466,9 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
             self.handle_error(505, "Version Not Supported: %s" % e)
         except NotImplementedError, e:
             self.handle_error(501, "Not implemented: %s" % e)
-        except KeyError, e:
+        except (ProtocolError, KeyError), e:
             # We assume that KeyErrors are due to not
             # finding a key in the RFC822 message
-            self.handle_error(400, "Bad request: %s" % e)
-        except ProtocolError, e:
             self.handle_error(400, "Bad request: %s" % e)
         except TimeoutError, e:
             self.handle_error(503, "Gateway timeout: %s" % e)
