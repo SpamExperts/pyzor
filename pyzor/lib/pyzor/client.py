@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.24 2002-08-09 20:41:08 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.25 2002-08-13 20:51:41 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -149,7 +149,7 @@ class ExecCall(object):
         if len(args) < 1:
            self.usage()
 
-        homedir = None
+        specified_homedir = None
 
         for (o, v) in options:
             if o == '-d':
@@ -157,12 +157,11 @@ class ExecCall(object):
             elif o == '-h':
                self.usage()
             elif o == '--homedir':
-                homedir = v
+                specified_homedir = v
         
         self.output = Output(debug=debug)
 
-        if homedir is None:
-            homedir = pyzor.get_homedir()
+        homedir = pyzor.get_homedir(specified_homedir)
 
         config = pyzor.Config(homedir)
         config.add_section('client')

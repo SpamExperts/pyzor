@@ -18,7 +18,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.3.1"
-__revision__ = "$Id: __init__.py,v 1.28 2002-08-09 20:55:49 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.29 2002-08-13 20:51:41 ftobin Exp $"
 
 import os
 import os.path
@@ -575,13 +575,17 @@ class Config(ConfigParser.ConfigParser, object):
         return fn
 
 
-def get_homedir():
-    userhome = os.getenv('HOME')
-    if userhome is None:
-        sys.stderr.write('environment variable HOME is unset; please set it\n')
-        sys.exit(1)
-
-    return os.path.join(userhome, '.pyzor')
+def get_homedir(specified):
+    homedir = os.path.join('/etc', 'pyzor')
+    
+    if specified is not None:
+        homedir = specified
+    else:
+        userhome = os.getenv('HOME')
+        if userhome is not None:
+            homedir = os.path.join(userhome, '.pyzor')
+    
+    return homedir
 
 
 def typecheck(inst, type_):
