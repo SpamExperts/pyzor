@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.25 2002-08-13 20:51:41 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.26 2002-08-21 03:13:58 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -36,10 +36,12 @@ randfile = '/dev/random'
 class Client(object):
     __slots__ = ['socket', 'output', 'accounts']
     ttl = 4
-    timeout = 4
+    timeout = 5
     max_packet_size = 8192
     
     def __init__(self, accounts):
+        signal.signal(signal.SIGALRM, timeout_handler)
+        
         self.accounts = accounts
         self.output   = Output()
         self.build_socket()
@@ -88,18 +90,16 @@ class Client(object):
         self.socket.sendto(mac_msg_str, 0, address)
 
     def recv(self):
-        return self.time_call(self.socket.recvfrom, (self.max_packet_size,))
+        return self.time_call(self.socket.recvfrom,
+                              (self.max_packet_size,))
 
     def time_call(self, call, varargs=(), kwargs=None):
         if kwargs is None:  kwargs  = {}
-        saved_handler = signal.getsignal(signal.SIGALRM)
-        signal.signal(signal.SIGALRM, timeout)
         signal.alarm(self.timeout)
         try:
             return apply(call, varargs, kwargs)
         finally:
             signal.alarm(0)
-            signal.signal(signal.SIGALRM, saved_handler)
 
     def read_response(self, expect_id):
         (packet, address) = self.recv()
@@ -660,7 +660,7 @@ def run():
     ExecCall().run()
 
 
-def timeout(signum, frame):
+def timeout_handler(signum, frame):
     raise TimeoutError
 
 
