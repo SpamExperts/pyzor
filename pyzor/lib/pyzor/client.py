@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.19 2002-06-29 23:14:59 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.20 2002-06-30 01:20:18 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -263,8 +263,8 @@ class ExecCall(object):
             for server in self.servers:
                 response = runner.run(server, (digest, server))
                 
-        return runner.found_hit
-            
+        return (runner.found_hit and not runner.whitelisted)
+
 
     def report(self, args):
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
@@ -464,14 +464,15 @@ class ClientRunner(object):
 
 
 class CheckClientRunner(ClientRunner):
-    __slots__ = ['found_hit']
+    __slots__ = ['found_hit', 'whitelisted']
 
     # the number of wl-count it takes for the normal
     # count to be overriden
     wl_count_clears = 1
 
     def setup(self):
-        self.found_hit = False
+        self.found_hit   = False
+        self.whitelisted = False
         super(CheckClientRunner, self).setup()
     
     def handle_response(self, response, message):
@@ -481,6 +482,7 @@ class CheckClientRunner(ClientRunner):
             wl_count = int(response['WL-Count'])
             if wl_count > 0:
                 count = 0
+                self.whitelisted = True
             else:
                 count = int(response['Count'])
                 if count > 0:
