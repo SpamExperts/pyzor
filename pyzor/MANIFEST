@@ -21,7 +21,9 @@ scripts/servers
 scripts/test.in.0
 scripts/test.in.mbox
 scripts/test.sh
-t/mutlipart
+t/atomic
+t/atomic.not
+t/multipart
 t/multipart.expected
 setup.py
 unittests.py
