@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.14 2002-05-17 20:58:15 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.15 2002-06-06 02:00:22 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -118,6 +118,7 @@ class ServerList(list):
                 self.append(pyzor.Address.from_str(line))
 
 
+
 class ExecCall(object):
     __slots__ = ['client', 'servers', 'output']
     
@@ -145,9 +146,11 @@ class ExecCall(object):
         config = pyzor.Config()
         config.add_section('client')
 
-        defaults = {'serversfile': os.path.join(pyzor.get_homedir(),
+        defaults = {'ServersFile': os.path.join(pyzor.get_homedir(),
                                                 'servers'),
-                    'DiscoverServersURL': ServerList.inform_url
+                    'DiscoverServersURL': ServerList.inform_url,
+                    'AccountsFile' : os.path.join(pyzor.get_homedir(),
+                                                  'accounts'),
                     }
 
         for k, v in defaults.items():
@@ -171,13 +174,10 @@ class ExecCall(object):
             sys.stderr.write("downloading servers from %s\n"
                              % config.get('client', 'DiscoverServersURL'))
             download(config.get('client', 'DiscoverServersURL'), servers_fn)
-        
-        self.servers = ServerList()
-        self.servers.read(open(servers_fn))
 
-        if len(self.servers) == 0:
-            sys.stderr.write("No servers available!  Maybe try the 'discover' command\n")
-            sys.exit(1)
+
+        self.load_servers(servers_fn)
+        self.load_accounts(config.get_filename('client', 'AccountsFile'))
 
         self.client = Client()
 
@@ -203,11 +203,13 @@ class ExecCall(object):
 
         return
 
+
     def usage(self):
         sys.stderr.write("usage: %s [-d] [-c config_file] check|report|discover|ping [cmd_options]\nData is read on standard input.\n"
                          % sys.argv[0])
         sys.exit(1)
         return
+
 
     def ping(self, args):
         for server in self.servers:
@@ -220,6 +222,7 @@ class ExecCall(object):
             except TimeoutError:
                 sys.stderr.write(message + 'timeout\n')
         return
+
 
     def check(self, args):
         import rfc822
@@ -261,6 +264,7 @@ class ExecCall(object):
         # return 'success', 0, if we found a hit.
         sys.exit(bool(not found_hit))
         return
+
 
     def report(self, args):
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
@@ -333,6 +337,23 @@ class ExecCall(object):
                                       pass_digest.hexdigest()))
 
 
+    def load_servers(self, servers_fn):
+        self.servers = ServerList()
+        self.servers.read(open(servers_fn))
+
+        if len(self.servers) == 0:
+            sys.stderr.write("No servers available!  Maybe try the 'discover' command\n")
+            sys.exit(1)
+
+
+    def load_accounts(self, accounts_fn):
+        self.accounts = AccountsDict()
+        if os.path.exists(accounts_fn):
+            for address, account in AccountFile(open(accounts_fn)):
+                self.accounts[address] = account
+
+
+
 class MailboxDigester(object):
     __slots__ = ['mbox', 'digest_spec']
     
@@ -352,16 +373,119 @@ class MailboxDigester(object):
                                               seekable=False)
 
 
-class Keyring(dict):
+class AccountsDict(dict):
+    """Key is pyzor.Address, value is Account"""
+    def __setitem__(self, k, v):
+        assert isinstance(k, pyzor.Address)
+        assert isinstance(v, Account)
+        super(AccountsDict, self).__setitem__(k, v)
+
+
+class Account(tuple):
+    def __init__(self, v):
+        self.validate()
+
+    def validate(self):
+        assert isinstance(self.username, pyzor.Username)
+        assert isinstance(self.keystuff, Keystuff)
+
+    def username(self):
+        return self[0]
+    username = property(username)
+
+    def keystuff(self):
+        return self[1]
+    keystuff = property(keystuff)
+
+
+
+class Keystuff(tuple):
+    """tuple of (salt, key).  Each is a long.
+    One or the other may be None, but not both."""
+    def __init__(self, v):
+        self.validate()
+
+    def validate(self):
+        # When we support just leaving the salt in, this should
+        # be removed
+        if self[1] is None:
+            raise ValueError, "no key information"
+        
+        for x in self:
+            if not (isinstance(x, long) or x is None):
+                raise ValueError, "Keystuff must be long's or None's"
+
+        # make sure we didn't get all None's
+        if not filter(lambda x: x is not None, self):
+            raise ValueError, "keystuff can't be all None's"
+
+    def from_hexstr(self, s):
+        parts = s.split(',')
+        if len(parts) != 2:
+            raise ValueError, "invalid number of parts for keystuff; perhaps you forgot comma at beginning for salt divider?"
+        return self(map(self.hex_to_long, parts))
+    from_hexstr = classmethod(from_hexstr)
+
+    def hex_to_long(h):
+        """Allows the argument to be an empty string"""
+        if h is '':
+            return None
+        return long(h, 16)
+    hex_to_long = staticmethod(hex_to_long)
+
+    def salt(self):
+        return self[0]
+    salt = property(salt)
+
+    def key(self):
+        return self[1]
+    key = property(key)
+
+
+
+class AccountFile(object):
+    """Iteration gives a tuple of (Address, Account)"""
+    __slots__ = ['file', 'lineno', 'output']
     
+    def __init__(self, f):
+        self.file = f
+        self.lineno = 0
+        self.output = pyzor.Output()
 
+    def __iter__(self):
+        return self
 
-class KeyFile(object):
-    pass
+    def next(self):
+        while 1:
+            orig_line = self.file.readline()
+            self.lineno += 1
+            
+            if not orig_line:
+                raise StopIteration
+            line = orig_line.strip()
+            if not line or line.startswith('#'):
+                continue
+            fields = line.split(':')
+            fields = map(lambda x: x.strip(), fields)
+            
+            if len(fields) != 4:
+                self.output.warn("account file: invalid line %d: wrong number of parts"
+                                 % self.lineno)
+                continue
+
+            try:
+                return (pyzor.Address((fields[0], int(fields[1]))),
+                        Account((Username(fields[2]),
+                                 Keystuff.from_hexstr(fields[3]))))
+            except ValueError, e:
+                self.output.warn("account file: invalid line %d: %s"
+                                 % (self.lineno, e))
+
 
 
 def run():
     ExecCall().run()
+
 
 def timeout(signum, frame):
     raise TimeoutError

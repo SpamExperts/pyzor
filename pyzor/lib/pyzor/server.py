@@ -31,7 +31,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.12 2002-05-17 20:58:15 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.13 2002-06-06 02:00:23 ftobin Exp $"
 
 
 class AuthorizationError(Exception):
@@ -49,7 +49,7 @@ class ACL(object):
 
     def add_entry(self, entry):
         assert isinstance(entry, ACLEntry)
-        self.entries.appen(entry)
+        self.entries.append(entry)
 
     def allows(self, user, op):
         assert isinstance(user, Username)
@@ -63,15 +63,14 @@ class ACL(object):
         return self.default_allow
 
 
-def ACLEntry(tuple):
-    all_keyword = 'ALL'
+class ACLEntry(tuple):
+    all_keyword = 'all'.lower()
     
-    def __init__(self, user, op, allow):
+    def __init__(self, v):
+        (user, op, allow) = v
         assert isinstance(user,  Username)
         assert isinstance(op,    Opname)
-        assert allow == True or allow == False
-
-        super(ACLEntry, self).__init__((user, op, bool(allow)))
+        assert bool(allow) == allow
 
     def user(self):
         return self[0]
@@ -82,7 +81,7 @@ def ACLEntry(tuple):
     op = property(op)
 
     def allow(self):
-        return bool(self[2])
+        return self[2]
     allow = property(allow)
 
     def allows(self, user, op):
@@ -97,27 +96,34 @@ def ACLEntry(tuple):
         """
         assert isinstance(user,  Username)
         assert isinstance(op,    Opname)
+        assert bool(allow) == allow
         
-        return bool(self.allow == allow
-                    and (self.user == user or self.user == self.all_keyword)
-                    and (self.op == op     or self.op   == self.all_keyword))
+        return (self.allow == allow
+                and (self.user == user
+                     or self.user.lower() == self.all_keyword)
+                and (self.op == op
+                     or self.op.lower() == self.all_keyword))
+
 
 
 class AccessFile(object):
     # I started doing an iterator protocol for this, but it just
     # got too complicated keeping track of everything on the line
-    __slots__ = ['file', 'output']
+    __slots__ = ['file', 'output', 'lineno']
     allow_keyword = 'allow'
     deny_keyword = 'deny'
     
     def __init__(self, f):
         self.output = Output()
         self.file = f
+        self.lineno = 0
 
     def feed_into(self, acl):
         assert isinstance(acl, ACL)
     
         for orig_line in self.file:
+            self.lineno += 1
+            
             line = orig_line.strip()
             if not line or line.startswith('#'):
                 continue
@@ -125,19 +131,19 @@ class AccessFile(object):
             parts = line.split(':')
 
             if len(parts) != 3:
-                self.output.warn("invalid number of parts for line: %s"
-                                 % repr(orig_line))
+                self.output.warn("access file: invalid number of parts in line %d"
+                                 % self.lineno)
                 continue
             
             (ops_str, users_str, allow_str) = parts
 
             ops = []
-            for o in ops_str.split():
+            for op_str in ops_str.split():
                 try:
-                    op = Opname(o)
+                    op = Opname(op_str)
                 except ValueError, e:
-                    self.output.warn("invalud opname %s: %s"
-                                     % (repr(o), e))
+                    self.output.warn("access file: invalid opname %s line %d: %s"
+                                     % (repr(op_str), self.lineno, e))
                 else:
                     ops.append(op)
 
@@ -146,8 +152,8 @@ class AccessFile(object):
                 try:
                     user = Username(u)
                 except ValueError, e:
-                    self.output.warn("invalid username %s: %s"
-                                     % (repr(u), e))
+                    self.output.warn("access file: invalid username %s line %d: %s"
+                                     % (repr(u), self.lineno, e))
                 else:
                     users.append(user)
 
@@ -157,31 +163,32 @@ class AccessFile(object):
             elif allow_str.lower() == self.deny_keyword:
                 allow = False
             else:
-                self.output.warn("invalid allow/deny keyword %s"
-                                 % repr(allow_str))
+                self.output.warn("access file: invalid allow/deny keyword %s line %d"
+                                 % (repr(allow_str), self.lineno))
                 continue
 
             for op in ops:
                 for user in users:
-                    acl.add_entry(ACLEntry(user, op, allow))
+                    acl.add_entry(ACLEntry((user, op, allow)))
+
 
 
 class Passwd(dict):
-    def __init__(self):
-        super(Passwd, self).__init__(self)
-        self.output = Output()
-    
-    def add_entry(self, entry):
-        assert isinstance(entry, PasswdEntry)
-        self[entry.user] = entry.key
+    def __setitem__(self, k, v):
+        assert isinstance(k, pyzor.Username)
+        assert isinstance(v, long)
+        super(Passwd, self).__setitem__(k, v)
+
 
             
 class PasswdFile(object):
-    __slots__ = ['file', 'output']
+    """Iteration gives (Username, long) objects"""
+    __slots__ = ['file', 'output', 'lineno']
 
     def __init__(self, f):
         self.file = f
         self.output = Output()
+        self.lineno = 0
 
     def __iter__(self):
         return self
@@ -189,46 +196,27 @@ class PasswdFile(object):
     def next(self):
         while 1:
             orig_line = self.file.readline()
+            self.lineno += 1
+            
             if not orig_line:
                 raise StopIteration
+            
             line = orig_line.strip()
             if not line or line.startswith('#'):
                 continue
             fields = line.split(':')
             fields = map(lambda x: x.strip(), fields)
 
-            if len(fields) == 2:
-                username = Username(fields[0])
-                try:
-                    entry = PasswdEntry(username, fields[1])
-                except ValueError, e:
-                    self.output.warn("invalid passwd entry: %s" % e)
-                else:
-                    return entry
-            else:
-                self.output.warn("passwd line %s is invalid"
-                                 % repr(orig_line))
-
-
-class PasswdEntry(tuple):
-    user_pattern = re.compile(r'^[-\.\w]+$')
-    
-    def __init__(self, user, key):
-        assert isinstance(user, Username)
-        assert isinstance(key, str)
-
-        super(PasswdEntry, self).__init__((user, key))
-        
-        if not self.user_pattern.match(self.user):
-            raise ValueError, "user %s is invalid" % repr(user)
-
-    def user(self):
-        return self[0]
-    user = property(user)
-    
-    def key(self):
-        return self[1]
-    key = property(key)
+            if len(fields) != 2:
+                self.output.warn("passwd line %d is invalid (wrong number of parts)"
+                                 % self.lineno)
+                continue
+            
+            try:
+                return (Username(fields[0]), long(fields[1], 16))
+            except ValueError, e:
+                self.output.warn("invalid passwd entry line %d: %s"
+                                 % (self.lineno, e))
 
 
 
@@ -259,6 +247,7 @@ class Log(object):
             self.fp.flush()
 
 
+
 class Record(object):
     __slots__ = ['count', 'entered', 'updated']
     def __init__(self, count=0, entered=None, updated=None):
@@ -283,6 +272,7 @@ class Record(object):
     def from_str(self, s):
         return apply(self, tuple(map(int, s.split(',', 3))))
     from_str = classmethod(from_str)
+
 
 
 class DBHandle(object):
@@ -329,6 +319,7 @@ class DBHandle(object):
         
         self.db.reorganize()
         self.db.sync()
+
         
 
 class Server(SocketServer.ThreadingUDPServer, object):
@@ -349,6 +340,7 @@ class Server(SocketServer.ThreadingUDPServer, object):
 
     def ensure_db_exists(self):
         db = DBHandle('c')
+
 
 
 class RequestHandler(SocketServer.DatagramRequestHandler, object):
@@ -402,6 +394,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.output.debug("sending: %s" % repr(msg_str))
         self.wfile.write(msg_str)
 
+
     def _really_handle(self):
         """handle() without the exception handling"""
 
@@ -448,6 +441,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.out_msg = ErrorResponse(code, s)
         if self.msg_thread is not None:
             self.out_msg.set_thread(self.msg_thread)
+
 
     def handle_check(self):
         digest = self.in_msg['Op-Digest']

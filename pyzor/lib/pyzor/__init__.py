@@ -167,7 +167,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.17 2002-05-17 20:58:15 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.18 2002-06-06 02:00:22 ftobin Exp $"
 
 import os
 import os.path
@@ -216,11 +216,10 @@ class Username(str):
     user_pattern = re.compile(r'^[-\.\w]+$')
     
     def __init__(self, s):
-        super(Username, self).__init__(s)
         self.validate()
 
     def validate(self):
-        if not self.user_patter.match(self):
+        if not self.user_pattern.match(self):
             raise ValueError, "%s is an invalid username" % self
 
 
@@ -228,11 +227,10 @@ class Opname(str):
     op_pattern = re.compile(r'^[-\.\w]+$')
     
     def __init__(self, s):
-        super(Username, self).__init__(s)
         self.validate()
 
     def validate(self):
-        if not self.user_patter.match(self):
+        if not self.op_pattern.match(self):
             raise ValueError, "%s is an invalid username" % self
 
 
@@ -274,7 +272,6 @@ class PiecesDigest(str):
     def __init__(self, value):
         if len(value) != self.value_size:
             raise ValueError, "invalid digest value size"
-        super(PiecesDigest, self).__init__(value)
 
     def get_line_offsets(buf):
         cur_offset = 0
@@ -662,10 +659,11 @@ class ThreadId(int):
 
 class Address(tuple):
     def __init__(self, *varargs, **kwargs):
-        super(Address, self).__init__(*varargs, **kwargs)
         self.validate()
 
     def validate(self):
+        assert isinstance(self[0], str)
+        assert isinstance(self[1], int)
         if len(self) != 2:
             raise ValueError, "invalid address: %s" % str(self)
     
@@ -676,7 +674,7 @@ class Address(tuple):
         fields = s.split(':')
 
         fields[1] = int(fields[1])
-        return apply(self, (fields,))
+        return self(fields)
 
     from_str = classmethod(from_str)
 

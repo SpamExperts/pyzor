@@ -11,17 +11,41 @@ import ConfigParser
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.7 2002-05-17 20:58:16 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.8 2002-06-06 02:00:23 ftobin Exp $"
 
 default_anonymous_allows = ['check', 'report', 'ping']
-
 
 def cleanup_server_handler(signum, frame):
     pyzor.server.DBHandle('c').cleanup()
 
+
 def usage():
     sys.stderr.write("usage: %s [-d] [-c config_file]\n" % sys.argv[0])
     sys.exit(1)
+
+
+def load_access_file(access_fn, server):
+    server.acl = ACL()
+    if os.path.exists(access_fn):
+        pyzor.server.AccessFile(open(access_fn)).feed_into(server.acl)
+    else:
+        output.warn("%s does not exist; using default ACL; allowing anonymous to do %s"
+                    % (access_fn, default_anonymous_allows))
+        for op in default_anonymous_allows:
+            server.acl.add_entry(pyzor.server.ACLEntry(op,
+                                                       pyzor.anonymous_user,
+                                                       True))
+
+                                 
+def load_passwd_file(access_fn, server):
+    server.passwd = pyzor.server.Passwd()
+    if os.path.exists(passwd_fn):
+        for user, key in pyzor.server.PasswdFile(open(passwd_fn)):
+            server.passwd[user] = key
+
+
+########################################################################
+# functions above, run below
 
 debug = 0
 (options, args) = getopt.getopt(sys.argv[1:], 'dhc:')
@@ -85,21 +109,8 @@ server = pyzor.server.Server((listen_adr, port),
                              pyzor.server.Log(logfile))
 
 
-server.passwd = pyzor.server.Passwd()
-if os.path.exists(passwd_fn):
-    for entry in pyzor.server.PasswdFile(open(passwd_fn)):
-        server.passwd.add_entry(entry)
-
-server.acl = ACL()
-if os.path.exists(access_fn):
-    pyzor.server.AccessFile(open(access_fn)).feed_into(server.acl)
-else:
-    output.warn("%s does not exist; using default ACL; allowing anonymous to do %s"
-                % (access_fn, default_anonymous_allows))
-    for op in default_anonymous_allows:
-        server.acl.add_entry(pyzor.server.ACLEntry(op,
-                                                   pyzor.anonymous_user,
-                                                   True)
+load_passwd_file(passwd_fn, server)
+load_access_file(access_fn, server)
 
 
 if not debug:
