@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.11 2002-04-22 00:38:01 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.12 2002-04-22 15:59:31 ftobin Exp $"
 
 
 class Client(object):
@@ -230,7 +230,7 @@ class ExecCall(object):
                 result = self.client.ping(server)
             except TimeoutError:
                 result = 'timeout'
-            sys.stdout.write("%s: %s\n" % (server, result))
+            sys.stdout.write("%s\t%s\n" % (server, result))
         return
 
     def check(self, args):
@@ -296,7 +296,7 @@ class ExecCall(object):
                                             server)
             except TimeoutError:
                 result = 'timeout'
-            sys.stdout.write("%s: %s\n" % (server, result))
+            sys.stdout.write("%s\t%s\n" % (server, result))
         return
 
 
