@@ -1,0 +1,8 @@
+[server]
+Port = 9999
+ListenAddress = 127.0.0.1
+AccessFile = access
+
+[client]
+ServersFile = servers
+AccountsFile = accounts
