@@ -3,6 +3,10 @@ Noteworthy changes in 0.3.0
 
     *	Pyzor now requires Python 2.2.1.
 
+    *	The protocol is not backwards compatible, so please
+	remove old ~/.pyzor/servers files, and they will
+	be refreshened to point to new servers.
+
     *	The pyzor system now has accounts, access controls on
 	users.  anonymous users by default can do
 	['check', 'report', 'ping', 'info'].
@@ -38,6 +42,7 @@ Noteworthy changes in 0.3.0
 
     *	pyzrod logfile now contains a human-readable timestamp
 	field in addition to the epoch-seconds field.
+
 
 
 Noteworthy changes in 0.2.1

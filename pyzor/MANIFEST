@@ -5,6 +5,7 @@ MANIFEST
 NEWS
 README
 THANKS
+UPGRADING
 docs/usage.html
 lib/pyzor/__init__.py
 lib/pyzor/client.py

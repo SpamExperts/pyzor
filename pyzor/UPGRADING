@@ -1,0 +1,4 @@
+If you are upgrading to Pyzor 0.3.x from an older version,
+please remove your old ~/.pyzor/servers file, as the protocol
+is not backwards compatible.  The Pyzor client will refreshen
+the servers file to point to the new protocol.

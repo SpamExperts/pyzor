@@ -34,4 +34,5 @@ The gdbm module is available at:
 		in their ports).
 
 
-See docs/usage.html for usage documentation.
+See docs/usage.html for usage documentation, and if you are upgrading
+from another version of Pyzor, please read the UPGRADING file.
