@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.39 2002-09-08 01:57:27 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.40 2002-09-08 02:15:03 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -665,7 +665,7 @@ class rfc822BodyCleaner(BasicIterator):
                 self.curfile = msg.fp
             else:
                 self.curfile = tempfile.TemporaryFile()
-                mimetools.decode(fp, self.curfile, encoding)
+                mimetools.decode(msg.fp, self.curfile, encoding)
                 self.curfile.seek(0)
                 
         elif self.type == 'multipart':
