@@ -1,5 +1,8 @@
 -----------------------------------------------------------------
 
+    *	Client now contacts each server listed in .pyzor
+	for each check/report/ping.
+
     *	Moved code around so that it can be used with
 	ReadyExec: http://readyexec.sourceforge.net/
 	Documentation on how to use ReadyExec is
