@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.33 2002-09-05 02:17:10 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.34 2002-09-06 00:56:08 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -373,66 +373,6 @@ Data is read on standard input (stdin)."""
 
 
 
-class FileDigester(BasicIterator):
-    __slots__ = ['mbox', 'fp', 'spec', 'stop',
-                 'mbox_digester', 'output']
-    
-    def __init__(self, fp, spec, mbox=False):
-        self.mbox = mbox
-        self.fp   = fp
-        self.spec = spec
-        self.stop = False
-        self.mbox_digester = None
-        self.output = pyzor.Output()
-        
-        if mbox:
-            import mailbox
-            factory = rfc822BodyCleaner
-            self.mbox_digester = MailboxDigester(mailbox.PortableUnixMailbox(self.fp,
-                                                                             factory),
-                                                 self.spec)
-
-
-    def next(self):
-        if self.stop:
-            raise StopIteration
-
-        digest = None
-        
-        if self.mbox:
-            while digest is None:
-                digest = self.mbox_digester.next()
-        else:
-            import rfc822
-            digest = DataDigester(rfc822.Message(self.fp).fp,
-                                  self.spec,
-                                  seekable=False).get_digest()
-            if digest is None:
-                raise StopIteration
-            self.stop = True
-
-        self.output.debug("calculated digest: %s" % digest)
-        return digest
-
-
-
-class MailboxDigester(BasicIterator):
-    __slots__ = ['mbox', 'digest_spec']
-    
-    def __init__(self, mbox, digest_spec):
-        self.mbox        = mbox
-        self.digest_spec = digest_spec
-
-    def next(self):
-        next_msg = self.mbox.next()
-        if next_msg is None:
-            raise StopIteration
-        return DataDigester(next_msg.fp,
-                            self.digest_spec,
-                            seekable=False).get_digest()
-
-
-
 class DataDigester(object):
     __slots__ = ['_atomic', '_value', '_used_line', '_digest']
     
@@ -594,6 +534,109 @@ class PrintingDataDigester(DataDigester):
 
 
 
+class FileDigester(BasicIterator):
+    __slots__ = ['digester']
+
+    def __init__(self, fp, spec, mbox=False):
+        self.digester = iter(get_file_digester(fp, spec, mbox))
+        self.output = pyzor.Output()
+
+    def next(self):
+        digest = self.digester.next()
+        self.output.debug("calculated digest: %s" % digest)
+        return digest
+
+
+
+def get_file_digester(fp, spec, mbox, seekable=False):
+    """Return an object that can be iterated over
+    to get all the digests from fp according to spec.
+    mbox is a boolean"""
+    if mbox:
+        return MailboxDigester(fp, spec)
+
+    return (DataDigester(rfc822BodyCleaner(fp).fp,
+                         spec, seekable).get_digest(),)
+
+
+
+class MailboxDigester(BasicIterator):
+    __slots__ = ['mbox', 'digest_spec', 'seekable']
+    
+    def __init__(self, fp, digest_spec, seekable=False):
+        import mailbox
+        self.mbox        = mailbox.PortableUnixMailbox(fp,
+                                                       rfc822BodyCleaner)
+        self.digest_spec = digest_spec
+        self.seekable    = seekable
+
+    def next(self):
+        next_msg = self.mbox.next()
+        if next_msg is None:
+            raise StopIteration
+        return DataDigester(next_msg.fp, self.digest_spec,
+                            seekable=self.seekable).get_digest()
+
+
+
+class rfc822BodyCleaner(BasicIterator):
+    __slots__ = ['fp', 'multifile', 'curfile', 'type']
+    
+    def __init__(self, fp):
+        msg            = mimetools.Message(fp, seekable=0)
+        self.type      = msg.getmaintype()
+        self.multifile = None
+        self.curfile   = None
+        self.fp        = fp
+
+        if self.type == 'text':
+            encoding = msg.getencoding()
+            if encoding == '7bit':
+                self.curfile = fp
+            else:
+                self.curfile = tempfile.TemporaryFile()
+                mimetools.decode(fp, self.curfile, encoding)
+                self.curfile.seek(0)
+                
+        elif self.type == 'multipart':
+            import multifile
+            self.multifile = multifile.MultiFile(fp, seekable=0)
+            self.multifile.push(msg.getparam('boundary'))
+            self.multifile.next()
+            self.curfile = self.__class__(self.multifile)
+
+
+        if self.type == 'text' or self.type == 'multipart':
+            assert self.curfile is not None
+        else:
+            assert self.curfile is None
+
+        
+    def readline(self):
+        l = None
+        if self.type == 'text':
+            l = self.curfile.readline()
+        elif self.type == 'multipart':
+            l = self.curfile.readline()
+            if not l and self.multifile.next():
+                self.curfile = self.__class__(self.multifile)
+                # recursion.  Could get messy if
+                # we get a bunch of empty multifile parts
+                l = self.readline()
+        else:
+            # If it's a type we dont' handle, we give nothing
+            l = ''
+        return l
+
+
+    def next(self):
+        l = self.readline()
+        if not l:
+            raise StopIteration
+        return l        
+
+
+
 class ClientRunner(object):
     __slots__ = ['routine', 'all_ok']
     
@@ -690,62 +733,6 @@ class InfoClientRunner(ClientRunner):
 
 
 
-class rfc822BodyCleaner(BasicIterator):
-    __slots__ = ['fp', 'multifile', 'curfile', 'type']
-    
-    def __init__(self, fp):
-        msg            = mimetools.Message(fp, seekable=0)
-        self.type      = msg.getmaintype()
-        self.multifile = None
-        self.curfile   = None
-        self.fp        = fp
-
-        if self.type == 'text':
-            encoding = msg.getencoding()
-            if encoding == '7bit':
-                self.curfile = fp
-            else:
-                self.curfile = tempfile.TemporaryFile()
-                mimetools.decode(fp, self.curfile, encoding)
-                self.curfile.seek(0)
-                
-        elif self.type == 'multipart':
-            import multifile
-            self.multifile = multifile.MultiFile(fp, seekable=0)
-            self.multifile.push(msg.getparam('boundary'))
-            self.multifile.next()
-            self.curfile = self.__class__(self.multifile)
-
-
-        if self.type == 'text' or self.type == 'multipart':
-            assert self.curfile is not None
-        else:
-            assert self.curfile is None
-
-        
-    def readline(self):
-        l = None
-        if self.type == 'text':
-            l = self.curfile.readline()
-        elif self.type == 'multipart':
-            l = self.curfile.readline()
-            if not l and self.multifile.next():
-                self.curfile = self.__class__(self.multifile)
-                # recursion.  Could get messy if
-                # we get a bunch of empty multifile parts
-                l = self.readline()
-        else:
-            # If it's a type we dont' handle, we give nothing
-            l = ''
-        return l
-
-
-    def next(self):
-        l = self.readline()
-        if not l:
-            raise StopIteration
-        return l
-        
 
 
 class Account(tuple):
