@@ -11,16 +11,13 @@ import ConfigParser
 
 _author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.20 2002-09-08 03:33:44 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.21 2002-09-19 01:56:46 ftobin Exp $"
 
 default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping',
                                               'info'])
 
 def cleanup_server_handler(signum, frame):
     pyzor.server.DBHandle().cleanup()
-
-def reopen_log_handler(signum, frame):
-    server.replace_log(pyzor.server.Log(open(log_fn, 'a')))
 
 
 def usage():
@@ -73,8 +70,6 @@ if not os.path.exists(homedir):
 
 defaults = {'port':          '24441',
             'listenaddress': '0.0.0.0',
-            'logfile':       'pyzord.log',
-            'pidfile':       'pyzord.pid',
             'digestdb':      'pyzord.db',
             'passwdfile':    'pyzord.passwd',
             'accessfile':    'pyzord.access',
@@ -92,8 +87,6 @@ config.read(os.path.join(homedir, 'config'))
 port       = config.getint('server', 'port')
 listen_adr = config.get('server', 'ListenAddress')
 
-log_fn    = config.get_filename('server', 'logfile')
-pid_fn    = config.get_filename('server', 'pidfile')
 dbfile    = config.get_filename('server', 'DigestDB')
 passwd_fn = config.get_filename('server', 'passwdfile')
 access_fn = config.get_filename('server', 'accessfile')
@@ -101,48 +94,13 @@ pyzor.server.DBHandle.max_age = config.getint('server', 'CleanupAge')
 
 output = pyzor.Output(debug=debug)
 
-logfile = open(log_fn, 'a')
 pyzor.server.DBHandle.initialize(dbfile, 'c')
-
 server = pyzor.server.Server((listen_adr, port),
-                             pyzor.server.Log(logfile))
+                             pyzor.server.Log(sys.stdout))
 
 
 load_passwd_file(passwd_fn, server)
 load_access_file(access_fn, server)
 
-if not debug:
-    # This step is required so that the new process is guaranteed
-    # not to be a process group leader. The next step, setsid(),
-    # fails if you're a process group leader.
-    pid = os.fork()
-    if pid != 0:
-        os._exit(0)
-
-    # setsid() to become a process group and session group leader.
-    # Since a controlling terminal is associated with a session,
-    # and this new session has not yet acquired a controlling
-    # terminal our process now has no controlling terminal,
-    # which is a Good Thing for daemons.
-    os.setsid()
-        
-    pid = os.fork()
-    if pid != 0:
-        os._exit(0)
-
-    sys.stdin  = sys.__stdin__  = open('/dev/null')
-    sys.stdout = sys.__stdout__ = open('/dev/null', 'a')
-    #sys.stderr = sys.__stderr__ = open('/dev/null', 'a')
-
-if pid_fn is not None:
-    f = open(pid_fn, 'w')
-    f.write("%d\n" % os.getpid())
-    f.close()
-
-# we shouldn't chdir because that prevents the re-opening
-# of logfiles and the database if they are relative paths
-##os.chdir("/")
-
 signal.signal(signal.SIGUSR1, cleanup_server_handler)
-signal.signal(signal.SIGHUP,  reopen_log_handler)
 server.serve_forever()

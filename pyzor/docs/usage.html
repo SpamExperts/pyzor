@@ -9,7 +9,7 @@
   <body>
     <h1>Pyzor Usage Documentation</h1>
 
-    <p id="cvsid">$Id: usage.html,v 1.7 2002-09-08 03:33:44 ftobin Exp $</p>
+    <p id="cvsid">$Id: usage.html,v 1.8 2002-09-19 01:56:46 ftobin Exp $</p>
     
     <ul>
       <li><a href="#client"><kbd>pyzor</kbd> (client)</a></li>
@@ -254,11 +254,19 @@ readyexec /tmp/pyzor -d ping
 pyzord [-d] [--homedir <var>dir</var>]
     </pre>
     
+    <p>
+      Note: pyzord does not daemonize itself.
+    </p>
+
+    <p>
+      Note: logging information is written to standard output.
+    </p>
+
     <h3>options</h3>
     
     <dl>
       <dt><kbd>-d</kbd></dt>
-      <dd>Turn on debugging</dd>
+      <dd>Turn on debugging (writes information to standard error)</dd>
       
       <dt id="pyzord-homedir"><kbd>--homedir <var class="filename">dir</var></kbd></dt>
       <dd>
@@ -275,10 +283,6 @@ pyzord [-d] [--homedir <var>dir</var>]
     <h3>Signal handling</h3>
 
     <dl>
-      <dt>HUP</dt>
-      <dd>
-	The server will re-open the logfile.
-      </dd>
       <dt>USR1</dt>
       <dd>
 	The database is 'cleaned up'.
@@ -312,8 +316,6 @@ pyzord [-d] [--homedir <var>dir</var>]
 <a href="#section-server">[server]</a>
 <a href="#Port">Port</a> = 24441
 <a href="#ListenAddress">ListenAddress</a> = 0.0.0.0
-<a href="#LogFile">LogFile</a>    = pyzord.log
-<a href="#PidFile">PidFile</a>    = pyzord.pid
 <a href="#DigestDB">DigestDB</a>   = pyzord.db
 <a href="#PasswdFile">PasswdFile</a> = pyzord.passwd
 <a href="#AccessFile">AccessFile</a> = pyzord.access
@@ -371,12 +373,6 @@ pyzord [-d] [--homedir <var>dir</var>]
       
       <dt id="ListenAddress">ListenAddress</dt>
       <dd>address to listen on</dd>
-      
-      <dt id="PidFile">PidFile</dt>
-      <dd>file to contain the process id of the server</dd>
-      
-      <dt id="LogFile">LogFile</dt>
-      <dd>file to contain server logs</dd>
       
       <dt id="DigestDB">DigestDB</dt>
       <dd>file containing the database of digests</dd>

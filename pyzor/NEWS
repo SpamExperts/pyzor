@@ -1,5 +1,11 @@
-    *	Upped timestamp difference to be up to 5 minutes
-	(up from 3 minutes).
+    *	pyzord no longer daemonizes itself, and now writes
+	it logging to standard output.
+
+    *	The following server config options no longer have effect:
+	PidFile, LogFile.
+
+    *	Upped the allowed signed timestamp difference to be up to
+	5 minutes (up from 3 minutes).
 
 
 Noteworthy changes in 0.4.0
