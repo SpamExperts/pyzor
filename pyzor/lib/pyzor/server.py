@@ -17,7 +17,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.22 2002-09-03 03:42:14 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.23 2002-09-04 17:55:03 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -184,7 +184,7 @@ class PasswdFile(object):
         return self
 
     def next(self):
-        while 1:
+        while True:
             orig_line = self.file.readline()
             self.lineno += 1
             

@@ -2,7 +2,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.4.0"
-__revision__ = "$Id: __init__.py,v 1.37 2002-09-04 17:35:26 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.38 2002-09-04 17:55:03 ftobin Exp $"
 
 import os
 import os.path
@@ -149,7 +149,7 @@ class PiecesDigest(str):
     def get_line_offsets(buf):
         cur_offset = 0
         offsets = []
-        while 1:
+        while True:
             i = buf.find('\n', cur_offset)
             if i == -1:
                 return offsets
