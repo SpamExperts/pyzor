@@ -17,8 +17,8 @@
 # http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
-__version__  = "0.3.0"
-__revision__ = "$Id: __init__.py,v 1.27 2002-07-02 20:09:39 ftobin Exp $"
+__version__  = "0.3.1"
+__revision__ = "$Id: __init__.py,v 1.28 2002-08-09 20:55:49 ftobin Exp $"
 
 import os
 import os.path
