@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.23 2002-07-28 02:35:52 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.24 2002-08-09 20:41:08 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -272,10 +272,9 @@ class ExecCall(object):
         all_ok = True
 
         for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
-            for server in self.servers:
-                if not self.send_digest(digest, self.digest_spec,
-                                        self.client.report):
-                    all_ok = False
+            if not self.send_digest(digest, self.digest_spec,
+                                    self.client.report):
+                all_ok = False
         
         return all_ok
 
@@ -302,10 +301,9 @@ class ExecCall(object):
         all_ok = True
 
         for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
-            for server in self.servers:
-                if not self.send_digest(digest, self.digest_spec,
-                                        self.client.whitelist):
-                    all_ok = False
+            if not self.send_digest(digest, self.digest_spec,
+                                    self.client.whitelist):
+                all_ok = False
         
         return all_ok
 
