@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.16 2002-06-09 17:35:26 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.17 2002-06-17 17:18:08 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -56,6 +56,11 @@ class Client(object):
 
     def check(self, digest, address):
         msg = CheckRequest(digest)
+        self.send(msg, address)
+        return self.read_response(msg.get_thread())
+
+    def shutdown(self, address):
+        msg = ShutdownRequest()
         self.send(msg, address)
         return self.read_response(msg.get_thread())
 
@@ -96,9 +101,13 @@ class Client(object):
         try:
             thread_id = msg.get_thread()
             if thread_id != expect_id:
-                raise ProtocolError, \
-                      "received unexpected thread id %d (expected %d)" \
-                      % (thread_id, expect_id)
+                if thread_id.in_ok_range():
+                    raise ProtocolError, \
+                          "received unexpected thread id %d (expected %d)" \
+                          % (thread_id, expect_id)
+                else:
+                    self.output.warn("received error thread id %d (expected %d)"
+                                     % (thread_id, expect_id))
         except KeyError:
             self.output.warn("no thread id received")
 
@@ -179,50 +188,61 @@ class ExecCall(object):
         self.client = Client(self.get_accounts(config.get_filename('client',
                                                                    'AccountsFile')))
 
-        try: 
-            if command == 'discover':
-                # already completed above
-                pass
-            elif command == 'check':
-                self.check(args)
-            elif command == 'report':
-                self.report(args)
-            elif command == 'ping':
-                self.ping(args)
-            elif command == 'genkey':
-                self.genkey(args)
-            else:
-               self.usage()
-        except TimeoutError:
-            # note that most of the methods will trap
-            # their own timeout error
-            sys.stderr.write("timeout from server\n")
-            sys.exit(1)
+        routines = {'check':    self.check,
+                    'report':   self.report,
+                    'ping' :    self.ping,
+                    'genkey':   self.genkey,
+                    'shutdown': self.shutdown,
+                    'discover': None         # already completed above
+                    }
 
-        return
+        if not routines.has_key(command):
+            self.usage()
+
+        routine = routines[command]
+        if routine is not None:
+            try:
+                if not apply(routine, (args,)):
+                    sys.exit(1)
+            except TimeoutError:
+                # note that most of the methods will trap
+                # their own timeout error
+                sys.stderr.write("timeout from server\n")
+                sys.exit(1)
 
 
     def usage(self):
-        sys.stderr.write("usage: %s [-d] [-c config_file] check|report|discover|ping [cmd_options]\nData is read on standard input.\n"
+        sys.stderr.write("usage: %s [-d] [-c config_file] check|report|discover|ping|genkey|shutdown [cmd_options]\nData is read on standard input.\n"
                          % sys.argv[0])
         sys.exit(1)
-        return
+        return  # just to help xemacs
 
 
     def ping(self, args):
+        (options, args2) = getopt.getopt(args[1:], '')
+        iterator = StdClientIterator(self.client.ping)
+
         for server in self.servers:
-            self.output.debug("pinging %s" % str(server))
-            message = "%s\t" % str(server)
-            try:
-                response = self.client.ping(server)
-                sys.stdout.write(message + str(response.head_tuple())
-                                 + '\n')
-            except TimeoutError:
-                sys.stderr.write(message + 'timeout\n')
-        return
+            iterator.run(server, (server,))
+
+        return iterator.all_ok
+        
+
+    def shutdown(self, args):
+        (options, args2) = getopt.getopt(args[1:], '')
+
+        iterator = StdClientIterator(self.client.shutdown)
+
+        for arg in args2:
+            server = Address.from_str(arg)
+            iterator.run(server, (server,))
+                    
+        return iterator.all_ok
 
 
     def check(self, args):
+        (options, args2) = getopt.getopt(args[1:], '')
+
         import rfc822
         fp = rfc822.Message(sys.stdin, seekable=False).fp
         
@@ -235,33 +255,12 @@ class ExecCall(object):
         
         self.output.debug("calculated digest: %s" % digest)
 
-        found_hit = False
+        iterator = CheckClientIterator(self.client.check)
+        
         for server in self.servers:
-            self.output.debug("sending to %s" % str(server))
-            message = "%s\t" % str(server)
-            try:
-                response = self.client.check(digest, server)
-                message += "%s\t" % str(response.head_tuple())
+            response = iterator.run(server, (digest, server))
 
-                if response.is_ok():
-                    if not response.has_key('Count'):
-                        raise IncompleteMessageError, "no count received"
-                    count = int(response['Count'])
-
-                    if count > 0:
-                        found_hit = True
-                    message += str(count)
-                sys.stdout.write(message + '\n')
-                
-            except TimeoutError:
-                sys.stderr.write(message + 'timeout\n')
-            except IncompleteMessageError, e:
-                sys.stderr.write(message + 'incomplete response: '
-                                 + str(e) + '\n')
-
-        # return 'success', 0, if we found a hit.
-        sys.exit(bool(not found_hit))
-        return
+        return iterator.found_hit
 
 
     def report(self, args):
@@ -273,6 +272,7 @@ class ExecCall(object):
                 do_mbox = True
                 
         self.output.debug("digest spec is %s" % self.digest_spec)
+        all_ok = True
 
         if do_mbox:
             import mailbox
@@ -286,37 +286,34 @@ class ExecCall(object):
                                                     self.digest_spec,
                                                     seekable=False)
             if digest is not None:
-                self.report_digest(digest)
-        return
+                if not self.report_digest(digest):
+                    all_ok = False
+        
+        return all_ok
 
 
     def report_digest(self, digest):
         typecheck(digest, PiecesDigest)
 
         self.output.debug("calculated digest: %s" % digest)
-        
+
+        iterator = StdClientIterator(self.client.report)
+
         for server in self.servers:
-            message = "%s\t" % str(server)
-            self.output.debug("sending to %s" % str(server))
-            try:
-                response = self.client.report(digest, self.digest_spec,
-                                              server)
-                sys.stdout.write(message + str(response.head_tuple()) + '\n')
-            except IncompleteMessageError, e:
-                sys.stderr.write(message + 'incomplete response: '
-                                 + str(e) + '\n')
-            except TimeoutError:
-                sys.stderr.write(message + 'timeout\n')
-        return
+            iterator.run(server, (digest, self.digest_spec, server))
+        
+        return iterator.all_ok
 
 
     def genkey(self, args):
+        (options, args2) = getopt.getopt(args[1:], '')
+
         import getpass
         p1 = getpass.getpass(prompt='Enter passphrase: ')
         p2 = getpass.getpass(prompt='Enter passphrase again: ')
         if p1 != p2:
             sys.stderr.write("Passwords do not match.\n")
-            sys.exit(1)
+            return 0
 
         del p2
 
@@ -330,9 +327,11 @@ class ExecCall(object):
         pass_digest = sha.new()
         pass_digest.update(salt_digest.digest())
         pass_digest.update(p1)
-
+        sys.stdout.write("salt,key:\n")
         sys.stdout.write("%s,%s\n" % (salt_digest.hexdigest(),
                                       pass_digest.hexdigest()))
+
+        return True
 
 
     def get_servers(servers_fn):
@@ -350,12 +349,63 @@ class ExecCall(object):
     def get_accounts(accounts_fn):
         accounts = AccountsDict()
         if os.path.exists(accounts_fn):
-            for address, account in AccountFile(open(accounts_fn)):
+            for address, account in AccountsFile(open(accounts_fn)):
                 accounts[address] = account
         return accounts
 
     get_accounts = staticmethod(get_accounts)
 
+
+
+class StdClientIterator(object):
+    __slots__ = ['routine', 'all_ok']
+    
+    def __init__(self, routine):
+        self.routine = routine
+        self.all_ok = True
+
+    def run(self, server, varargs, kwargs=None):
+        if kwargs is None:
+            kwargs = {}
+        message = "%s\t" % str(server)
+        response = None
+        try:
+            response = apply(self.routine, varargs, kwargs)
+            self.handle_response(response, message)
+        except CommError, e:
+            sys.stderr.write(message + ("%s: %s\n"
+                                        % (e.__class__.__name__, e)))
+            self.all_ok = False
+        
+    def handle_response(self, response, message):
+        """mesaage is a string we've built up so far"""
+        if not response.is_ok():
+            self.all_ok = False
+        sys.stdout.write(message + str(response.head_tuple())
+                         + '\n')
+    
+
+class CheckClientIterator(StdClientIterator):
+    __slots__ = ['found_hit']
+    def __init__(self, routine):
+        self.found_hit = False
+        super(CheckClientIterator, self).__init__(routine)
+    
+    def handle_response(self, response, message):
+        message += "%s\t" % str(response.head_tuple())
+        
+        if response.is_ok():
+            if not response.has_key('Count'):
+                raise IncompleteMessageError, "no count received"
+
+            count = int(response['Count'])
+            if count > 0:
+                self.found_hit = True
+            
+            message += str(count)
+            sys.stdout.write(message + '\n')
+        else:
+            sys.stderr.write(message)
 
 
 class MailboxDigester(object):
@@ -413,7 +463,7 @@ class Keystuff(tuple):
                 raise ValueError, "Keystuff must be long's or None's"
 
         # make sure we didn't get all None's
-        if not filter(lambda x: x is not None, self):
+        if not filter(lambda x: x is not None, self): 
             raise ValueError, "keystuff can't be all None's"
 
     def from_hexstr(self, s):
@@ -460,8 +510,12 @@ class AccountsDict(dict):
 
 
 
-class AccountFile(object):
-    """Iteration gives a tuple of (Address, Account)"""
+class AccountsFile(object):
+    """Iteration gives a tuple of (Address, Account)
+
+    Layout of file is:
+    host : port ; username : keystuff
+    """
     __slots__ = ['file', 'lineno', 'output']
     
     def __init__(self, f):

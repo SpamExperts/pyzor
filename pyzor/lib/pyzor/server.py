@@ -19,6 +19,8 @@
 
 from __future__ import division
 
+import os
+import signal
 import SocketServer
 import time
 import gdbm
@@ -31,10 +33,10 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.15 2002-06-09 17:35:26 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.16 2002-06-17 17:18:08 ftobin Exp $"
 
 
-class AuthorizationError(Exception):
+class AuthorizationError(pyzor.CommError):
     """signature was valid, but not permitted to
     do the requested action"""
     pass
@@ -182,7 +184,11 @@ class Passwd(dict):
 
             
 class PasswdFile(object):
-    """Iteration gives (Username, long) objects"""
+    """Iteration gives (Username, long) objects
+
+    Format of file is:
+    user : key
+    """
     __slots__ = ['file', 'output', 'lineno']
 
     def __init__(self, f):
@@ -341,6 +347,10 @@ class Server(SocketServer.ThreadingUDPServer, object):
     def ensure_db_exists(self):
         db = DBHandle('c')
 
+    def serve_forever(self):
+        self.pid = os.getpid()
+        super(Server, self).serve_forever()
+
 
 
 class RequestHandler(SocketServer.DatagramRequestHandler, object):
@@ -362,6 +372,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
 
 
     def handle(self):
+        do_exit = False
+        
         try:
             self._really_handle()
         except UnsupportedVersionError, e:
@@ -380,6 +392,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
             self.handle_error(401, "Unauthorized: %s" % e)
         except SignatureError, e:
             self.handle_error(401, "Unauthorized, Signature Error: %s" % e)
+        except SystemExit, e:
+            do_exit = True
         except Exception, e:
             self.handle_error(500, "Internal Server Error: %s" % e)
             traceback.print_exc()
@@ -393,7 +407,11 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         msg_str = str(self.out_msg)
         self.output.debug("sending: %s" % repr(msg_str))
         self.wfile.write(msg_str)
-
+        
+        if do_exit:
+            db_hold = DBHandle('r')  # to keep the db consistent
+            self.finish()
+            os.kill(self.server.pid, signal.SIGQUIT)
 
     def _really_handle(self):
         """handle() without the exception handling"""
@@ -412,34 +430,42 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         
         self.in_msg = signed_msg.get_submsg(pyzor.Request)
 
+        self.msg_thread = self.in_msg.get_thread()
+
         # We take the int() of the proto versions because
         # if the int()'s are the same, then they should be compatible
         if int(self.in_msg.get_protocol_version()) != int(proto_version):
             raise UnsupportedVersionError
         
-        self.msg_thread = self.in_msg.get_thread()
         self.out_msg.set_thread(self.msg_thread)
 
         self.op = Opname(self.in_msg.get_op())
         if not self.server.acl.allows(self.user, self.op):
-            raise AuthorizationError
+            raise AuthorizationError, "user is unauthorized to request the operation"
         
         self.output.debug("got a %s command from %s" %
                           (self.op, self.client_address))
-            
-        if self.op == 'ping':
-            pass
-        elif self.op == 'check':
-            self.handle_check()
-        elif self.op == 'report':
-            self.handle_report()
-        else:
-            raise NotImplementedError, self.op
-        
+
+        dispatches = { 'check':    self.handle_check,
+                       'report':   self.handle_report,
+                       'ping':     None,
+                       'shutdown': self.handle_shutdown,
+                       }
+                       
+        if not dispatches.has_key(self.op):
+            raise NotImplementedError, "requested operation is not implemented"
+
+        dispatch = dispatches[self.op]
+        if dispatch is not None:
+            apply(dispatch)
+
 
     def handle_error(self, code, s):
         self.out_msg = ErrorResponse(code, s)
-        if self.msg_thread is not None:
+        
+        if self.msg_thread is None:
+            self.out_msg.set_thread(ThreadId(0))
+        else:
             self.out_msg.set_thread(self.msg_thread)
 
 
@@ -470,3 +496,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         rec = Record.from_str(db[digest])
         rec.increment()
         db[digest] = str(rec)
+
+
+    def handle_shutdown(self):
+        raise SystemExit

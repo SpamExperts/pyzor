@@ -7,6 +7,8 @@ from pyzor import *
 from pyzor.server import *
 from pyzor.client import *
 
+__revision__ = "$Id: unittests.py,v 1.2 2002-06-17 17:18:07 ftobin Exp $"
+
 
 class ACLTest(unittest.TestCase):
     def setUp(self):
@@ -69,7 +71,7 @@ class PasswdTest(unittest.TestCase):
 
 class AcountInfoTest(unittest.TestCase):
     def setUp(self):
-        account_file = AccountFile(StringIO.StringIO("""127.0.0.0 : 3333 : alice : 5,a
+        account_file = AccountsFile(StringIO.StringIO("""127.0.0.0 : 3333 : alice : 5,a
         # comment
         127.0.0.1 : 4444 : bob : ,18
         """))

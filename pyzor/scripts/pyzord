@@ -11,7 +11,7 @@ import ConfigParser
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.10 2002-06-09 17:35:27 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.11 2002-06-17 17:18:08 ftobin Exp $"
 
 default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping'])
 
@@ -76,8 +76,8 @@ defaults = {'port':          '24441',
             'logfile':       os.path.join(homedir, 'pyzord.log'),
             'pidfile':       os.path.join(homedir, 'pyzord.pid'),
             'digestdb':      os.path.join(homedir, 'pyzord.db'),
-            'passwd':        os.path.join(homedir, 'pyzord.passwd'),
-            'access':        os.path.join(homedir, 'pyzord.access'),
+            'passwdfile':    os.path.join(homedir, 'pyzord.passwd'),
+            'accessfile':    os.path.join(homedir, 'pyzord.access'),
             'CleanupAge':    str(pyzor.server.DBHandle.max_age),
             }
 
@@ -96,8 +96,8 @@ listen_adr = config.get('server', 'ListenAddress')
 log_fn    = config.get_filename('server', 'logfile')
 pid_fn    = config.get_filename('server', 'pidfile')
 dbfile    = config.get_filename('server', 'DigestDB')
-passwd_fn = config.get_filename('server', 'passwd')
-access_fn = config.get_filename('server', 'access')
+passwd_fn = config.get_filename('server', 'passwdfile')
+access_fn = config.get_filename('server', 'accessfile')
 pyzor.server.DBHandle.max_age = config.getint('server', 'CleanupAge')
 
 output = pyzor.Output(debug=debug)
@@ -118,7 +118,8 @@ if not debug:
     # not to be a process group leader. The next step, setsid(),
     # fails if you're a process group leader.
     pid = os.fork()
-    if pid: os._exit(0)
+    if pid != 0:
+        os._exit(0)
 
     # setsid() to become a process group and session group leader.
     # Since a controlling terminal is associated with a session,
@@ -128,7 +129,8 @@ if not debug:
     os.setsid()
         
     pid = os.fork()
-    if pid: os._exit(0)
+    if pid != 0:
+        os._exit(0)
 
     #sys.stdin.close()
     #sys.stdout.close()

@@ -18,7 +18,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.22 2002-06-09 17:35:26 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.23 2002-06-17 17:18:08 ftobin Exp $"
 
 import os
 import os.path
@@ -35,10 +35,16 @@ import time
 proto_name     = 'pyzor'
 proto_version  =  2.0
 
-class ProtocolError(Exception):
+
+class CommError(Exception):
+    """Something in general went wrong with the transaction"""
     pass
 
-class TimeoutError(Exception):
+class ProtocolError(CommError):
+    """Something is wrong with talking the protocol"""
+    pass
+
+class TimeoutError(CommError):
     pass
 
 class IncompleteMessageError(ProtocolError):
@@ -47,7 +53,7 @@ class IncompleteMessageError(ProtocolError):
 class UnsupportedVersionError(ProtocolError):
     pass
 
-class SignatureError(Exception):
+class SignatureError(CommError):
     """unknown user, signature on msg invalid,
     or not within allowed time range"""
     pass
@@ -312,12 +318,11 @@ class MacEnvelope(Message):
     def verify_sig(self, user_key):
         typecheck(user_key, long)
         
-        user     = self['User']
+        user     = Username(self['User'])
         ts       = int(self['Time'])
         said_sig = self['Sig']
-
-        hashed_user_key = self.hash_user_key(user_key)
-
+        hashed_user_key = self.hash_key(user_key, user)
+        
         if abs(time.time() - ts) > self.ts_diff_max:
             raise SignatureError, "timestamp not within allowed range"
 
@@ -483,6 +488,12 @@ class CheckRequest(Request):
 ##            raise IncompleteMessageError, \
 ##                  "doesn't have fields for a CheckResponse"
 ##        super(CheckResponse, self).ensure_complete()
+
+
+class ShutdownRequest(Request):
+    def __init__(self):
+        super(ShutdownRequest, self).__init__()
+        self.setdefault('Op', 'shutdown')
 
 
 class ErrorResponse(Response):
