@@ -3,7 +3,6 @@
 import os
 import os.path
 import sys
-import signal
 import getopt
 import pyzor
 import pyzor.server
@@ -11,17 +10,15 @@ import ConfigParser
 
 _author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.22 2002-10-08 18:48:01 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.23 2002-10-09 00:33:44 ftobin Exp $"
+progname = 'pyzord'
 
 default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping',
                                               'info'])
 
-def cleanup_server_handler(signum, frame):
-    pyzor.server.DBHandle().cleanup()
-
 
 def usage():
-    sys.stderr.write("usage: %s [-d] [--homedir dir]\n" % sys.argv[0])
+    sys.stderr.write("usage: %s [-d] [--homedir dir]\n" % progname)
     sys.exit(1)
 
 
@@ -30,7 +27,7 @@ def load_access_file(access_fn, server):
     if os.path.exists(access_fn):
         pyzor.server.AccessFile(open(access_fn)).feed_into(server.acl)
     else:
-        output.warn("%s does not exist; using default ACL; allowing anonymous to do %s"
+        output.warn("%s does not exist; using default ACL: allowing anonymous to do %s"
                     % (access_fn, default_anonymous_allows))
         for op in default_anonymous_allows:
             server.acl.add_entry(pyzor.server.ACLEntry((pyzor.anonymous_user,
@@ -94,7 +91,7 @@ pyzor.server.DBHandle.max_age = config.getint('server', 'CleanupAge')
 
 output = pyzor.Output(debug=debug)
 
-pyzor.server.DBHandle.initialize(dbfile, 'cf')
+pyzor.server.DBHandle.initialize(dbfile, 'c')
 server = pyzor.server.Server((listen_adr, port),
                              pyzor.server.Log(sys.stdout))
 
@@ -102,5 +99,4 @@ server = pyzor.server.Server((listen_adr, port),
 load_passwd_file(passwd_fn, server)
 load_access_file(access_fn, server)
 
-signal.signal(signal.SIGUSR1, cleanup_server_handler)
 server.serve_forever()

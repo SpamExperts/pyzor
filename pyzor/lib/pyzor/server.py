@@ -17,7 +17,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.27 2002-09-24 03:13:00 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.28 2002-10-09 00:33:44 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -343,41 +343,77 @@ class Record(object):
 
 
 
-class DBHandle(object):
-    __slots__ = ['output']
-    db_lock = threading.Lock()
-    max_age = 3600*24*30*4   # 3 months
-    db      = None
+class DBHandle(Singleton):
+    __slots__ = ['output', 'initialized']
+    db_lock   = threading.Lock()
+    max_age   = 3600*24*30*4   # 3 months
+    db        = None
+    sync_period = 60
+    reorganize_period = 3600*24  # 1 day
 
     def __init__(self):
         assert self.db is not None, "database was not initialized"
-        self.db_lock.acquire()
 
     def initialize(self, fn, mode):
         self.output = Output()
         self.db = gdbm.open(fn, mode)
+        self.start_reorganizing()
+        self.start_syncing()
     initialize = classmethod(initialize)
 
-    def __del__(self):
-        self.db.sync()
-        self.db_lock.release()
-
+    def apply_locking_method(self, method, varargs=(), kwargs={}):
+        # just so we don't carry around a mutable kwargs
+        if kwargs == {}:
+            kwargs = {}
+        self.output.debug("acquiring lock")
+        self.db_lock.acquire()
+        self.output.debug("acquired lock")
+        try:
+            result = apply(method, varargs, kwargs)
+        finally:
+            self.output.debug("releasing lock")
+            self.db_lock.release()
+            self.output.debug("released lock")
+        return result
+    apply_locking_method = classmethod(apply_locking_method)
+    
     def __getitem__(self, key):
+        return self.apply_locking_method(self._really_getitem, (key,))
+    
+    def _really_getitem(self, key):
         return self.db[key]
 
     def __setitem__(self, key, value):
+        self.apply_locking_method(self._really_setitem, (key, value))
+
+    def _really_setitem(self, key, value):
         self.db[key] = value
 
-    def __delitem__(self, key):
-        del self.db[key]
+    def start_syncing(self):
+        self.apply_locking_method(self._really_sync)
+        self.sync_timer = threading.Timer(self.sync_period,
+                                          self.start_syncing)
+        self.sync_timer.start()
+    start_syncing = classmethod(start_syncing)
 
-    def cleanup(self):
-        self.output.debug("cleaning up the database")
+    def _really_sync(self):
+        self.db.sync()
+    _really_sync = classmethod(_really_sync)
+
+    def start_reorganizing(self):
+        self.apply_locking_method(self._really_reorganize)
+        self.reorganize_timer = threading.Timer(self.reorganize_period,
+                                                self.start_reorganizing)
+        self.reorganize_timer.start()
+    start_reorganizing = classmethod(start_reorganizing)
+
+    def _really_reorganize(self):
+        self.output.debug("reorganizing the database")
         key = self.db.firstkey()
         breakpoint = time.time() - self.max_age
 
         while key is not None:
-            rec = Record.from_str(self[key])
+            rec = Record.from_str(self.db[key])
             delkey = None
             if rec.r_updated < breakpoint:
                 self.output.debug("deleting key %s" % key)
@@ -385,9 +421,8 @@ class DBHandle(object):
             key = self.db.nextkey(key)
             if delkey:
                 del self.db[delkey]
-        
         self.db.reorganize()
-
+    _really_reorganize = classmethod(_really_reorganize)
 
 
 class Server(SocketServer.ThreadingUDPServer, object):
