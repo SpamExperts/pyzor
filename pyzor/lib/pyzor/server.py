@@ -17,7 +17,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.24 2002-09-05 02:17:10 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.25 2002-09-08 03:33:44 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -352,7 +352,7 @@ class DBHandle(object):
     def __init__(self):
         assert self.db is not None, "database was not initialized"
         self.db_lock.acquire()
-        
+
     def initialize(self, fn, mode):
         self.output = Output()
         self.db = gdbm.open(fn, mode)
@@ -371,13 +371,6 @@ class DBHandle(object):
     def __delitem__(self, key):
         del self.db[key]
 
-##    # we shouldn't need these
-##    def has_key(self, key):
-##        return self.__contains__(key)
-
-##    def __contains__(self, key):
-##        return self.db.has_key(key)
-
     def cleanup(self):
         self.output.debug("cleaning up the database")
         key = self.db.firstkey()
@@ -394,7 +387,7 @@ class DBHandle(object):
                 del self.db[delkey]
         
         self.db.reorganize()
-        
+
 
 
 class Server(SocketServer.ThreadingUDPServer, object):
@@ -404,6 +397,7 @@ class Server(SocketServer.ThreadingUDPServer, object):
     time_diff_allowance = 180
 
     def __init__(self, address, log):
+        typecheck(log, Log)
         self.output = Output()
         RequestHandler.output = self.output
         RequestHandler.log    = log
@@ -415,6 +409,10 @@ class Server(SocketServer.ThreadingUDPServer, object):
         self.pid = os.getpid()
         super(Server, self).serve_forever()
 
+    def replace_log(self, newlog):
+        typecheck(newlog, Log)
+        RequestHandler.log = newlog
+        self.output.debug("changing logfile")
 
 
 class RequestHandler(SocketServer.DatagramRequestHandler, object):

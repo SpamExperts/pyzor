@@ -24,6 +24,9 @@ Noteworthy changes in 0.4.0
     *	If HOME is unspecified and no --homedir is given,
 	The the config directory is /etc/pyzor
 
+    *	If the pyzord process receives a HUP signal, it re-opens
+	the logfile.
+
 
 Noteworthy changes in 0.3.1
 -----------------------------------------------------------------

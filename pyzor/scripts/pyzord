@@ -11,13 +11,16 @@ import ConfigParser
 
 _author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.19 2002-08-13 20:51:41 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.20 2002-09-08 03:33:44 ftobin Exp $"
 
 default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping',
                                               'info'])
 
 def cleanup_server_handler(signum, frame):
-    pyzor.server.DBHandle('c').cleanup()
+    pyzor.server.DBHandle().cleanup()
+
+def reopen_log_handler(signum, frame):
+    server.replace_log(pyzor.server.Log(open(log_fn, 'a')))
 
 
 def usage():
@@ -136,7 +139,10 @@ if pid_fn is not None:
     f.write("%d\n" % os.getpid())
     f.close()
 
-os.chdir("/")
+# we shouldn't chdir because that prevents the re-opening
+# of logfiles and the database if they are relative paths
+##os.chdir("/")
 
 signal.signal(signal.SIGUSR1, cleanup_server_handler)
+signal.signal(signal.SIGHUP,  reopen_log_handler)
 server.serve_forever()
