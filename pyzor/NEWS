@@ -1,3 +1,7 @@
+    *	If HOME is unspecified and no --homedir is given,
+	The the config directory is /etc/pyzor
+
+
 Noteworthy changes in 0.3.1
 -----------------------------------------------------------------
 
