@@ -1,5 +1,7 @@
-Noteworthy changes in 0.4.0
+Noteworthy changes in 0.3.0
 -----------------------------------------------------------------
+
+    *	Pyzor now requires Python 2.2.1.
 
     *	The pyzor system now has accounts, access controls on
 	users.  anonymous users by default can do
@@ -30,17 +32,9 @@ Noteworthy changes in 0.4.0
     *	a 'shutdown' commmand has been implemented, which can
 	be used to shutdown a server.
 
-    *	Expiring of digests using a USR1 signal has bee removed
+    *	Expiring of digests using a USR1 signal has been removed
 	for now.  In the future a client/server message
 	will be likely be implemented for this functionality.
-
-
-Noteworthy changes in 0.3.0
------------------------------------------------------------------
-
-    *	Pyzor now requires Python 2.2.1.
-
-    *	Much code re-written.
 
     *	pyzrod logfile now contains a human-readable timestamp
 	field in addition to the epoch-seconds field.
