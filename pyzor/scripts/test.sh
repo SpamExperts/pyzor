@@ -39,7 +39,7 @@ check_bob()
 
 kill_server()
 {
-    if [ ${PYZORD_PID:--1} != -1 ]; then
+    if [ ! -z $PYZORD_PID ]; then
 	echo "killing server (pid $PYZORD_PID)"
 	kill $PYZORD_PID
     else
@@ -77,13 +77,11 @@ start_server
 # sleep to give it time to start listening
 sleep 2
 
-[ ${PYZORD_PID:--1} != -1 ] || fail "we didn't get a process id for the server!"
+[ ! -z $PYZORD_PID ] || fail "we didn't get a process id for the server!"
 kill -0 $PYZORD_PID || fail "process is dead"
 
 echo "anonymous: pinging"
 pyzor ping || fail
-
-export PYZORD_PID=$!
 
 echo "anonymous: ensuring a count of 0 at start"
 setcount
