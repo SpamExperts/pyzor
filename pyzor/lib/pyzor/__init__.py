@@ -18,7 +18,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.3.1"
-__revision__ = "$Id: __init__.py,v 1.31 2002-08-16 20:16:49 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.32 2002-08-19 01:56:39 ftobin Exp $"
 
 import os
 import os.path
@@ -124,6 +124,7 @@ class PiecesDigest(str):
     value_size = sha.digest_size * 2
     
     bufsize = 1024
+    min_line_length = 8
 
     # We're not going to try to match email addresses
     # as per the spec because it's too freakin difficult
@@ -137,8 +138,13 @@ class PiecesDigest(str):
     # We also want to remove anything that is so long it
     # looks like possibly a unique identifier
     longstr_ptrn = re.compile(r'\S{10,}')
-    
-    ws_ptrn = re.compile(r'\s')
+
+    html_tag_ptrn = re.compile(r'<.*?>')
+    ws_ptrn       = re.compile(r'\s')
+
+    # we might want to change this in the future.
+    # Note that an empty string will always be used to remove whitespace
+    unwanted_txt_repl = ''
 
     def __init__(self, value):
         if len(value) != self.value_size:
@@ -157,10 +163,12 @@ class PiecesDigest(str):
     get_line_offsets = staticmethod(get_line_offsets)
 
     def normalize(self, s):
+        repl = self.unwanted_txt_repl
         s2 = s
-        s2 = self.email_ptrn.sub('', s2)
-        s2 = self.url_ptrn.sub('', s2)
-        s2 = self.longstr_ptrn.sub('', s2)
+        s2 = self.email_ptrn.sub(repl, s2)
+        s2 = self.url_ptrn.sub(repl, s2)
+        s2 = self.longstr_ptrn.sub(repl, s2)
+        s2 = self.html_tag_ptrn.sub(repl, s2)
         # make sure we do the whitespace last because some of
         # the previous patterns rely on whitespace
         s2 = self.ws_ptrn.sub('', s2)
@@ -211,9 +219,11 @@ class PiecesDigest(str):
             i = 0
             while i < length:
                 line = fp.readline()
-                if not line: break
+                if not line:
+                    break
                 norm_line = self.normalize(line)
-                if not norm_line: continue
+                if len(norm_line) < self.min_line_length:
+                    continue
                 digest.update(norm_line)
                 i += 1
 

@@ -7,7 +7,7 @@ from pyzor import *
 from pyzor.server import *
 from pyzor.client import *
 
-__revision__ = "$Id: unittests.py,v 1.2 2002-06-17 17:18:07 ftobin Exp $"
+__revision__ = "$Id: unittests.py,v 1.3 2002-08-19 01:56:39 ftobin Exp $"
 
 
 class ACLTest(unittest.TestCase):
@@ -134,6 +134,19 @@ class ServerListTest(unittest.TestCase):
     def test_entries(self):
         self.assert_(Address(('127.0.0.1', 4444)) in self.sl)
         self.assert_(Address(('127.0.0.2', 1234)) in self.sl)
+
+
+
+class NormalizationTest(unittest.TestCase):
+    def test_ptrns(self):
+        norm = PiecesDigest.normalize
+        self.assertEqual(norm('aaa me@example.com bbb'), 'aaabbb')
+        self.assertEqual(norm('aaa http://www.example.com/ bbb'), 'aaabbb')
+        self.assertEqual(norm('aaa Supercalifragilisticexpialidocious bbb'),
+                         'aaabbb')
+        self.assertEqual(norm('aaa  bbb  ccc\n'), 'aaabbbccc')
+        self.assertEqual(norm('aaa <! random tag > bbb'), 'aaabbb')
+
 
 
 if __name__ == "__main__":
