@@ -29,21 +29,25 @@ ping:
     Merely requests a response from the server.
 
 
+Using Pyzor in procmail:
+
 To use pyzor in a procmail system, consider the following
 simple recipe:
 
-:0 W
-| pyzor
+:0 Wc
+| pyzor check
 :0 a
 pyzor-caught
 
-Or, you may wish to simply use 'formail' to add a header
-so that pyzor is only part of a larger spam-detection system.
-You may also wish to act differently depending on the count
-that pyzor prints.
+Or, to add merely add header:
+
+:0 Wc
+| pyzor check
+:0 Waf
+| formail -A "X-Pyzor: spam"
 
 
-Differences from Razor:
+Differences from Razor clients:
     Pyzor does not consult a white-list for you.  This
     is best handled by other systems, such as other
     procmail rules.
@@ -51,7 +55,7 @@ Differences from Razor:
 
 SERVER (pyzord):
 
-usage: pyzord [-d] dbfile port\n
+usage: pyzord [-d] dbfile port
 
 -d:
     turn on debugging
@@ -100,7 +104,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.1.0"
-__revision__ = "$Id: __init__.py,v 1.3 2002-04-14 19:52:51 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.4 2002-04-14 21:24:43 ftobin Exp $"
 
 import re
 import sys

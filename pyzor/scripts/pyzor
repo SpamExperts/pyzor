@@ -7,7 +7,7 @@ import getopt
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzor,v 1.4 2002-04-14 21:17:10 ftobin Exp $"
+__revision__ = "$Id: pyzor,v 1.5 2002-04-14 21:24:43 ftobin Exp $"
 
 # hard-coded for the moment
 digest_spec = pyzor.client.PiecesDigestSpec([(20, 3), (60, 3)])
@@ -90,6 +90,7 @@ def run():
             usage()
     except pyzor.client.TimeoutError, e:
         sys.stderr.write("timeout from server\n")
+        sys.exit(1)
 
 if __name__ == '__main__':
     run()
