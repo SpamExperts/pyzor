@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+ "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us">
+  <head>
+    <title>Pyzor Usage Documentation</title>
+  </head>
+
+  <body>
+    <h1>Pyzor Usage Documentation</h1>
+    
+    <ul>
+      <li><a href="#client"><kbd>pyzor</kbd> (client)</a></li>
+      <li><a href="#server"><kbd>pyzord</kbd> (server)</a></li>
+      <li><a href="#files">Files</a></li>
+      <li><a href="#using-accounts">Using Accounts</a></li>
+      <li><a href="#razor-diff">User-level Differences from Razor</a></li>
+      <li><a href="#copyright">Copyright</a></li>
+     </ul>
+
+    <h2 id="client"><kbd>pyzor</kbd> (client)</h2>
+    
+    <pre>
+pyzor [-d] [-c <var class="filename">config</var>] check|report|discover|ping|whitelist [<var>cmd_options</var>]
+    </pre>
+    
+    <h3 id="options">options</h3>
+    
+    <dl>
+      <dt><kbd>-d</kbd></dt>
+      <dd>turn on debuggin</dd>
+      
+      <dt><kbd>-c <var class="filename">config</var></kbd></dt>
+      <dd>
+	use file <var>config</var> instead of the default
+	<span class="filename">~/.pyzor/config</span>.
+	See the <a href="#config">config section</a> for
+	more information on this file.
+      </dd>
+      
+    </dl>
+    
+    <h3 id="commands">commands</h3>
+    
+    <dl>
+      <dt id="check"><kbd>check</kbd></dt>
+      <dd>
+	<p>
+	  Reads on standard input an RFC 822 (email) message.
+	  Exit code is zero (0) if and only if a match is found
+	  and the global whitelist count is zero.
+	</p>
+	<p>
+	  If multiple servers are listed in the configuration file,
+	  the exit code will be zero (0) if and only if there
+	  is a match found on at least one server (without it
+	  being whitelisted anyplace).
+	</p>
+      </dd>
+      
+      <dt id="report"><kbd>report [--mbox]</kbd></dt>
+      <dd>
+	<p>
+	  Reads on standard input an RFC 822 (email) message.
+	  Reports to the server a digest of each message
+	  in the mailbox as spam.  Writes to standard output
+	  a tuple of (error-code, message) from the server.
+	</p>
+	<p>
+	  If <kbd>--mbox</kbd> is provided, then the input is
+	  assumed to be a unix mailbox, and all messages in it
+	  will be sent to the server.
+	</p>
+      </dd>
+      
+      <dt id="whitelist"><kbd>whitelist [--mbox]</kbd></dt>
+      <dd>
+	<p>
+	  Reads on standard input an RFC 822 (email) message.
+	  Sends to the server a digest of each message
+	  in the mailbox for whitelisting.  Writes to standard output
+	  a tuple of (error-code, message) from the server.
+	</p>
+	<p>
+	  If <kbd>--mbox</kbd> is provided, then the input is
+	  assumed to be a unix mailbox, and all messages in it
+	  will be sent to the server.
+	</p>
+      </dd>
+      
+      <dt id="discover"><kbd>discover</kbd></dt>
+      <dd>
+	<p>
+	  Finds Pyzor servers, and writes them to
+	  <span class="filename">~/.pyzor/servers</span>.
+	  This may accomplished through querying already-known
+	  servers or an HTTP call to a hard-coded address.
+	</p>
+      </dd>
+      
+      <dt id="ping"><kbd>ping</kbd></dt>
+      <dd>
+	<p>Merely requests a response from the servers.</p>
+      </dd>
+      
+      <dt id="shutdown"><kbd>shutdown <var>server ...</var></kbd></dt>
+      <dd>
+	<p>
+	  Requests each <kbd><var>server</var></kbd> to be shutdown.
+	  Format for <kbd><var>server</var></kbd> is <kbd>host:port</kbd>.
+	</p>
+      </dd>
+
+      <dt id="genkey"><kbd>genkey</kbd></dt>
+      <dd>
+	Based upon a secret passphrase gathered from the user
+	and salt gathered from /dev/random, prints to
+	standard output a tuple of "salt,key".
+	Used to put account information into the
+	<span class="filename">accounts</span> file.
+	See the section <a href="#using-accounts">Using Accounts</a>
+	for more information.
+      </dd>
+      
+    </dl>
+    
+    
+    <h3>Using the Pyzor client with procmail</h3>
+    
+    <p>
+      To use Pyzor in a procmail system, consider using the following
+      simple recipe.
+    </p>
+
+    <pre>
+:0 Wc
+| pyzor check
+:0 a
+pyzor-caught
+    </pre>
+
+    <p>
+      If you prefer, you can merely add a header to message
+      marked with Pyzor, instead of immediately filtering them
+      into a separate folder:
+    </p>
+    
+    <pre>
+:0 Wc
+| pyzor check
+:0 Waf
+| formail -A 'X-Pyzor: spam'
+    </pre>
+
+    <h2>Using the Pyzor client with
+      <a href="http://readyexec.sourceforge.net/">ReadyExec</a></h2>
+    
+    <p>
+      <a href="http://readyexec.sourceforge.net/">ReadyExec</a>
+      is a system to eliminate the high startup-cost
+      of executing scripts repeatedly.  If you execute
+      <kbd>pyzor</kbd> a lot, you might be interested in installing
+      ReadyExec and using it with <kbd>pyzor</kbd>.
+    </p>
+    
+    <p>
+      To use pyzor with ReadyExec, the readyexecd.py server
+      needs to be started as:
+    </p>
+    
+    <pre>
+readyexecd.py <var>socket_file</var> pyzor.client.run
+    </pre>
+
+    <p>
+      <var>socket_file</var> can be any (non-existing)
+      filename you wish ReadyExec
+      to use, such as <kbd class="filename">/tmp/pyzor</kbd>:
+    </p>
+
+    <pre>
+readyexecd.py /tmp/pyzor pyzor.client.run
+    </pre>
+    
+    <p>
+      Individual clients are then executed as:
+    </p>
+    
+    <pre>
+readyexec <var>socket_file</var> <var>options</var> <var>command</var> <var>cmd_options</var>
+    </pre>
+    
+    <p>
+      For example:
+    </p>
+    
+    <pre>
+readyexec /tmp/pyzor check
+readyexec /tmp/pyzor report
+readyexec /tmp/pyzor whitelist --mbox
+readyexec /tmp/pyzor -d ping
+    </pre>
+
+
+    <h2 id="server"><kbd>pyzord</kbd> (server)</h2>
+    
+    <pre>
+pyzord [-d]
+    </pre>
+    
+    <h3>options</h3>
+    
+    <dl>
+      <dt><kbd>-d</kbd></dt>
+      <dd>Turn on debugging</dd>
+    </dl>
+
+
+    <h2 id="files">Files</h2>
+    
+    <h3 id="config"><kbd>~/pyzor/config</kbd></h3>
+    
+    <p>
+      The format of this file is INI-style
+      (<kbd><var>name</var>=<var>value</var></kbd>,
+	divided into <kbd>[<var>sections</var>]</kbd>).
+	All values which are filenames can have shell-style tildes
+	(<kbd>~</kbd>) in them.  Names are case insensitive.
+    </p>
+
+    <h4>Defaults</h4>
+      
+    <pre>
+[client]
+ServersFile = ~/.pyzor/servers
+DiscoverServersURL = http://pyzor.sourceforge.net/cgi-bin/inform-servers
+AccountsFile = ~/.pyzor/accounts
+
+[server]
+port = 24441
+ListenAddress = 0.0.0.0
+LogFile    = ~/.pyzor/pyzord.log
+PidFile    = ~/.pyzor/pyzord.pid
+DigestDB   = ~/.pyzor/pyzord.db
+PasswdFile = ~/.pyzor/pyzord.passwd
+AccessFile = ~/.pyzor/pyzord.access
+    </pre>
+    
+    <h4>Definitions</h4>
+    
+    <h5><kbd>[client]</kbd> section</h5>
+
+    <dl>
+      <dt>ServersFile</dt>
+      <dd>
+	A newline-separated list of server addresses to
+	report/whitelist/check with.  Addresses are in the format
+	<kbd>host:port</kbd>.  Can be populated with
+	<kbd>pyzor discover</kbd>.
+      </dd>
+      
+      <dt>DiscoverServersURL</dt>
+      <dd>
+	During <kbd>pyzor discover</kbd>, the URL to use
+	in finding servers.
+      </dd>
+      
+      <dt>AccountsFile</dt>
+      <dd>
+	<p>
+	  File containing information about accounts on servers.
+	  Format is line-oriented, with each line being:
+	</p>
+	
+	<pre>
+<var>host</var> : <var>port</var> : <var>username</var> : <var>salt,key</var>
+	</pre>
+	
+	<p>Example:</p>
+	
+	<pre>
+127.0.0.1 : 9999 : bob : 227bfb58efaba7c582d9dcb66ab2063d38df2923,8da9f54058c34e383e997f45d6eb74837139f83b
+	</pre>
+	
+	<p>
+	  See the section <a href="#using-accounts">Using Accounts</a>
+	  for more information.
+	</p>
+      </dd>
+  </dl>
+    
+    <h5><kbd>[server]</kbd> section</h5>
+
+    <dl>
+      <dt>port</dt>
+      <dd>port to listen on </dd>
+      
+      <dt>ListenAddress</dt>
+      <dd>address to listen on</dd>
+      
+      <dt>pidfile</dt>
+      <dd>file to contain the process id of the server</dd>
+      
+      <dt>DigestDB</dt>
+      <dd>file containing the database of digests</dd>
+      
+      <dt>PasswdFile</dt>
+      <dd>
+	<p>
+	  File containing a list of user account information.
+	  Line format:
+	</p>
+	
+	<pre>
+<var>username</var> : <var>key</var>
+	</pre>
+	
+	<p>Example:</p>
+	<pre>
+bob : 8da9f54058c34e383e997f45d6eb74837139f83b
+	</pre>
+	
+      </dd>
+      
+      <dt>AccessFile</dt>
+      <dd>
+	<p>
+	  File containing information about user privileges.
+	  The format is very similar to the popular tcp_wrappers
+	  hosts.{allow,deny}:
+	</p>
+	<pre>
+<var>privilege ...</var> : <var>username ...</var> : allow|deny
+	</pre>
+	
+	<dl>
+	  <dt><var>privilege ...</var></dt>
+	  <dd>
+	    a list of whitespace-separated commands such as
+	    <kbd>report</kbd>, <kbd>check</kbd>, and <kbd>whitelist</kbd>,
+	    generally corresponding to the Pyzor client commands.
+	    The keyword <kbd>all</kbd> can be used to to refer
+	    to all commands.
+	  </dd>
+	  
+	  <dt><var>username ...</var></dt>
+	  <dd>
+	    a list of whitespace-separated usernames.
+	    The keyword <kbd>all</kbd> can be used to refer to 
+	    all users.  The anonymous user is refered to as
+	    <kbd>anonymous</kbd>.
+	  </dd>
+	  
+	  <dt>allow|deny</dt>
+	  <dd>
+	    Whether or not the specified user(s)
+	    can perform the specified privilege(s) on the line.
+	  </dd>
+	  
+	</dl>
+	
+	<p>
+	  The file is processed from top to bottom, with the first
+	  match for user/privilege being the value taken.
+	  Every file has the following implicit final rule:
+	</p>
+	
+	<pre>
+all : all : deny
+	</pre>
+	
+	<p>
+	  If this file is nonexistant, the following default is used:
+	</p>
+	
+	<pre>
+check report ping info : anonymous : allow
+	</pre>
+	
+      </dd>
+      
+    </dl>
+    
+    <h2 id="using-accounts">Using Accounts</h2>
+    
+    <p>
+      To get an account on a server requires coordination
+      between the client user and server admin.
+      Use the following steps:
+    </p>
+    
+    <ol>
+      <li>
+	User and admin should agree on a username for the user.
+	Allowed characters for a userame are alpha-numerics, 
+	the underscore, and dashes.  The normative regular expression
+	it must match is <kbd>^[-\.\w]+$</kbd>.  Let us assume
+	They have agreed on 'bob'.
+      </li>
+      
+      <li>
+	<p>
+	  User generates a key with <kbd>pyzor genkey</kbd>, and
+	  puts an entry into their
+	  <span class="filename">~/.pyzor/accounts</span>.
+	  Let us say that it generates the salt,key of:
+	  <samp>227bfb58efaba7c582d9dcb66ab2063d38df2923,8da9f54058c34e383e997f45d6eb74837139f83b</samp>.
+	  Assuming the server is at 127.0.0.1:9999, the user puts
+	  the following entry into
+	  <span class="filename">~/.pyzor/accounts</span>:
+	</p>
+	<pre>
+127.0.0.1 : 9999 : bob : 227bfb58efaba7c582d9dcb66ab2063d38df2923,8da9f54058c34e383e997f45d6eb74837139f83b
+	</pre>
+      </li>
+      
+      <li>
+	The user then sends the key (<em>the part to the
+	  <strong>right</strong>-hand
+	  side of the comma</em>) to the admin.
+      </li>
+      
+      <li>
+	<p>
+	  The admin adds the following to their
+	  <span class="filename">~/.pyzor/pyzord.passwd</span>:
+	</p>
+	<pre>
+bob : 8da9f54058c34e383e997f45d6eb74837139f83b
+	</pre>
+      </li>
+
+      <li>
+	<p>
+	  Assuming the admin wants to give the privilege of whitelisting
+	  (in addition to the normal permissions),
+	  the admin then adds the appropriate permissions to
+	  <span class="filename">~/.pyzor/pyzord.access</span>:
+	</p>
+	
+	<pre>
+check report ping info whitelist : bob : allow
+	</pre>
+	
+      </li>
+      
+      <li>
+	The server needs to be restarted in order for this to take
+	effect.
+      </li>
+      
+    </ol>
+    
+
+    <h2 id="razor-diff">User-level Differences from Razor</h2>
+    
+    <p>
+      This is a small list of user-recognizable differences
+      between Pyzor and Razor that one might notice if coming
+      from Razor to Pyzor.
+    </p>
+    
+    <ul>
+      <li>
+	Pyzor does not consult a whitelist system for you
+	before checking whether to send a message.  This is best
+	handled by other systems, such as other procmail rules.
+      </li>
+      <li>
+	Pyzor does not currently implement a web-of-trust system.
+      </li>
+    </ul>
+
+    <h2 id="copyright">Copyright</h2>
+    
+    <p>
+      Copyright &copy; 2002 Frank J. Tobin
+      <a href="mailto:ftobin@neverending.org">ftobin@neverending.org</a>
+    </p>
+
+    <p>
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+    </p>
+
+    <p>
+      This program is distributed in the hope that it will be useful,
+      but <strong>without any warranty</strong>;
+      without even the implied warranty of
+      <strong>merchantability or fitness for a particular purpose</strong>.
+      See the <a href="http://www.gnu.org/copyleft/gpl.html">GNU
+	General Public License</a> for more details.
+    </p>
+
+    <p>
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, visit the following URL:
+      <a href="http://www.gnu.org/copyleft/gpl.html">http://www.gnu.org/copyleft/gpl.html</a>.
+    </p>
+    
+  </body>
+</html>
