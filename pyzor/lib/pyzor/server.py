@@ -33,7 +33,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.16 2002-06-17 17:18:08 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.17 2002-06-19 17:41:06 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -446,18 +446,13 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.output.debug("got a %s command from %s" %
                           (self.op, self.client_address))
 
-        dispatches = { 'check':    self.handle_check,
-                       'report':   self.handle_report,
-                       'ping':     None,
-                       'shutdown': self.handle_shutdown,
-                       }
-                       
-        if not dispatches.has_key(self.op):
+        
+        if not self.dispatches.has_key(self.op):
             raise NotImplementedError, "requested operation is not implemented"
 
-        dispatch = dispatches[self.op]
+        dispatch = self.dispatches[self.op]
         if dispatch is not None:
-            apply(dispatch)
+            apply(dispatch, (self,))
 
 
     def handle_error(self, code, s):
@@ -498,5 +493,30 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         db[digest] = str(rec)
 
 
+    def handle_info(self):
+        digest = self.in_msg['Op-Digest']
+        self.op_arg = digest
+        self.output.debug("request to check digest %s" % digest)
+
+        db = DBHandle('r')
+        if db.has_key(digest):
+            record = Record.from_str(db[digest])
+            count = record.count
+            self.out_msg['Entered'] = str(record.entered)
+            self.out_msg['Updated'] = str(record.updated)
+        else:
+            count = 0
+
+        self.out_msg['Count'] = str(count)
+
+
     def handle_shutdown(self):
         raise SystemExit
+
+
+    dispatches = { 'check':    handle_check,
+                   'report':   handle_report,
+                   'ping':     None,
+                   'info':     handle_info,
+                   'shutdown': handle_shutdown,
+                   }

@@ -72,6 +72,12 @@ check.bob || fail
 echo "bob: reporting a mailbox"
 $PYZOR_BOB report --mbox < test.in.mbox || fail
 
+echo "bob: getting info"
+# check exit
+$PYZOR_BOB info < test.in.0 || fail
+# check lines
+[ `$PYZOR_BOB info < test.in.0 | wc -l` = 4 ] || fail
+
 setcount_bob
 echo "bob: counting reports"
 [ ${count:--1} = 3 ] || fail

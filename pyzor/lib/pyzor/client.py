@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.17 2002-06-17 17:18:08 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.18 2002-06-19 17:41:06 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -46,6 +46,11 @@ class Client(object):
 
     def ping(self, address):
         msg = PingRequest()
+        self.send(msg, address)
+        return self.read_response(msg.get_thread())
+
+    def info(self, digest, address):
+        msg = InfoRequest(digest)
         self.send(msg, address)
         return self.read_response(msg.get_thread())
         
@@ -188,21 +193,13 @@ class ExecCall(object):
         self.client = Client(self.get_accounts(config.get_filename('client',
                                                                    'AccountsFile')))
 
-        routines = {'check':    self.check,
-                    'report':   self.report,
-                    'ping' :    self.ping,
-                    'genkey':   self.genkey,
-                    'shutdown': self.shutdown,
-                    'discover': None         # already completed above
-                    }
-
-        if not routines.has_key(command):
+        if not self.dispatches.has_key(command):
             self.usage()
 
-        routine = routines[command]
-        if routine is not None:
+        dispatch = self.dispatches[command]
+        if dispatch is not None:
             try:
-                if not apply(routine, (args,)):
+                if not apply(dispatch, (self, args)):
                     sys.exit(1)
             except TimeoutError:
                 # note that most of the methods will trap
@@ -220,48 +217,49 @@ class ExecCall(object):
 
     def ping(self, args):
         (options, args2) = getopt.getopt(args[1:], '')
-        iterator = StdClientIterator(self.client.ping)
+        runner = ClientRunner(self.client.ping)
 
         for server in self.servers:
-            iterator.run(server, (server,))
+            runner.run(server, (server,))
 
-        return iterator.all_ok
+        return runner.all_ok
         
 
     def shutdown(self, args):
         (options, args2) = getopt.getopt(args[1:], '')
 
-        iterator = StdClientIterator(self.client.shutdown)
+        runner = ClientRunner(self.client.shutdown)
 
         for arg in args2:
             server = Address.from_str(arg)
-            iterator.run(server, (server,))
+            runner.run(server, (server,))
                     
-        return iterator.all_ok
+        return runner.all_ok
+
+
+    def info(self, args):
+        (options, args2) = getopt.getopt(args[1:], '')
+        
+        runner = InfoClientRunner(self.client.info)
+
+        for digest in FileDigester(sys.stdin, self.digest_spec):
+            for server in self.servers:
+                response = runner.run(server, (digest, server))
+
+        return True
 
 
     def check(self, args):
         (options, args2) = getopt.getopt(args[1:], '')
 
-        import rfc822
-        fp = rfc822.Message(sys.stdin, seekable=False).fp
-        
-        self.output.debug("digest spec is %s" % self.digest_spec)
-        digest = PiecesDigest.compute_from_file(fp,
-                                                self.digest_spec,
-                                                seekable=False)
-        if digest is None:
-            return
-        
-        self.output.debug("calculated digest: %s" % digest)
+        runner = CheckClientRunner(self.client.check)
 
-        iterator = CheckClientIterator(self.client.check)
-        
-        for server in self.servers:
-            response = iterator.run(server, (digest, server))
-
-        return iterator.found_hit
-
+        for digest in FileDigester(sys.stdin, self.digest_spec):
+            for server in self.servers:
+                response = runner.run(server, (digest, server))
+                
+        return runner.found_hit
+            
 
     def report(self, args):
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
@@ -271,38 +269,25 @@ class ExecCall(object):
             if o == '--mbox':
                 do_mbox = True
                 
-        self.output.debug("digest spec is %s" % self.digest_spec)
         all_ok = True
 
-        if do_mbox:
-            import mailbox
-            mbox = mailbox.PortableUnixMailbox(sys.stdin)
-            for digest in MailboxDigester(mbox, self.digest_spec):
-                if digest is not None:
-                    self.report_digest(digest)
-        else:
-            import rfc822
-            digest = PiecesDigest.compute_from_file(rfc822.Message(sys.stdin).fp,
-                                                    self.digest_spec,
-                                                    seekable=False)
-            if digest is not None:
-                if not self.report_digest(digest):
+        for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
+            for server in self.servers:
+                if not self.report_digest(digest, self.digest_spec):
                     all_ok = False
         
         return all_ok
 
 
-    def report_digest(self, digest):
+    def report_digest(self, digest, spec):
         typecheck(digest, PiecesDigest)
 
-        self.output.debug("calculated digest: %s" % digest)
-
-        iterator = StdClientIterator(self.client.report)
+        runner = ClientRunner(self.client.report)
 
         for server in self.servers:
-            iterator.run(server, (digest, self.digest_spec, server))
+            runner.run(server, (digest, spec, server))
         
-        return iterator.all_ok
+        return runner.all_ok
 
 
     def genkey(self, args):
@@ -356,12 +341,69 @@ class ExecCall(object):
     get_accounts = staticmethod(get_accounts)
 
 
+    dispatches = {'check':    check,
+                  'report':   report,
+                  'ping' :    ping,
+                  'genkey':   genkey,
+                  'shutdown': shutdown,
+                  'info':     info,
+                  'discover': None,  # handled earlier
+                  }
 
-class StdClientIterator(object):
+
+
+class FileDigester(object):
+    __slots__ = ['mbox', 'file', 'spec', 'stop',
+                 'mbox_digester', 'output']
+    
+    def __init__(self, file, spec, mbox=False):
+        self.mbox = mbox
+        self.file = file
+        self.spec = spec
+        self.stop = False
+        self.mbox_digester = None
+        self.output = pyzor.Output()
+        
+        if mbox:
+            import mailbox
+            self.mbox_digester = MailboxDigester(mailbox.PortableUnixMailbox(self.file), self.spec)
+
+
+    def __iter__(self):
+        return self
+
+
+    def next(self):
+        if self.stop:
+            raise StopIteration
+
+        digest = None
+        
+        if self.mbox:
+            while digest is None:
+                digest = self.mbox_digester.next()
+        else:
+            import rfc822
+            digest = PiecesDigest.compute_from_file(rfc822.Message(self.file).fp,
+                                                    self.spec,
+                                                    seekable=False)
+            if digest is None:
+                raise StopIteration
+            self.stop = True
+
+        self.output.debug("calculated digest: %s" % digest)
+        return digest
+
+
+
+class ClientRunner(object):
     __slots__ = ['routine', 'all_ok']
     
     def __init__(self, routine):
         self.routine = routine
+        self.setup()
+        
+    def setup(self):
         self.all_ok = True
 
     def run(self, server, varargs, kwargs=None):
@@ -376,7 +418,16 @@ class StdClientIterator(object):
             sys.stderr.write(message + ("%s: %s\n"
                                         % (e.__class__.__name__, e)))
             self.all_ok = False
-        
+        except KeyError, e:
+            sys.stderr.write(message + ("%s: %s\n"
+                                        % (e.__class__.__name__, e)))
+            self.all_ok = False
+        except ValueError, e:
+            sys.stderr.write(message + ("%s: %s\n"
+                                        % (e.__class__.__name__, e)))
+            self.all_ok = False
+
+
     def handle_response(self, response, message):
         """mesaage is a string we've built up so far"""
         if not response.is_ok():
@@ -385,19 +436,18 @@ class StdClientIterator(object):
                          + '\n')
     
 
-class CheckClientIterator(StdClientIterator):
+
+class CheckClientRunner(ClientRunner):
     __slots__ = ['found_hit']
-    def __init__(self, routine):
+
+    def setup(self):
         self.found_hit = False
-        super(CheckClientIterator, self).__init__(routine)
+        super(CheckClientRunner, self).setup()
     
     def handle_response(self, response, message):
         message += "%s\t" % str(response.head_tuple())
         
         if response.is_ok():
-            if not response.has_key('Count'):
-                raise IncompleteMessageError, "no count received"
-
             count = int(response['Count'])
             if count > 0:
                 self.found_hit = True
@@ -406,6 +456,26 @@ class CheckClientIterator(StdClientIterator):
             sys.stdout.write(message + '\n')
         else:
             sys.stderr.write(message)
+
+
+
+class InfoClientRunner(ClientRunner):
+    def handle_response(self, response, message):
+        message += "%s\n" % str(response.head_tuple())
+        
+        if response.is_ok():
+            count = int(response['Count'])
+
+            message += "\tCount: %d\n" % count
+            if count > 0:
+                for f in ('Entered', 'Updated'):
+                    if response.has_key(f):
+                        message += ("\t%s: %s\n"
+                                    % (f, time.ctime(int(response[f]))))
+            sys.stdout.write(message)
+        else:
+            sys.stderr.write(message)
+
 
 
 class MailboxDigester(object):

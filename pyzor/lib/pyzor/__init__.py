@@ -18,7 +18,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.23 2002-06-17 17:18:08 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.24 2002-06-19 17:41:06 ftobin Exp $"
 
 import os
 import os.path
@@ -40,23 +40,34 @@ class CommError(Exception):
     """Something in general went wrong with the transaction"""
     pass
 
+
+
 class ProtocolError(CommError):
     """Something is wrong with talking the protocol"""
     pass
 
+
+
 class TimeoutError(CommError):
     pass
+
+
 
 class IncompleteMessageError(ProtocolError):
     pass
 
+
+
 class UnsupportedVersionError(ProtocolError):
     pass
+
+
 
 class SignatureError(CommError):
     """unknown user, signature on msg invalid,
     or not within allowed time range"""
     pass
+
 
 
 class Singleton(object):
@@ -66,6 +77,7 @@ class Singleton(object):
         if it is None:
             cls.__it__ = object.__new__(cls)
         return cls.__it__
+
 
 
 class Username(str):
@@ -79,6 +91,7 @@ class Username(str):
             raise ValueError, "%s is an invalid username" % self
 
 
+
 class Opname(str):
     op_pattern = re.compile(r'^[-\.\w]+$')
     
@@ -88,6 +101,7 @@ class Opname(str):
     def validate(self):
         if not self.op_pattern.match(self):
             raise ValueError, "%s is an invalid username" % self
+
 
 
 class Output(Singleton):
@@ -102,6 +116,7 @@ class Output(Singleton):
         if not self.quiet: sys.__stderr__.write('%s\n' % msg)
     def debug(self, msg):
         if self.do_debug: sys.__stderr__.write('%s\n' % msg)
+
 
 
 class PiecesDigest(str):
@@ -205,6 +220,7 @@ class PiecesDigest(str):
     compute_from_file = classmethod(compute_from_file)
 
 
+
 class PiecesDigestSpec(list):
     """a list of tuples, (perc_offset, length)"""
 
@@ -244,12 +260,20 @@ class PiecesDigestSpec(list):
     from_netstring = classmethod(from_netstring)
 
 
+
 class Message(rfc822.Message, object):
     def __init__(self, fp=None):
         if fp is None:
             fp = cStringIO.StringIO()
             
         super(Message, self).__init__(fp)
+        self.setup()
+
+
+    def setup(self):
+        """called after __init__, designed to be extended"""
+        pass
+
 
     def init_for_sending(self):
         if __debug__:
@@ -271,6 +295,7 @@ class Message(rfc822.Message, object):
 
     def ensure_complete(self):
         pass
+
 
 
 class ThreadedMessage(Message):
@@ -418,10 +443,12 @@ class Response(ThreadedMessage):
         return (self.get_code(), self.get_diag())
 
 
+
 class Request(ThreadedMessage):
     """this is class that should be used to read in Requests of any type.
     subclasses are responsible for setting 'Op' if they are generating
     a message"""
+    
     def get_op(self):
         return self['Op']
 
@@ -432,68 +459,53 @@ class Request(ThreadedMessage):
         super(Request, self).ensure_complete()
 
 
-##class SuccessResponse(Response):
-##    def init_for_sending(self):
-##        super(SuccessResponse, self).init_for_sending()
 
-##        self.setdefault('Code', str(self.ok_code))
-##        self.setdefault('Diag', 'OK')
-
-
-class PingRequest(Request):
-    def __init__(self):
-        super(PingRequest, self).__init__()
-        self.setdefault('Op', 'ping')
+class ClientSideRequest(Request):
+    def setup(self):
+        super(Request, self).setup()
+        self.setdefault('Op', self.op)
+        
 
 
-##class PingResponse(SuccessResponse):
-##    pass
+class PingRequest(ClientSideRequest):
+    op = Opname('ping')
 
 
-class ReportRequest(Request):
+class ShutdownRequest(ClientSideRequest):
+    op = Opname('shutdown')
+
+
+
+class ReportRequest(ClientSideRequest):
+    op = Opname('report')
+    
     def __init__(self, digest, spec):
         typecheck(digest, str)
         typecheck(spec, PiecesDigestSpec)
 
         super(ReportRequest, self).__init__()
 
-        self.setdefault('Op',        'report')
         self.setdefault('Op-Spec',   spec.netstring())
         self.setdefault('Op-Digest', str(digest))
 
 
-##class ReportResponse(SuccessResponse):
-##    pass
 
-
-class CheckRequest(Request):
+class SimpleDigestBasedRequest(ClientSideRequest):
     def __init__(self, digest):
         typecheck(digest, str)
-        
-        super(CheckRequest, self).__init__()
-
-        self.setdefault('Op',        'check')
+        super(SimpleDigestBasedRequest, self).__init__()
         self.setdefault('Op-Digest', digest)
 
 
-##class CheckResponse(SuccessResponse):
-##    def __init__(self, count):
-##        typecheck(count, int)
-        
-##        super(CheckResponse, self).__init__()
-##        self.setdefault('Count', str(count))
 
-##    def ensure_complete(self):
-##        if not self.has_key('Count'):
-##            raise IncompleteMessageError, \
-##                  "doesn't have fields for a CheckResponse"
-##        super(CheckResponse, self).ensure_complete()
+class CheckRequest(SimpleDigestBasedRequest):
+    op = Opname('check')
 
 
-class ShutdownRequest(Request):
-    def __init__(self):
-        super(ShutdownRequest, self).__init__()
-        self.setdefault('Op', 'shutdown')
+
+class InfoRequest(SimpleDigestBasedRequest):
+    op = Opname('info')
+
 
 
 class ErrorResponse(Response):
@@ -504,6 +516,7 @@ class ErrorResponse(Response):
         super(ErrorResponse, self).__init__()
         self.setdefault('Code', str(code))
         self.setdefault('Diag', s)
+
 
 
 class ThreadId(int):
@@ -523,6 +536,7 @@ class ThreadId(int):
 
     def in_ok_range(self):
         return (self >= self.ok_range[0] and self < self.ok_range[1])
+
 
 
 class Address(tuple):
@@ -545,6 +559,7 @@ class Address(tuple):
         return self(fields)
 
     from_str = classmethod(from_str)
+
 
 
 class Config(ConfigParser.ConfigParser, object):
