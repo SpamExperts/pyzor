@@ -114,32 +114,32 @@ FILES:
 
     [client]
       ServersFile = ~/.pyzor/servers
-        Location of file which contains a list of servers,
-        host:ip per line
-        .
+          Location of file which contains a list of servers,
+          host:ip per line
+
       DiscoverServersURL = http://pyzor.sourceforge.net/cgi-bin/inform-servers
-        URL to discover servers from.
+          URL to discover servers from.
 
     [server]
       Port=24441
-        Port to listen on.
+          Port to listen on.
 
       ListenAddress = 0.0.0.0
-        Address to listen on.
+          Address to listen on.
 
       LogFile = ~/.pyzor/pyzord.log
-        Location of logfile. Logfile format:
-          epochtime,user,address,command,data
+          Location of logfile. Logfile format:
+              epochtime,user,address,command,data
 
       PidFile = ~/.pyzor/pyzord.pid
-        Location of file containing PID of server.
+          Location of file containing PID of server.
 
       DigestDB = ~/.pyzor/pyzord.db
-        Location of digest database.
+          Location of digest database.
 
       CleanupAge = 259200
-        When cleaning the database, entries older than this number
-        of seconds are removed.
+          When cleaning the database, entries older than this number
+          of seconds are removed.
 
 
 TODO:
@@ -167,7 +167,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.14 2002-04-22 16:39:02 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.15 2002-04-22 17:37:25 ftobin Exp $"
 
 import os
 import os.path
