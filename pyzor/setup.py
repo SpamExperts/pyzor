@@ -1,5 +1,5 @@
 import sys
-sys.path.append('lib')
+sys.path.insert(0, 'lib')
 import pyzor
 import distutils.core
 
