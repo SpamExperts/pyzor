@@ -17,7 +17,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.26 2002-09-19 01:41:30 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.27 2002-09-24 03:13:00 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -391,8 +391,6 @@ class DBHandle(object):
 
 
 class Server(SocketServer.ThreadingUDPServer, object):
-    ttl = 4
-    timeout = 3
     max_packet_size = 8192
     time_diff_allowance = 180
 
@@ -447,8 +445,6 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
             # We assume that KeyErrors are due to not
             # finding a key in the RFC822 message
             self.handle_error(400, "Bad request: %s" % e)
-        except TimeoutError, e:
-            self.handle_error(503, "Gateway timeout: %s" % e)
         except AuthorizationError, e:
             self.handle_error(401, "Unauthorized: %s" % e)
         except SignatureError, e:
