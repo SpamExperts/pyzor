@@ -39,49 +39,79 @@ rm -rf .pyzor
 echo "starting server"
 $PYZORD || fail
 
-setcount
+
 echo "anonymous: ensuring a count of 0 at start"
+setcount
 [ ${count:--1} = 0 ] || fail
 check && fail
 
-setcount_bob
+
 echo "bob: ensuring a count of 0 at start"
+setcount_bob
 [ ${count:--1} = 0 ] || fail
 check.bob && fail
 
+
 echo "anonymous: reporting"
 $PYZOR report < test.in.0 && fail
 echo "anonymous: reporting"
 $PYZOR report < test.in.0 && fail
+
 
 echo "bob: reporting"
 $PYZOR_BOB report < test.in.0 || fail
 echo "bob: reporting"
 $PYZOR_BOB report < test.in.0 || fail
 
-setcount
+
 echo "anonymous: counting reports"
+setcount
 [ ${count:--1} = 2 ] || fail
 check || fail
 
-setcount_bob
+
 echo "bob: counting reports"
+setcount_bob
 [ ${count:--1} = 2 ] || fail
 check.bob || fail
 
+
 echo "bob: reporting a mailbox"
 $PYZOR_BOB report --mbox < test.in.mbox || fail
+
+
+echo "bob: counting reports"
+setcount_bob
+[ ${count:--1} = 3 ] || fail
+check.bob || fail
+
 
 echo "bob: getting info"
 # check exit
 $PYZOR_BOB info < test.in.0 || fail
 # check lines
-[ `$PYZOR_BOB info < test.in.0 | wc -l` = 4 ] || fail
+[ `$PYZOR_BOB info < test.in.0 | wc -l` = 7 ] || fail
 
-setcount_bob
+
+echo "anonymous: whitelisting"
+$PYZOR whitelist < test.in.0 && fail
+
+echo "bob: whitelisting"
+$PYZOR_BOB whitelist < test.in.0 || fail
+
+
+echo "bob: getting info"
+# check exit
+$PYZOR_BOB info < test.in.0 || fail
+# check lines
+[ `$PYZOR_BOB info < test.in.0 | wc -l` = 7 ] || fail
+
+
 echo "bob: counting reports"
-[ ${count:--1} = 3 ] || fail
-check.bob || fail
+setcount_bob
+[ ${count:--1} = 0 ] || fail
+check && fail
+
 
 echo "anonymous: pinging"
 $PYZOR ping || fail

@@ -20,6 +20,7 @@
 from __future__ import division
 
 import os
+import sys
 import signal
 import SocketServer
 import time
@@ -33,7 +34,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.17 2002-06-19 17:41:06 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.18 2002-06-29 23:14:59 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -255,29 +256,106 @@ class Log(object):
 
 
 class Record(object):
-    __slots__ = ['count', 'entered', 'updated']
-    def __init__(self, count=0, entered=None, updated=None):
-        if entered is None: entered = int(time.time())
-        if updated is None: updated = entered
-        self.count =   long(count)
-        self.entered = int(entered)
-        self.updated = int(updated)
+    """Prefix conventions used in this class:
+    r = report (spam)
+    wl = whitelist
+    """
+    
+    __slots__ = ['r_count',  'r_entered',  'r_updated',
+                 'wl_count', 'wl_entered', 'wl_updated',
+                 ]
+    fields = ('r_count',  'r_entered',  'r_updated',
+              'wl_count', 'wl_entered', 'wl_updated',
+              )
+    this_version = '1'
+    
+    # epoch seconds
+    never = -1
+    
+    def __init__(self, r_count=0, wl_count=0):
+        self.r_count =  r_count
+        self.wl_count = wl_count
 
-    def increment(self):
+        self.r_entered = self.never
+        self.r_updated = self.never
+
+        self.wl_entered = self.never
+        self.wl_updated = self.never
+
+    def wl_increment(self):
         # overflow prevention
-        if self.count < 2**30:
-            self.count += 1
-        self.update()
+        if self.wl_count < sys.maxint:
+            self.wl_count += 1
+        if self.wl_entered == self.never:
+            self.wl_entered = int(time.time())
+        self.wl_update()
 
-    def update(self):
-        self.updated = int(time.time())
+    def r_increment(self):
+        # overflow prevention
+        if self.r_count < sys.maxint:
+            self.r_count += 1
+        if self.r_entered == self.never:
+            self.r_entered = int(time.time())
+        self.r_update()
+
+    def r_update(self):
+        self.r_updated = int(time.time())
+
+    def wl_update(self):
+        self.wl_updated = int(time.time())
 
     def __str__(self):
-        return "%d,%d,%d" % (self.count, self.entered, self.updated)
+        return "%s,%d,%d,%d,%d,%d,%d" \
+               % ((self.this_version,)
+                  + tuple(map(lambda x: getattr(self, x), self.fields)))
+
 
     def from_str(self, s):
-        return apply(self, tuple(map(int, s.split(',', 3))))
+        parts = s.split(',')
+        dispatch = None
+
+        version = parts[0]
+        
+        if len(parts) == 3:
+            dispatch = self.from_str_0
+        elif version == '1':
+            dispatch = self.from_str_1
+        else:
+            raise StandardError, ("don't know how to handle db value %s"
+                                  % repr(s))
+        
+        return apply(dispatch, (s,))
+    
     from_str = classmethod(from_str)
+
+
+    def from_str_0(self, s):
+        r = Record()
+        parts = s.split(',')
+
+        fields = ('r_count', 'r_entered', 'r_updated')
+        assert len(parts) == len(fields)
+        
+        for i in range(len(parts)):
+            setattr(r, fields[i], int(parts[i]))
+        
+        return r
+
+    from_str_0 = classmethod(from_str_0)
+
+
+    def from_str_1(self, s):
+        r = Record()
+        parts = s.split(',')[1:]
+        
+        assert len(parts) == len(self.fields)
+
+        for i in range(len(parts)):
+            setattr(r, self.fields[i], int(parts[i]))
+
+        return r
+        
+    from_str_1 = classmethod(from_str_1)
 
 
 
@@ -302,11 +380,15 @@ class DBHandle(object):
     def __setitem__(self, key, value):
         self.db[key] = value
 
-    def has_key(self, key):
-        return self.__contains__(key)
+    def __delitem(self, key):
+        del self.db[key]
 
-    def __contains__(self, key):
-        return self.db.has_key(key)
+##    # we shouldn't need these
+##    def has_key(self, key):
+##        return self.__contains__(key)
+
+##    def __contains__(self, key):
+##        return self.db.has_key(key)
 
     def cleanup(self):
         self.output.debug("cleaning up the database")
@@ -316,7 +398,7 @@ class DBHandle(object):
         while key is not None:
             rec = Record.from_str(self[key])
             delkey = None
-            if rec.updated < breakpoint:
+            if rec.r_updated < breakpoint:
                 self.output.debug("deleting key %s" % key)
                 delkey = key
             key = self.db.nextkey(key)
@@ -470,14 +552,16 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.output.debug("request to check digest %s" % digest)
 
         db = DBHandle('r')
-        if db.has_key(digest):
-            count = Record.from_str(db[digest]).count
-        else:
-            count = 0
+        try:
+            rec = Record.from_str(db[digest])
+            r_count  = rec.r_count
+            wl_count = rec.wl_count
+        except KeyError:
+            r_count  = 0
+            wl_count = 0
 
-        if not (isinstance(count, int) or isinstance(count, long)):
-            raise TypeError
-        self.out_msg['Count'] = str(count)
+        self.out_msg['Count']    = "%d" % r_count
+        self.out_msg['WL-Count'] = "%d" % wl_count
 
 
     def handle_report(self):
@@ -486,10 +570,25 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.output.debug("request to report digest %s" % digest)
 
         db = DBHandle('c')
-        if not db.has_key(digest):
-            db[digest] = str(Record())
-        rec = Record.from_str(db[digest])
-        rec.increment()
+        try:
+            rec = Record.from_str(db[digest])
+        except KeyError:
+            rec = Record()
+        rec.r_increment()
+        db[digest] = str(rec)
+
+
+    def handle_whitelist(self):
+        digest = self.in_msg['Op-Digest']
+        self.op_arg = digest
+        self.output.debug("request to whitelist digest %s" % digest)
+
+        db = DBHandle('c')
+        try:
+            rec = Record.from_str(db[digest])
+        except KeyError:
+            rec = Record()
+        rec.wl_increment()
         db[digest] = str(rec)
 
 
@@ -499,24 +598,32 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.output.debug("request to check digest %s" % digest)
 
         db = DBHandle('r')
-        if db.has_key(digest):
+        try:
             record = Record.from_str(db[digest])
-            count = record.count
-            self.out_msg['Entered'] = str(record.entered)
-            self.out_msg['Updated'] = str(record.updated)
-        else:
-            count = 0
+        except KeyError:
+            record = Record()
+        
+        r_count  = record.r_count
+        wl_count = record.wl_count
+        
+        self.out_msg['Entered'] = "%d" % record.r_entered
+        self.out_msg['Updated'] = "%d" % record.r_updated
 
-        self.out_msg['Count'] = str(count)
+        self.out_msg['WL-Entered'] = "%d" % record.wl_entered
+        self.out_msg['WL-Updated'] = "%d" % record.wl_updated
+
+        self.out_msg['Count']    = "%d" % r_count
+        self.out_msg['WL-Count'] = "%d" % wl_count
 
 
     def handle_shutdown(self):
         raise SystemExit
 
 
-    dispatches = { 'check':    handle_check,
-                   'report':   handle_report,
-                   'ping':     None,
-                   'info':     handle_info,
-                   'shutdown': handle_shutdown,
+    dispatches = { 'check':     handle_check,
+                   'report':    handle_report,
+                   'ping':      None,
+                   'info':      handle_info,
+                   'shutdown':  handle_shutdown,
+                   'whitelist': handle_whitelist,
                    }

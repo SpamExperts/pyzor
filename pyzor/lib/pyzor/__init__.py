@@ -18,7 +18,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.24 2002-06-19 17:41:06 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.25 2002-06-29 23:14:59 ftobin Exp $"
 
 import os
 import os.path
@@ -475,21 +475,6 @@ class ShutdownRequest(ClientSideRequest):
     op = Opname('shutdown')
 
 
-
-class ReportRequest(ClientSideRequest):
-    op = Opname('report')
-    
-    def __init__(self, digest, spec):
-        typecheck(digest, str)
-        typecheck(spec, PiecesDigestSpec)
-
-        super(ReportRequest, self).__init__()
-
-        self.setdefault('Op-Spec',   spec.netstring())
-        self.setdefault('Op-Digest', str(digest))
-
-
-
 class SimpleDigestBasedRequest(ClientSideRequest):
     def __init__(self, digest):
         typecheck(digest, str)
@@ -497,15 +482,29 @@ class SimpleDigestBasedRequest(ClientSideRequest):
         self.setdefault('Op-Digest', digest)
 
 
-
 class CheckRequest(SimpleDigestBasedRequest):
     op = Opname('check')
-
 
 
 class InfoRequest(SimpleDigestBasedRequest):
     op = Opname('info')
 
+
+class SimpleDigestSpecBasedRequest(SimpleDigestBasedRequest):
+    def __init__(self, digest, spec):
+        typecheck(digest, str)
+        typecheck(spec, PiecesDigestSpec)
+
+        super(SimpleDigestSpecBasedRequest, self).__init__(digest)
+        self.setdefault('Op-Spec',   spec.netstring())
+
+
+class ReportRequest(SimpleDigestSpecBasedRequest):
+    op = Opname('report')
+
+
+class WhitelistRequest(SimpleDigestSpecBasedRequest):
+    op = Opname('whitelist')
 
 
 class ErrorResponse(Response):

@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.18 2002-06-19 17:41:06 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.19 2002-06-29 23:14:59 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -56,6 +56,11 @@ class Client(object):
         
     def report(self, digest, spec, address):
         msg = ReportRequest(digest, spec)
+        self.send(msg, address)
+        return self.read_response(msg.get_thread())
+
+    def whitelist(self, digest, spec, address):
+        msg = WhitelistRequest(digest, spec)
         self.send(msg, address)
         return self.read_response(msg.get_thread())
 
@@ -273,21 +278,41 @@ class ExecCall(object):
 
         for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
             for server in self.servers:
-                if not self.report_digest(digest, self.digest_spec):
+                if not self.send_digest(digest, self.digest_spec,
+                                        self.client.report):
                     all_ok = False
         
         return all_ok
 
 
-    def report_digest(self, digest, spec):
+    def send_digest(self, digest, spec, client_method):
         typecheck(digest, PiecesDigest)
 
-        runner = ClientRunner(self.client.report)
+        runner = ClientRunner(client_method)
 
         for server in self.servers:
             runner.run(server, (digest, spec, server))
         
         return runner.all_ok
+
+
+    def whitelist(self, args):
+        (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+        do_mbox = False
+
+        for (o, v) in options:
+            if o == '--mbox':
+                do_mbox = True
+                
+        all_ok = True
+
+        for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
+            for server in self.servers:
+                if not self.send_digest(digest, self.digest_spec,
+                                        self.client.whitelist):
+                    all_ok = False
+        
+        return all_ok
 
 
     def genkey(self, args):
@@ -341,13 +366,14 @@ class ExecCall(object):
     get_accounts = staticmethod(get_accounts)
 
 
-    dispatches = {'check':    check,
-                  'report':   report,
-                  'ping' :    ping,
-                  'genkey':   genkey,
-                  'shutdown': shutdown,
-                  'info':     info,
-                  'discover': None,  # handled earlier
+    dispatches = {'check':     check,
+                  'report':    report,
+                  'ping' :     ping,
+                  'genkey':    genkey,
+                  'shutdown':  shutdown,
+                  'info':      info,
+                  'whitelist': whitelist,
+                  'discover':  None,  # handled earlier
                   }
 
 
@@ -440,6 +466,10 @@ class ClientRunner(object):
 class CheckClientRunner(ClientRunner):
     __slots__ = ['found_hit']
 
+    # the number of wl-count it takes for the normal
+    # count to be overriden
+    wl_count_clears = 1
+
     def setup(self):
         self.found_hit = False
         super(CheckClientRunner, self).setup()
@@ -448,11 +478,15 @@ class CheckClientRunner(ClientRunner):
         message += "%s\t" % str(response.head_tuple())
         
         if response.is_ok():
-            count = int(response['Count'])
-            if count > 0:
-                self.found_hit = True
+            wl_count = int(response['WL-Count'])
+            if wl_count > 0:
+                count = 0
+            else:
+                count = int(response['Count'])
+                if count > 0:
+                    self.found_hit = True
             
-            message += str(count)
+            message += "%d\t%d" % (count, wl_count)
             sys.stdout.write(message + '\n')
         else:
             sys.stderr.write(message)
@@ -465,13 +499,25 @@ class InfoClientRunner(ClientRunner):
         
         if response.is_ok():
             count = int(response['Count'])
-
             message += "\tCount: %d\n" % count
+            
             if count > 0:
-                for f in ('Entered', 'Updated'):
+                for f in ('Entered', 'Updated', 'WL-Entered', 'WL-Updated'):
                     if response.has_key(f):
-                        message += ("\t%s: %s\n"
-                                    % (f, time.ctime(int(response[f]))))
+                        val = int(response[f])
+                        if val == -1:
+                            stringed = 'Never'
+                        else:
+                            stringed = time.ctime(val)
+
+                        # we want to insert the wl-count before
+                        # our wl printouts
+                        if f is 'WL-Entered':
+                            message += ("\tWhiteList Count: %d\n"
+                                        % int(response['WL-Count']))
+                        
+                        message += ("\t%s: %s\n" % (f, stringed))
+            
             sys.stdout.write(message)
         else:
             sys.stderr.write(message)
