@@ -7,6 +7,9 @@
     *	Message normalization now doesn't digest of lines
 	less than 8 chars.
 
+    *	Messages having less than or equal to 4 lines are entirely
+	digested.
+
     *	If HOME is unspecified and no --homedir is given,
 	The the config directory is /etc/pyzor
 
