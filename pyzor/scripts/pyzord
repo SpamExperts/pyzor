@@ -11,7 +11,7 @@ import ConfigParser
 
 _author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.17 2002-07-28 02:13:38 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.18 2002-07-30 18:00:17 ftobin Exp $"
 
 default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping',
                                               'info'])
@@ -109,7 +109,6 @@ server = pyzor.server.Server((listen_adr, port),
 load_passwd_file(passwd_fn, server)
 load_access_file(access_fn, server)
 
-
 if not debug:
     # This step is required so that the new process is guaranteed
     # not to be a process group leader. The next step, setsid(),
@@ -137,6 +136,8 @@ if pid_fn is not None:
     f = open(pid_fn, 'w')
     f.write("%d\n" % os.getpid())
     f.close()
+
+os.chdir("/")
 
 signal.signal(signal.SIGUSR1, cleanup_server_handler)
 server.serve_forever()
