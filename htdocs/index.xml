@@ -73,7 +73,7 @@
       
       <dt>netlong</dt>
       <dd>
-	A netlong is used to encode a list.  A netlong matches the
+	A netlong is used to encode an unsigned.  A netlong matches the
 	regular expression <code>[:digit:]{1,16},</code>
       </dd>
       
