@@ -3,16 +3,16 @@
 # HOME so it finds the right .pyzor
 export HOME=.
 export PYTHONPATH=../lib
-PYZOR="./pyzor -c config"
-PYZOR_BOB="./pyzor -c config.bob"
-PYZORD="./pyzord -c config"
+PYZOR="./pyzor --homedir ."
+PYZOR_BOB="./pyzor --homedir bob"
+PYZORD="./pyzord --homedir ."
 alias check="$PYZOR check < test.in.0"
 alias check.bob="$PYZOR check < test.in.0"
 
 kill_server()
 {
   echo "killing server"
-  pidfile='.pyzor/pyzord.pid'
+  pidfile='pyzord.pid'
   [ -e $pidfile ] && kill `cat $pidfile`
 }
 
@@ -34,7 +34,7 @@ setcount_bob()
   count=`$PYZOR check < test.in.0 | cut -f 3`
 }
 
-rm -rf .pyzor
+rm -f pyzord.*
 
 echo "starting server"
 $PYZORD || fail
@@ -117,7 +117,7 @@ echo "anonymous: pinging"
 $PYZOR ping || fail
 
 echo "checking for logfile"
-[ -s .pyzor/pyzord.log ] || fail
+[ -s pyzord.log ] || fail
 
 echo "anonymous: shutting down server"
 $PYZOR shutdown 127.0.0.1:9999 && fail

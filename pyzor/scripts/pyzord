@@ -11,7 +11,7 @@ import ConfigParser
 
 _author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.13 2002-06-30 03:28:03 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.14 2002-07-02 20:09:39 ftobin Exp $"
 
 default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping'
                                               'info'])
@@ -21,7 +21,7 @@ def cleanup_server_handler(signum, frame):
 
 
 def usage():
-    sys.stderr.write("usage: %s [-d] [-c config_file]\n" % sys.argv[0])
+    sys.stderr.write("usage: %s [-d] [--homedir dir]\n" % sys.argv[0])
     sys.exit(1)
 
 
@@ -49,47 +49,43 @@ def load_passwd_file(access_fn, server):
 # functions above, run below
 
 debug = 0
-(options, args) = getopt.getopt(sys.argv[1:], 'dhc:')
+(options, args) = getopt.getopt(sys.argv[1:], 'dh:', ['homedir='])
 if len(args) != 0:
     usage()
 
-config_fn = None
+homedir = None
 
 for (o, v) in options:
     if o == '-d':
         debug = 1
     elif o == '-h':
         usage()
-    elif o == '-c':
-        config_fn = v
+    elif o == '--homedir':
+        homedir = v
 
-if config_fn is None:
-    config_fn = pyzor.Config.get_default_filename()
+if homedir is None:
+    homedir = pyzor.get_homedir()
 
-homedir = pyzor.get_homedir()
-# We really shouldn't need to make this unless
-# the user wants to use it...
 if not os.path.exists(homedir):
     os.mkdir(homedir)
 
 defaults = {'port':          '24441',
             'listenaddress': '0.0.0.0',
-            'logfile':       os.path.join(homedir, 'pyzord.log'),
-            'pidfile':       os.path.join(homedir, 'pyzord.pid'),
-            'digestdb':      os.path.join(homedir, 'pyzord.db'),
-            'passwdfile':    os.path.join(homedir, 'pyzord.passwd'),
-            'accessfile':    os.path.join(homedir, 'pyzord.access'),
+            'logfile':       'pyzord.log',
+            'pidfile':       'pyzord.pid',
+            'digestdb':      'pyzord.db',
+            'passwdfile':    'pyzord.passwd',
+            'accessfile':    'pyzord.access',
             'CleanupAge':    "%d" % pyzor.server.DBHandle.max_age,
             }
 
-config = pyzor.Config()
+config = pyzor.Config(homedir)
 config.add_section('server')
 
 for k, v in defaults.items():
     config.set('server', k, v)
 
-config.read(config_fn)
-
+config.read(os.path.join(homedir, 'config'))
 
 port       = config.getint('server', 'port')
 listen_adr = config.get('server', 'ListenAddress')

@@ -9,7 +9,7 @@
   <body>
     <h1>Pyzor Usage Documentation</h1>
 
-    <p id="cvsid">$Id: usage.html,v 1.2 2002-07-02 18:01:32 ftobin Exp $</p>
+    <p id="cvsid">$Id: usage.html,v 1.3 2002-07-02 20:09:38 ftobin Exp $</p>
     
     <ul>
       <li><a href="#client"><kbd>pyzor</kbd> (client)</a></li>
@@ -23,7 +23,7 @@
     <h2 id="client"><kbd>pyzor</kbd> (client)</h2>
     
     <pre>
-pyzor [-d] [-c <var class="filename">config</var>] <var>command</var> [<var>command_options</var>]
+pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>command_options</var>]
     </pre>
     
     <h3 id="options">options</h3>
@@ -32,12 +32,14 @@ pyzor [-d] [-c <var class="filename">config</var>] <var>command</var> [<var>comm
       <dt><kbd>-d</kbd></dt>
       <dd>turn on debugging</dd>
       
-      <dt><kbd>-c <var class="filename">config</var></kbd></dt>
+      <dt id="pyzor-homedir"><kbd>--homedir <var class="filename">dir</var></kbd></dt>
       <dd>
-	use file <var>config</var> instead of the default
-	<span class="filename">~/.pyzor/config</span>.
-	See the <a href="#config">config section</a> for
-	more information on this file.
+	use <var>dir</var> as the home directory
+	for Pyzor instead of the default
+	<span class="filename">~/.pyzor</span>.
+	See the <a href="#files">files section</a> for
+	more information on what files are inside of the
+	homedir.
       </dd>
       
     </dl>
@@ -207,7 +209,7 @@ readyexec /tmp/pyzor -d ping
     <h2 id="server"><kbd>pyzord</kbd> (server)</h2>
     
     <pre>
-pyzord [-d]
+pyzord [-d] [--homedir <var>dir</var>]
     </pre>
     
     <h3>options</h3>
@@ -215,6 +217,17 @@ pyzord [-d]
     <dl>
       <dt><kbd>-d</kbd></dt>
       <dd>Turn on debugging</dd>
+      
+      <dt id="pyzord-homedir"><kbd>--homedir <var class="filename">dir</var></kbd></dt>
+      <dd>
+	use <var>dir</var> as the home directory
+	for Pyzor instead of the default
+	<span class="filename">~/.pyzor</span>.
+	See the <a href="#files">files section</a> for
+	more information on what files are inside of the
+	homedir.
+      </dd>
+      
     </dl>
 
 
@@ -225,35 +238,38 @@ pyzord [-d]
     <p>
       The format of this file is INI-style
       (<kbd><var>name</var>=<var>value</var></kbd>,
-	divided into <kbd>[<var>sections</var>]</kbd>).
-	All values which are filenames can have shell-style tildes
-	(<kbd>~</kbd>) in them.  Names are case insensitive.
+      divided into <kbd>[<var>sections</var>]</kbd>).
+      Names are case insensitive.
+      All values which are filenames can have shell-style tildes
+      (<kbd>~</kbd>) in them.  All values which are relative
+      filenames are interpreted to be relative to the Pyzor
+      <a href="#pyzor-homedir">homedir</a>.
     </p>
-
+    
     <h4>Defaults</h4>
       
     <pre>
-[client]
-ServersFile = ~/.pyzor/servers
-DiscoverServersURL = http://pyzor.sourceforge.net/cgi-bin/inform-servers-0-3-x
-AccountsFile = ~/.pyzor/accounts
+<a href="#section-client">[client]</a>
+<a href="#ServersFile">ServersFile</a> = servers
+<a href="#AccountsFile">AccountsFile</a> = accounts
+<a href="#DiscoverServersURL">DiscoverServersURL</a> = http://pyzor.sourceforge.net/cgi-bin/inform-servers-0-3-x
 
-[server]
-port = 24441
-ListenAddress = 0.0.0.0
-LogFile    = ~/.pyzor/pyzord.log
-PidFile    = ~/.pyzor/pyzord.pid
-DigestDB   = ~/.pyzor/pyzord.db
-PasswdFile = ~/.pyzor/pyzord.passwd
-AccessFile = ~/.pyzor/pyzord.access
+<a href="#section-server">[server]</a>
+<a href="#Port">Port</a> = 24441
+<a href="#ListenAddress">ListenAddress</a> = 0.0.0.0
+<a href="#LogFile">LogFile</a>    = pyzord.log
+<a href="#PidFile">PidFile</a>    = pyzord.pid
+<a href="#DigestDB">DigestDB</a>   = pyzord.db
+<a href="#PasswdFile">PasswdFile</a> = pyzord.passwd
+<a href="#AccessFile">AccessFile</a> = pyzord.access
     </pre>
     
     <h4>Definitions</h4>
     
-    <h5><kbd>[client]</kbd> section</h5>
+    <h5 id="section-client"><kbd>[client]</kbd> section</h5>
 
     <dl>
-      <dt>ServersFile</dt>
+      <dt id="ServersFile">ServersFile</dt>
       <dd>
 	A newline-separated list of server addresses to
 	report/whitelist/check with.  Addresses are in the format
@@ -261,13 +277,7 @@ AccessFile = ~/.pyzor/pyzord.access
 	<kbd>pyzor discover</kbd>.
       </dd>
       
-      <dt>DiscoverServersURL</dt>
-      <dd>
-	During <kbd>pyzor discover</kbd>, the URL to use
-	in finding servers.
-      </dd>
-      
-      <dt>AccountsFile</dt>
+      <dt id="AccountsFile">AccountsFile</dt>
       <dd>
 	<p>
 	  File containing information about accounts on servers.
@@ -289,24 +299,34 @@ AccessFile = ~/.pyzor/pyzord.access
 	  for more information.
 	</p>
       </dd>
+
+      <dt id="DiscoverServersURL">DiscoverServersURL</dt>
+      <dd>
+	During <kbd>pyzor discover</kbd>, the URL to use
+	in finding servers.
+      </dd>
+      
   </dl>
     
-    <h5><kbd>[server]</kbd> section</h5>
+    <h5 id="section-server"><kbd>[server]</kbd> section</h5>
 
     <dl>
-      <dt>port</dt>
+      <dt id="Port">Port</dt>
       <dd>port to listen on </dd>
       
-      <dt>ListenAddress</dt>
+      <dt id="ListenAddress">ListenAddress</dt>
       <dd>address to listen on</dd>
       
-      <dt>pidfile</dt>
+      <dt id="PidFile">PidFile</dt>
       <dd>file to contain the process id of the server</dd>
       
-      <dt>DigestDB</dt>
+      <dt id="LogFile">LogFile</dt>
+      <dd>file to contain server logs</dd>
+      
+      <dt id="DigestDB">DigestDB</dt>
       <dd>file containing the database of digests</dd>
       
-      <dt>PasswdFile</dt>
+      <dt id="PasswdFile">PasswdFile</dt>
       <dd>
 	<p>
 	  File containing a list of user account information.
@@ -324,7 +344,7 @@ bob : 8da9f54058c34e383e997f45d6eb74837139f83b
 	
       </dd>
       
-      <dt>AccessFile</dt>
+      <dt id="AccessFile">AccessFile</dt>
       <dd>
 	<p>
 	  File containing information about user privileges.

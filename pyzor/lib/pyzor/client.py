@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.21 2002-07-02 02:53:20 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.22 2002-07-02 20:09:39 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -145,45 +145,40 @@ class ExecCall(object):
 
     def run(self):
         debug = 0
-        (options, args) = getopt.getopt(sys.argv[1:], 'dhc:')
+        (options, args) = getopt.getopt(sys.argv[1:], 'dh:', ['homedir='])
         if len(args) < 1:
            self.usage()
 
-        config_fn = None
+        homedir = None
 
         for (o, v) in options:
             if o == '-d':
                 debug = 1
             elif o == '-h':
                self.usage()
-            elif o == '-c':
-                config_fn = v
+            elif o == '--homedir':
+                homedir = v
         
         self.output = Output(debug=debug)
 
-        config = pyzor.Config()
+        if homedir is None:
+            homedir = pyzor.get_homedir()
+
+        config = pyzor.Config(homedir)
         config.add_section('client')
 
-        defaults = {'ServersFile': os.path.join(pyzor.get_homedir(),
-                                                'servers'),
+        defaults = {'ServersFile': 'servers',
                     'DiscoverServersURL': ServerList.inform_url,
-                    'AccountsFile' : os.path.join(pyzor.get_homedir(),
-                                                  'accounts'),
+                    'AccountsFile' : 'accounts',
                     }
 
         for k, v in defaults.items():
             config.set('client', k, v)
             
-        if config_fn is None:
-            config_fn = pyzor.Config.get_default_filename()
-        
-        config.read(config_fn)
+        config.read(os.path.join(homedir, 'config'))
         
         servers_fn = config.get_filename('client', 'ServersFile')
     
-        homedir = pyzor.get_homedir()
-        # We really shouldn't need to make this unless
-        # the user wants to use it...
         if not os.path.exists(homedir):
             os.mkdir(homedir)
 
@@ -214,7 +209,7 @@ class ExecCall(object):
 
 
     def usage(self):
-        sys.stderr.write("usage: %s [-d] [-c config_file] check|report|discover|ping|genkey|shutdown [cmd_options]\nData is read on standard input.\n"
+        sys.stderr.write("usage: %s [-d] [--homedir dir] check|report|discover|ping|genkey|shutdown [cmd_options]\nData is read on standard input.\n"
                          % sys.argv[0])
         sys.exit(1)
         return  # just to help xemacs

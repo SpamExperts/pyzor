@@ -1,3 +1,2 @@
 ping check : anonymous : allow
 ALL : bob : allow
-ALL : ALL : deny

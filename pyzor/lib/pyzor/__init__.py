@@ -18,7 +18,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.3.0"
-__revision__ = "$Id: __init__.py,v 1.26 2002-07-02 02:53:20 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.27 2002-07-02 20:09:39 ftobin Exp $"
 
 import os
 import os.path
@@ -562,21 +562,17 @@ class Address(tuple):
 
 
 class Config(ConfigParser.ConfigParser, object):
+
+    def __init__(self, homedir):
+        assert isinstance(homedir, str)
+        self.homedir = homedir
+        super(Config, self).__init__()
     
     def get_filename(self, section, option):
-        return os.path.expanduser(self.get(section, option))
-
-    def get_default_filename(self):
-        homedir = get_homedir()
-        
-        if os.path.isfile(homedir):
-            sys.stderr.write("In new versions of Pyzor, %s is a directory,\nand your current file %s\nneeds to be removed and re-generated with 'pyzor discover'.\n" \
-                                 % (homedir, homedir))
-            sys.exit(1)
-        
-        return os.path.join(homedir, 'config')
-        
-    get_default_filename = classmethod(get_default_filename)
+        fn = os.path.expanduser(self.get(section, option))
+        if not os.path.isabs(fn):
+            fn = os.path.join(self.homedir, fn)
+        return fn
 
 
 def get_homedir():
