@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.22 2002-07-02 20:09:39 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.23 2002-07-28 02:35:52 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -435,15 +435,7 @@ class ClientRunner(object):
         try:
             response = apply(self.routine, varargs, kwargs)
             self.handle_response(response, message)
-        except CommError, e:
-            sys.stderr.write(message + ("%s: %s\n"
-                                        % (e.__class__.__name__, e)))
-            self.all_ok = False
-        except KeyError, e:
-            sys.stderr.write(message + ("%s: %s\n"
-                                        % (e.__class__.__name__, e)))
-            self.all_ok = False
-        except ValueError, e:
+        except (CommError, KeyError, ValueError), e:
             sys.stderr.write(message + ("%s: %s\n"
                                         % (e.__class__.__name__, e)))
             self.all_ok = False
