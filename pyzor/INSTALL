@@ -7,16 +7,22 @@ To install this distribution, simply run the following:
 To use the server, the Python gdbm module is required.
 You can generally check if you have the gdbm module
 by executing:
-	echo 'import gdbm' | python && echo 'gdbm found'
+	python -c 'import gdbm' && echo 'gdbm found'
 
 The gdbm module is available at:
-	Debian:
+	Debian GNU/Linux:
 		http://packages.debian.org/stable/interpreters/python-gdbm.html
+	Gentoo Linux:
+		Will be built with Python if the gdbm library is found.
+		If it isn't there with your Python, try stealing
+		the FreeBSD setup.py patchfile in their ports to
+		install just the gdbm module.
 	FreeBSD:
 		ports/databases/py-gdbm
 	tar.gz:
 		included in the Python distribution
 		(not sure of the precise procedure for simply installing
-		the gdbm module)
+		the gdbm module; try stealing the FreeBSD setup.py patchfile
+		in their ports).
 
 See 'pydoc pyzor' for command-line usage and module documentation.
