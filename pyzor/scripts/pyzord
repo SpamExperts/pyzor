@@ -11,9 +11,9 @@ import ConfigParser
 
 _author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.14 2002-07-02 20:09:39 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.15 2002-07-02 21:32:29 ftobin Exp $"
 
-default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping'
+default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping',
                                               'info'])
 
 def cleanup_server_handler(signum, frame):
