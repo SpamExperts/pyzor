@@ -1,0 +1,75 @@
+#!/usr/local/bin/python
+
+import sys
+import os.path
+import pyzor.client
+
+digest_spec = pyzor.client.PiecesDigestSpec([(5, 10), (0, 4)])
+
+def usage():
+    sys.stderr.write("usage: %s [check|report|discover|ping]\nData is read on standard input.\n"
+                     % sys.argv[0])
+    sys.exit(1)
+
+def discover(config, config_fn):
+    config.get_informed(config.default_inform_url, config_fn)
+         
+def ping(client, config):
+    print repr(client.ping(config.servers[0]))
+
+
+def check(client, config):
+    import rfc822
+    fp = rfc822.Message(sys.stdin, seekable=0).fp
+        
+    digest = pyzor.client.PiecesDigest.compute_from_file(fp,
+                                                         digest_spec)
+    count = int(client.check(digest, config.servers[0])[1])
+    print count
+    sys.exit(count == 0)
+
+
+def report(client, config):
+    import mailbox
+    mbox = mailbox.PortableUnixMailbox(sys.stdin)
+
+    for msg in mbox:
+        digest = pyzor.client.PiecesDigest.compute_from_file(msg.fp,
+                                                             digest_spec)
+        print repr(client.report(digest, digest_spec, config.servers[0]))
+
+
+def run():
+    if len(sys.argv) != 2:
+        usage()
+
+    command = sys.argv[1]
+    
+    client = pyzor.client.Client(debug=1)
+
+    config = pyzor.client.Config()
+    config_fn = config.get_default_filename()
+
+    if not os.path.exists(config_fn) or command == 'discover':
+        discover(config, config_fn)
+    config.load(config_fn)
+
+    if len(config.servers) == 0:
+        sys.stderr.write("No servers available!  Maybe try the 'discover' command\n")
+        sys.exit(1)
+                
+    if command == 'discover':
+        # already completed above
+        pass
+    elif command == 'check':
+        check(client, config)
+    elif command == 'report':
+        report(client, config)
+    elif command == 'ping':
+        ping(client, config)
+    else:
+        usage()
+
+
+if __name__ == '__main__':
+    run()

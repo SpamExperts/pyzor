@@ -1,0 +1,22 @@
+#!/usr/local/bin/python
+
+import sys
+import signal
+import pyzor.server
+
+def cleanup_server_handler(signum, frame):
+    pyzor.server.DBHandle('c').cleanup()
+
+def usage():
+    sys.stderr.write("usage: %s dbfile port\n" % sys.argv[0])
+    sys.exit(1)
+
+if len(sys.argv) != 3:
+    usage()
+
+(dbfile, port) = sys.argv[1:]
+
+port = int(port)
+pyzor.server.DBHandle.dbfile = dbfile
+signal.signal(signal.SIGUSR1, cleanup_server_handler)
+pyzor.server.Server(('0.0.0.0', port), debug=1).serve_forever()
