@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.35 2002-09-07 01:12:12 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.36 2002-09-07 06:08:50 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -196,8 +196,10 @@ class ExecCall(object):
 
     def usage(self):
         sys.stderr.write("""usage: %s [-d] [--homedir dir] command [cmd_opts]
-command is one of: check, report, discover, ping, digest, genkey, shutdown
-Data is read on standard input (stdin)."""
+command is one of: check, report, discover, ping, digest, predigest,
+                   genkey, shutdown
+Data is read on standard input (stdin).
+"""
                          % sys.argv[0])
         sys.exit(1)
         return  # just to help xemacs
