@@ -5,10 +5,15 @@ MANIFEST
 NEWS
 README
 THANKS
+docs/index.html
 lib/pyzor/__init__.py
 lib/pyzor/client.py
 lib/pyzor/server.py
+scripts/access
+scripts/accounts
 scripts/config
+scripts/config.bob
+scripts/passwd
 scripts/pyzor
 scripts/pyzord
 scripts/servers
