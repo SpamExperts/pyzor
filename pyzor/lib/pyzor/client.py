@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.20 2002-06-30 01:20:18 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.21 2002-07-02 02:53:20 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -126,7 +126,7 @@ class Client(object):
 
 
 class ServerList(list):
-    inform_url = 'http://pyzor.sourceforge.net/cgi-bin/inform-servers'
+    inform_url = 'http://pyzor.sourceforge.net/cgi-bin/inform-servers-0-3-x'
     
     def read(self, serverfile):
         for line in serverfile:
