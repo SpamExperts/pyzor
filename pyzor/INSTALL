@@ -4,4 +4,10 @@ To install this distribution, simply run the following:
 	python setup.py build
 	python setup.py install
 
+To use the server, the Python gdbm module is required.
+	Debian:
+		http://packages.debian.org/stable/interpreters/python-gdbm.html
+	FreeBSD:
+		ports/databases/py-gdbm
+
 See 'pydoc pyzor' for command-line usage and module documentation.
