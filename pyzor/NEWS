@@ -7,6 +7,8 @@ Noteworthy changes in 0.1.1
     *	Added --mbox option for 'pyzor report' for when
 	reporting entire mailboxes.
 
+    *	No changes were made in the server portion.
+
 
 Noteworthy changes in 0.1.0
 -----------------------------------------------------------------
