@@ -23,7 +23,7 @@ report [--mbox]:
 
     If --mbox is provided, then the input is assumed
     to be a unix mailbox, and all messages in it
-    will be send to the server.
+    will be sent to the server.
 
 
 discover:
@@ -115,7 +115,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.1.1"
-__revision__ = "$Id: __init__.py,v 1.6 2002-04-15 23:46:37 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.7 2002-04-16 15:56:35 ftobin Exp $"
 
 import re
 import sys
