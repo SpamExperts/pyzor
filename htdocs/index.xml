@@ -37,6 +37,14 @@
       Pyzor should fit into their overall scheme, and to realize
       that Pyzor is meant to <em>complement</em> other techniques.
     </p>
+
+    <h2>How does it work?</h2>
+    
+    <p>
+      Colin Smith has an
+      <a href="http://www.archeus.plus.com/colin/pydoc/">excellent
+	overview</a> of how Pyzor works.
+    </p>
     
   </body>
 </html>
