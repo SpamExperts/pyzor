@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.31 2002-09-04 20:34:48 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.32 2002-09-04 22:41:48 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -374,12 +374,12 @@ Data is read on standard input (stdin)."""
 
 
 class FileDigester(object):
-    __slots__ = ['mbox', 'file', 'spec', 'stop',
+    __slots__ = ['mbox', 'fp', 'spec', 'stop',
                  'mbox_digester', 'output']
     
-    def __init__(self, file, spec, mbox=False):
+    def __init__(self, fp, spec, mbox=False):
         self.mbox = mbox
-        self.file = file
+        self.fp   = fp
         self.spec = spec
         self.stop = False
         self.mbox_digester = None
@@ -388,7 +388,7 @@ class FileDigester(object):
         if mbox:
             import mailbox
             factory = rfc822BodyCleaner
-            self.mbox_digester = MailboxDigester(mailbox.PortableUnixMailbox(self.file,
+            self.mbox_digester = MailboxDigester(mailbox.PortableUnixMailbox(self.fp,
                                                                              factory),
                                                  self.spec)
 
@@ -408,7 +408,7 @@ class FileDigester(object):
                 digest = self.mbox_digester.next()
         else:
             import rfc822
-            digest = DataDigester(rfc822.Message(self.file).fp,
+            digest = DataDigester(rfc822.Message(self.fp).fp,
                                   self.spec,
                                   seekable=False).get_digest()
             if digest is None:
@@ -421,7 +421,7 @@ class FileDigester(object):
 
 
 class DataDigester(object):
-    __slots__ = ['_atomic', '_value']
+    __slots__ = ['_atomic', '_value', '_used_line', '_digest']
     
     bufsize = 1024
 
@@ -455,8 +455,9 @@ class DataDigester(object):
     unwanted_txt_repl = ''
 
     def __init__(self, fp, spec, seekable=True):
-        self._atomic = None
-        self._value  = None
+        self._atomic    = None
+        self._value     = None
+        self._used_line = None
         line_offsets = []
 
         if seekable:
@@ -487,16 +488,14 @@ class DataDigester(object):
         if len(line_offsets) == 0:
             return None
             
-        digest = sha.new()
+        self._digest = sha.new()
 
         if len(line_offsets) <= self.atomic_num_lines:
             # digest everything
             self._atomic = True
             fp.seek(0)
             for line in fp:
-                norm_line = self.normalize(line)
-                if self.should_handle_line(norm_line):
-                    digest.update(norm_line)
+                self.handle_line(line)
         else:
             # digest stuff according to the spec
             self._atomic = False
@@ -512,16 +511,26 @@ class DataDigester(object):
                     line = fp.readline()
                     if not line:
                         break
-                    norm_line = self.normalize(line)
-                    if self.should_handle_line(norm_line):
-                        digest.update(norm_line)
+                    self.handle_line(line)
+                    if self._used_line:
                         i += 1
 
-        self._value = DataDigest(digest.hexdigest())
+        self._value = DataDigest(self._digest.hexdigest())
         
         assert self._atomic is not None
         assert self._value is not None
 
+
+    def handle_line(self, line):
+        norm_line = self.normalize(line)
+        if self.should_handle_line(norm_line):
+            self._used_line = True
+            self.__really_handle_line(norm_line)
+        self._used_line = False
+        assert self._used_line is not None
+
+    def __really_handle_line(self, line):
+        self._digest.update(line)
 
     def is_atomic(self):
         if self._atomic is None:
@@ -722,7 +731,7 @@ class MailboxDigester(object):
     __slots__ = ['mbox', 'digest_spec']
     
     def __init__(self, mbox, digest_spec):
-        self.mbox = mbox
+        self.mbox         = mbox
         self.digest_spec = digest_spec
 
     def __iter__(self):
@@ -826,10 +835,10 @@ class AccountsFile(object):
     Layout of file is:
     host : port ; username : keystuff
     """
-    __slots__ = ['file', 'lineno', 'output']
+    __slots__ = ['fp', 'lineno', 'output']
     
-    def __init__(self, f):
-        self.file = f
+    def __init__(self, fp):
+        self.fp     = fp
         self.lineno = 0
         self.output = pyzor.Output()
 
@@ -838,7 +847,7 @@ class AccountsFile(object):
 
     def next(self):
         while 1:
-            orig_line = self.file.readline()
+            orig_line = self.fp.readline()
             self.lineno += 1
             
             if not orig_line:
