@@ -4,6 +4,7 @@ INSTALL
 MANIFEST
 NEWS
 README
+THANKS
 lib/pyzor/__init__.py
 lib/pyzor/client.py
 lib/pyzor/server.py
