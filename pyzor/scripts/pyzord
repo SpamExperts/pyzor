@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!/usr/bin/python2
 
 import os
 import os.path
@@ -11,7 +11,7 @@ import ConfigParser
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.8 2002-06-06 02:00:23 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.9 2002-06-08 23:58:22 ftobin Exp $"
 
 default_anonymous_allows = ['check', 'report', 'ping']
 
@@ -25,7 +25,7 @@ def usage():
 
 
 def load_access_file(access_fn, server):
-    server.acl = ACL()
+    server.acl = pyzor.server.ACL()
     if os.path.exists(access_fn):
         pyzor.server.AccessFile(open(access_fn)).feed_into(server.acl)
     else:
