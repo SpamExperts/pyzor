@@ -1,3 +1,7 @@
+    *	pyzor client has new config file option in the [client]
+	section, Timeout, which specifies a timeout in seconds
+	for queries to come back to the client.
+
     *	pyzord no longer daemonizes itself, and now writes
 	it logging to standard output.
 

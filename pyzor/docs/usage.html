@@ -9,7 +9,7 @@
   <body>
     <h1>Pyzor Usage Documentation</h1>
 
-    <p id="cvsid">$Id: usage.html,v 1.8 2002-09-19 01:56:46 ftobin Exp $</p>
+    <p id="cvsid">$Id: usage.html,v 1.9 2002-09-24 02:29:51 ftobin Exp $</p>
     
     <ul>
       <li><a href="#client"><kbd>pyzor</kbd> (client)</a></li>
@@ -312,6 +312,7 @@ pyzord [-d] [--homedir <var>dir</var>]
 <a href="#ServersFile">ServersFile</a> = servers
 <a href="#AccountsFile">AccountsFile</a> = accounts
 <a href="#DiscoverServersURL">DiscoverServersURL</a> = http://pyzor.sourceforge.net/cgi-bin/inform-servers-0-3-x
+<a href="#Timeout">Timeout</a> = 5
 
 <a href="#section-server">[server]</a>
 <a href="#Port">Port</a> = 24441
@@ -363,6 +364,11 @@ pyzord [-d] [--homedir <var>dir</var>]
 	in finding servers.
       </dd>
       
+      <dt id="Timeout">Timeout</dt>
+      <dd>
+	Number of seconds to wait for response to a query.
+      </dd>
+
   </dl>
     
     <h5 id="section-server"><kbd>[server]</kbd> section</h5>
@@ -547,7 +553,7 @@ check report ping info whitelist : bob : allow
     <h2 id="copyright">Copyright</h2>
     
     <p>
-      Copyright &copy; 2002 Frank J. Tobin
+      Copyright &#169; 2002 Frank J. Tobin
       <a href="mailto:ftobin@neverending.org">ftobin@neverending.org</a>
     </p>
 

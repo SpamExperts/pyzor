@@ -15,14 +15,13 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.41 2002-09-08 20:37:15 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.42 2002-09-24 02:29:51 ftobin Exp $"
 
 randfile = '/dev/random'
 
 
 class Client(object):
     __slots__ = ['socket', 'output', 'accounts']
-    ttl = 4
     timeout = 5
     max_packet_size = 8192
     
@@ -153,18 +152,20 @@ class ExecCall(object):
         config = pyzor.Config(homedir)
         config.add_section('client')
 
-        defaults = {'ServersFile': 'servers',
+        defaults = {'ServersFile':        'servers',
                     'DiscoverServersURL': ServerList.inform_url,
-                    'AccountsFile' : 'accounts',
+                    'AccountsFile':       'accounts',
+                    'Timeout':            str(Client.timeout),
                     }
 
         for k, v in defaults.items():
             config.set('client', k, v)
-            
+        
         config.read(os.path.join(homedir, 'config'))
         
         servers_fn = config.get_filename('client', 'ServersFile')
-    
+        Client.timeout = config.getint('client', 'Timeout')
+        
         if not os.path.exists(homedir):
             os.mkdir(homedir)
 
