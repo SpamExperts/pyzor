@@ -27,8 +27,9 @@
       Pyzor initially started out to be merely a Python
       implementation of <a href="http://razor.sourceforge.net/">Razor</a>,
       but due to the protocol and the fact that Razor's server
-      is not software libre, I decided to impelement Pyzor with a
-      new protocol and release the entire system as software libre.
+      is not Open Source or software libre,
+      I decided to impelement Pyzor with a new protocol and release the entire system
+      as Open Source and software libre.
     </p>
     
     <p>
