@@ -1,0 +1,7 @@
+Pyzor requires at least Python 2.2.
+
+To install this distribution, simply run the following:
+	python setup.py build
+	python setup.py install
+
+See 'pydoc pyzor' for command-line usage and module documentation.
