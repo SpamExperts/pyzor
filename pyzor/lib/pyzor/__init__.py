@@ -137,7 +137,7 @@ FILES:
       DigestDB = ~/.pyzor/pyzord.db
           Location of digest database.
 
-      CleanupAge = 259200
+      CleanupAge = 10368000
           When cleaning the database, entries older than this number
           of seconds are removed.
 
@@ -167,7 +167,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.20 2002-06-06 17:31:48 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.21 2002-06-07 16:15:11 ftobin Exp $"
 
 import os
 import os.path

@@ -31,7 +31,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.13 2002-06-06 02:00:23 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.14 2002-06-07 16:15:12 ftobin Exp $"
 
 
 class AuthorizationError(Exception):
@@ -279,7 +279,7 @@ class DBHandle(object):
     __slots__ = ['db', 'output']
     dbfile = None
     db_lock = threading.Lock()
-    max_age = 72*3600
+    max_age = 3600*24*30*4   # 3 months
 
     def __init__(self, mode='r'):
         self.output = Output()
