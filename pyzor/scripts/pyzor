@@ -7,7 +7,7 @@ import getopt
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzor,v 1.3 2002-04-14 19:52:51 ftobin Exp $"
+__revision__ = "$Id: pyzor,v 1.4 2002-04-14 21:17:10 ftobin Exp $"
 
 # hard-coded for the moment
 digest_spec = pyzor.client.PiecesDigestSpec([(20, 3), (60, 3)])
@@ -29,7 +29,9 @@ def check(client, config):
     fp = rfc822.Message(sys.stdin, seekable=0).fp
         
     digest = pyzor.client.PiecesDigest.compute_from_file(fp,
-                                                         digest_spec)
+                                                         digest_spec,
+                                                         seekable=0)
+    
     count = int(client.check(digest, config.servers[0])[1])
     print count
     sys.exit(count == 0)
@@ -41,7 +43,9 @@ def report(client, config):
 
     for msg in mbox:
         digest = pyzor.client.PiecesDigest.compute_from_file(msg.fp,
-                                                             digest_spec)
+                                                             digest_spec,
+                                                             seekable=0)
+        
         print repr(client.report(digest, digest_spec, config.servers[0]))
 
 
