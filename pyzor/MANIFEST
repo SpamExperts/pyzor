@@ -22,3 +22,4 @@ scripts/test.in.0
 scripts/test.in.mbox
 scripts/test.sh
 setup.py
+unittests.py
