@@ -17,7 +17,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.25 2002-09-08 03:33:44 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.26 2002-09-19 01:41:30 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -473,7 +473,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         if do_exit:
             db_hold = DBHandle()  # to keep the db consistent
             self.finish()
-            os.kill(self.server.pid, signal.SIGQUIT)
+            os.kill(self.server.pid, signal.SIGTERM)
 
 
     def _really_handle(self):
