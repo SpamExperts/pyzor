@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.43 2002-09-24 03:13:17 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.44 2002-10-05 01:55:22 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -261,7 +261,7 @@ Data is read on standard input (stdin).
 
         for digest in FileDigester(sys.stdin, self.digest_spec):
             for server in self.servers:
-                response = runner.run(server, (digest, server))
+                runner.run(server, (digest, server))
                 
         return (runner.found_hit and not runner.whitelisted)
 
@@ -629,9 +629,10 @@ def get_file_digester(fp, spec, mbox, seekable=False):
     if mbox:
         return MailboxDigester(fp, spec)
 
-    return (DataDigester(rfc822BodyCleaner(fp),
-                         spec, seekable).get_digest(),)
-
+    return filter(lambda x: x is not None,
+                  (DataDigester(rfc822BodyCleaner(fp),
+                                spec, seekable).get_digest(),)
+                  )
 
 
 class MailboxDigester(BasicIterator):
