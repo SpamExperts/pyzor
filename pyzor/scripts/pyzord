@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 
+import os
 import sys
 import signal
 import getopt
@@ -7,7 +8,7 @@ import pyzor.server
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.3 2002-04-14 19:52:51 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.4 2002-04-14 20:33:05 ftobin Exp $"
 
 def cleanup_server_handler(signum, frame):
     pyzor.server.DBHandle('c').cleanup()
@@ -31,5 +32,28 @@ for (o, v) in options:
 
 port = int(port)
 pyzor.server.DBHandle.dbfile = dbfile
+server = pyzor.server.Server(('0.0.0.0', port), debug=debug)
+
+if not debug:
+    # This step is required so that the new process is guaranteed
+    # not to be a process group leader. The next step, setsid(),
+    # fails if you're a process group leader.
+    pid = os.fork()
+    if pid: os._exit(0)
+
+    # setsid() to become a process group and session group leader.
+    # Since a controlling terminal is associated with a session,
+    # and this new session has not yet acquired a controlling
+    # terminal our process now has no controlling terminal,
+    # which is a Good Thing for daemons.
+    os.setsid()
+        
+    pid = os.fork()
+    if pid: os._exit(0)
+
+    #sys.stdin.close()
+    #sys.stdout.close()
+    #sys.stderr.close()
+
 signal.signal(signal.SIGUSR1, cleanup_server_handler)
-pyzor.server.Server(('0.0.0.0', port), debug=debug).serve_forever()
+server.serve_forever()

@@ -31,7 +31,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.4 2002-04-14 19:52:51 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.5 2002-04-14 20:33:05 ftobin Exp $"
 
 
 class Record(object):
@@ -46,8 +46,8 @@ class Record(object):
     def increment(self):
         # overflow prevention
         if self.count < 2**30:
-            sys.stderr.write("increasing %d\n" % self.count)
             self.count += 1
+            sys.stderr.write("count is now %d\n" % self.count)
         self.update()
 
     def update(self):
@@ -135,7 +135,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
             self.msg.thread = thread_id
 
             op = self.read_string()
-            self.output.debug("got a %s command" % op)
+            self.output.debug("got a %s command from %s" %
+                              (op, self.client_address))
             if op == 'ping':
                 pass
             elif op == 'check':
@@ -169,6 +170,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
     def handle_check(self):
         ttl    = self.read_ttl()
         digest = self.read_digest()
+        self.output.debug("request is for digest %s" % digest)
         self.msg.add_int(200)
 
         db = DBHandle('r')
@@ -181,6 +183,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         ttl    = self.read_ttl()
         spec   = self.read_digest_spec()
         digest = self.read_digest()
+        self.output.debug("request is for digest %s" % digest)
 
         db = DBHandle('c')
         if not db.has_key(digest):
@@ -191,20 +194,20 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
 
     def read_ttl(self):
         x = self.read_int()
-        self.output.debug("read ttl %s" % x)
+        #self.output.debug("read ttl %s" % x)
         return x
 
     def read_digest(self):
         try:
             x = PiecesDigest(self.read_string())
-            self.output.debug("read digest %s" % x)
+            #self.output.debug("read digest %s" % x)
         except ValueError, e:
             raise ProtocolError, e
         return x
 
     def read_digest_spec(self):
         try:
-            x = PiecesDigestSpec(self.read_list(read_netstring))
+            return PiecesDigestSpec(self.read_list(read_netstring))
         except ValueError, e:
             raise ProtocolError, e
 
@@ -222,17 +225,17 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
 
     def read_string(self):
         s = read_netstring(self.rfile)
-        self.output.debug("read string %s" % repr(s))
+        #self.output.debug("read string %s" % repr(s))
         return s
 
     def read_int(self):
         i = read_netint(self.rfile)
-        self.output.debug("read int %s" % repr(i))
+        #self.output.debug("read int %s" % repr(i))
         return i
 
     def read_list(self, factory):
         l = read_netlist(self.rfile, factory)
-        self.output.debug("read list %s" % repr(l))
+        #self.output.debug("read list %s" % repr(l))
         return l
 
     def expect(self, expected, factory):
@@ -240,4 +243,3 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         if got != expected:
             raise ProtocolError, \
                   "expected %s, got %s" % (repr(expected), repr(got))
-
