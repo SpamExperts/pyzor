@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.40 2002-09-08 02:15:03 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.41 2002-09-08 20:37:15 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -288,6 +288,9 @@ Data is read on standard input (stdin).
 
 
     def send_digest(self, digest, spec, client_method):
+        """digest can be none; if so, nothing is sent"""
+        if digest is None:
+            return
         typecheck(digest, DataDigest)
 
         runner = ClientRunner(client_method)
@@ -465,7 +468,7 @@ class DataDigester(object):
         
         # did we get an empty file?
         if len(offsets) == 0:
-            return None
+            return
 
         self._digest = sha.new()
 
