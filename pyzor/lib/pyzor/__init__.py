@@ -2,7 +2,7 @@
 
 CLIENT (pyzor):
 
-usage: pyzor [-d] check|report|discover|ping
+usage: pyzor [-d] check|report|discover|ping [cmd_options]
 
 -d:
     turn on debugging
@@ -14,16 +14,23 @@ check:
     Exit code is zero (0) if a match is found, and non-zero
     if there are no matches.
 
-report:
-    Reads on standard input a unix mailbox.
+
+report [--mbox]:
+    Reads on standard input an RFC 822 (mail) message.
     Sends to the server a digest of each message
     in the mailbox.  Writes to standard output
     a tuple of (error-code, message) from the server.
+
+    If --mbox is provided, then the input is assumed
+    to be a unix mailbox, and all messages in it
+    will be send to the server.
+
 
 discover:
     Finds Pyzor servers, and writes them to ~/.pyzor.
     This may accomplished through querying already-known
     servers or an HTTP call to a hard-coded address.
+
 
 ping:
     Merely requests a response from the server.
@@ -107,8 +114,8 @@ http://www.gnu.org/copyleft/gpl.html
 """
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
-__version__  = "0.1.0"
-__revision__ = "$Id: __init__.py,v 1.5 2002-04-14 21:33:50 ftobin Exp $"
+__version__  = "0.1.1"
+__revision__ = "$Id: __init__.py,v 1.6 2002-04-15 23:46:37 ftobin Exp $"
 
 import re
 import sys

@@ -10,5 +10,6 @@ lib/pyzor/server.py
 scripts/pyzor
 scripts/pyzord
 scripts/test.in.0
+scripts/test.in.mbox
 scripts/test.sh
 setup.py

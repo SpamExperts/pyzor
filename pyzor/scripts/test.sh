@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# HOME so it finds the right .pyzor
 export HOME=.
 port=9999
 db='test.db'
@@ -22,6 +23,8 @@ sleep 1
 ./pyzor report < test.in.0 || fail
 ./pyzor report < test.in.0 || fail
 [ `./pyzor check < test.in.0` = 2 ] || fail
+./pyzor report --mbox < test.in.mbox || fail
+[ `./pyzor check < test.in.0` = 3 ] || fail
 ./pyzor ping || fail
 
 kill $server_pid

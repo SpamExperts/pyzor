@@ -7,24 +7,24 @@ import getopt
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzor,v 1.6 2002-04-14 22:23:08 ftobin Exp $"
+__revision__ = "$Id: pyzor,v 1.7 2002-04-15 23:46:37 ftobin Exp $"
 
 # hard-coded for the moment
 digest_spec = pyzor.client.PiecesDigestSpec([(20, 3), (60, 3)])
 
 def usage():
-    sys.stderr.write("usage: %s [-d] check|report|discover|ping\nData is read on standard input.\n"
+    sys.stderr.write("usage: %s [-d] check|report|discover|ping [cmd_options]\nData is read on standard input.\n"
                      % sys.argv[0])
     sys.exit(1)
 
-def discover(config, config_fn):
+def discover(args, config, config_fn):
     config.get_informed(config.default_inform_url, config_fn)
          
-def ping(client, config):
+def ping(args, client, config):
     print repr(client.ping(config.servers[0]))
 
 
-def check(client, config):
+def check(args, client, config):
     import rfc822
     fp = rfc822.Message(sys.stdin, seekable=0).fp
         
@@ -39,22 +39,35 @@ def check(client, config):
     sys.exit(1)
 
 
-def report(client, config):
-    import mailbox
-    mbox = mailbox.PortableUnixMailbox(sys.stdin)
+def report(args, client, config):
+    (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+    do_mbox = 0
+    for (o, v) in options:
+        if o == '--mbox':
+            do_mbox = 1
 
-    for msg in mbox:
-        digest = pyzor.client.PiecesDigest.compute_from_file(msg.fp,
-                                                             digest_spec,
-                                                             seekable=0)
-        
-        print repr(client.report(digest, digest_spec, config.servers[0]))
+    if do_mbox:
+        import mailbox
+        mbox = mailbox.PortableUnixMailbox(sys.stdin)
+        for msg in mbox:
+            report_fp(client, config, msg.fp)
+    else:
+        import rfc822
+        report_fp(client, config, rfc822.Message(sys.stdin).fp)
 
+
+def report_fp(client, config, fp):
+    digest = pyzor.client.PiecesDigest.compute_from_file(fp,
+                                                         digest_spec,
+                                                         seekable=0)
+
+    print repr(client.report(digest, digest_spec, config.servers[0]))
+    
 
 def run():
     debug = 0
     (options, args) = getopt.getopt(sys.argv[1:], 'dh')
-    if len(args) != 1:
+    if len(args) < 1:
         usage()
 
     for (o, v) in options:
@@ -71,7 +84,7 @@ def run():
     config_fn = config.get_default_filename()
 
     if not os.path.exists(config_fn) or command == 'discover':
-        discover(config, config_fn)
+        discover(args, config, config_fn)
     config.load(config_fn)
 
     if len(config.servers) == 0:
@@ -83,11 +96,11 @@ def run():
             # already completed above
             pass
         elif command == 'check':
-            check(client, config)
+            check(args, client, config)
         elif command == 'report':
-            report(client, config)
+            report(args, client, config)
         elif command == 'ping':
-            ping(client, config)
+            ping(args, client, config)
         else:
             usage()
     except pyzor.client.TimeoutError, e:
