@@ -3,6 +3,8 @@ Noteworthy changes in 0.4.0
 
     *	Messages are now decoded if they are encoded,
 	and subparts that are not encoded text/* are ignored.
+	Currently base64, quoted-printable, and uuencode
+	is supported.
 
     *	Message normalization now removes HTML tags
 	(irregardless of Content-Type).
