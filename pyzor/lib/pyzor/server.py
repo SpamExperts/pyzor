@@ -1,22 +1,5 @@
 """networked spam-signature detection server"""
 
-# Copyright (C) 2002 Frank J. Tobin <ftobin@neverending.org>
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, visit the following URL:
-# http://www.gnu.org/copyleft/gpl.html
-
-
 from __future__ import division
 
 import os
@@ -34,7 +17,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.21 2002-07-28 02:13:38 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.22 2002-09-03 03:42:14 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):

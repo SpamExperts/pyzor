@@ -1,24 +1,8 @@
 """networked spam-signature detection"""
 
-# Copyright (C) 2002 Frank J. Tobin <ftobin@neverending.org>
-# 
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, visit the following URL:
-# http://www.gnu.org/copyleft/gpl.html
-
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.3.1"
-__revision__ = "$Id: __init__.py,v 1.32 2002-08-19 01:56:39 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.33 2002-09-03 03:42:14 ftobin Exp $"
 
 import os
 import os.path
