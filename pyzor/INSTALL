@@ -5,6 +5,11 @@ To install this distribution, simply run the following:
 	python setup.py install
 
 To use the server, the Python gdbm module is required.
+You can generally check if you have the gdbm module
+by executing:
+	echo 'import gdbm' | python && echo 'gdbm found'
+
+The gdbm module is available at:
 	Debian:
 		http://packages.debian.org/stable/interpreters/python-gdbm.html
 	FreeBSD:
