@@ -7,6 +7,7 @@ import cStringIO
 import getopt
 import tempfile
 import mimetools
+import multifile
 import sha
 import threading
 
@@ -15,7 +16,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.45 2002-10-09 00:45:45 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.46 2002-10-21 21:38:35 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -652,7 +653,6 @@ class rfc822BodyCleaner(BasicIterator):
                 self.curfile.seek(0)
                 
         elif self.type == 'multipart':
-            import multifile
             self.multifile = multifile.MultiFile(msg.fp, seekable=False)
             self.multifile.push(msg.getparam('boundary'))
             self.multifile.next()
@@ -679,11 +679,15 @@ class rfc822BodyCleaner(BasicIterator):
 
 
     def next(self):
-        l = self.readline()
+        try:
+            l = self.readline()
+        except multifile.Error, e:
+            sys.stderr.write("%s: %s\n" % (e.__class__, e))
+            raise StopIteration
+            
         if not l:
             raise StopIteration
-        return l        
-
+        return l
 
 
 class ClientRunner(object):
