@@ -26,6 +26,7 @@ import StringIO
 import traceback
 import threading
 
+import pyzor
 from pyzor import *
 
 __author__   = pyzor.__author__

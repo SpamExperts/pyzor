@@ -2,21 +2,28 @@
 
 import sys
 import signal
+import getopt
 import pyzor.server
 
 def cleanup_server_handler(signum, frame):
     pyzor.server.DBHandle('c').cleanup()
 
 def usage():
-    sys.stderr.write("usage: %s dbfile port\n" % sys.argv[0])
+    sys.stderr.write("usage: %s [-d] dbfile port\n" % sys.argv[0])
     sys.exit(1)
 
-if len(sys.argv) != 3:
+debug = 0
+(options, args) = getopt.getopt(sys.argv[1:], 'd')
+if len(args) != 2:
     usage()
+    
+for (o, v) in options:
+    if o == '-d':
+        debug = 1
 
-(dbfile, port) = sys.argv[1:]
+(dbfile, port) = args
 
 port = int(port)
 pyzor.server.DBHandle.dbfile = dbfile
 signal.signal(signal.SIGUSR1, cleanup_server_handler)
-pyzor.server.Server(('0.0.0.0', port), debug=1).serve_forever()
+pyzor.server.Server(('0.0.0.0', port), debug=debug).serve_forever()

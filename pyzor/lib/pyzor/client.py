@@ -23,6 +23,7 @@ import socket
 import signal
 import StringIO
 
+import pyzor
 from pyzor import *
 
 __author__   = pyzor.__author__
@@ -36,7 +37,7 @@ class ConfigError(Exception):
 class Client(object):
     __slots__ = ['socket', 'output']
     ttl = 4
-    timeout = 2
+    timeout = 4
     max_packet_size = 8192
     
     def __init__(self, debug):
@@ -127,8 +128,9 @@ class Config(object):
     
     def get_informed(self, url, outfile):
         import urllib
+        self.output.debug("retrieving servers from %s" % url)
         urllib.urlretrieve(url, outfile)
-            
+
     def load(self, configfile):
         cf = open(configfile)
         for line in cf:
@@ -158,6 +160,7 @@ class Config(object):
             port = int(port)
         except ValueError, e:
             raise ConfigError, "%s is not a valid port" % repr(port)
+        self.output.debug("loading in server %s" % str((ip, port)))
         self.servers.append((ip, port))
 
 

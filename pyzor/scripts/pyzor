@@ -3,11 +3,12 @@
 import sys
 import os.path
 import pyzor.client
+import getopt
 
 digest_spec = pyzor.client.PiecesDigestSpec([(5, 10), (0, 4)])
 
 def usage():
-    sys.stderr.write("usage: %s [check|report|discover|ping]\nData is read on standard input.\n"
+    sys.stderr.write("usage: %s [-d] check|report|discover|ping\nData is read on standard input.\n"
                      % sys.argv[0])
     sys.exit(1)
 
@@ -40,12 +41,18 @@ def report(client, config):
 
 
 def run():
-    if len(sys.argv) != 2:
+    debug = 0
+    (options, args) = getopt.getopt(sys.argv[1:], 'd')
+    if len(args) != 1:
         usage()
 
-    command = sys.argv[1]
+    for (o, v) in options:
+        if o == '-d':
+            debug = 1
     
-    client = pyzor.client.Client(debug=1)
+    command = args[0]
+    
+    client = pyzor.client.Client(debug=debug)
 
     config = pyzor.client.Config()
     config_fn = config.get_default_filename()
@@ -57,19 +64,21 @@ def run():
     if len(config.servers) == 0:
         sys.stderr.write("No servers available!  Maybe try the 'discover' command\n")
         sys.exit(1)
-                
-    if command == 'discover':
-        # already completed above
-        pass
-    elif command == 'check':
-        check(client, config)
-    elif command == 'report':
-        report(client, config)
-    elif command == 'ping':
-        ping(client, config)
-    else:
-        usage()
 
+    try: 
+        if command == 'discover':
+            # already completed above
+            pass
+        elif command == 'check':
+            check(client, config)
+        elif command == 'report':
+            report(client, config)
+        elif command == 'ping':
+            ping(client, config)
+        else:
+            usage()
+    except pyzor.client.TimeoutError, e:
+        sys.stderr.write("timeout from server\n")
 
 if __name__ == '__main__':
     run()
