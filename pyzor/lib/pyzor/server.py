@@ -31,7 +31,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.14 2002-06-07 16:15:12 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.15 2002-06-09 17:35:26 ftobin Exp $"
 
 
 class AuthorizationError(Exception):
@@ -48,12 +48,12 @@ class ACL(object):
         self.entries = []
 
     def add_entry(self, entry):
-        assert isinstance(entry, ACLEntry)
+        typecheck(entry, ACLEntry)
         self.entries.append(entry)
 
     def allows(self, user, op):
-        assert isinstance(user, Username)
-        assert isinstance(op,   Opname)
+        typecheck(user, Username)
+        typecheck(op,   Opname)
         
         for entry in self.entries:
             if entry.allows(user, op):
@@ -68,8 +68,8 @@ class ACLEntry(tuple):
     
     def __init__(self, v):
         (user, op, allow) = v
-        assert isinstance(user,  Username)
-        assert isinstance(op,    Opname)
+        typecheck(user,  Username)
+        typecheck(op,    Opname)
         assert bool(allow) == allow
 
     def user(self):
@@ -94,8 +94,8 @@ class ACLEntry(tuple):
         """If allow is True, we return true if and only if we allow user to do op.
         If allow is False, we return true if and only if we deny user to do op
         """
-        assert isinstance(user,  Username)
-        assert isinstance(op,    Opname)
+        typecheck(user,  Username)
+        typecheck(op,    Opname)
         assert bool(allow) == allow
         
         return (self.allow == allow
@@ -119,7 +119,7 @@ class AccessFile(object):
         self.lineno = 0
 
     def feed_into(self, acl):
-        assert isinstance(acl, ACL)
+        typecheck(acl, ACL)
     
         for orig_line in self.file:
             self.lineno += 1
@@ -175,8 +175,8 @@ class AccessFile(object):
 
 class Passwd(dict):
     def __setitem__(self, k, v):
-        assert isinstance(k, pyzor.Username)
-        assert isinstance(v, long)
+        typecheck(k, pyzor.Username)
+        typecheck(v, long)
         super(Passwd, self).__setitem__(k, v)
 
 
@@ -406,7 +406,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
 
         if self.user != pyzor.anonymous_user:
             if self.server.passwd.has_key(self.user):
-                signed_msg.verify_sig(user_key)
+                signed_msg.verify_sig(self.server.passwd[self.user])
             else:
                 raise SignatureError, "unknown user"
         
@@ -421,7 +421,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.out_msg.set_thread(self.msg_thread)
 
         self.op = Opname(self.in_msg.get_op())
-        if not self.server.acl.allows(user, self.op):
+        if not self.server.acl.allows(self.user, self.op):
             raise AuthorizationError
         
         self.output.debug("got a %s command from %s" %
@@ -454,7 +454,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         else:
             count = 0
 
-        assert isinstance(count, int) or isinstance(count, long)
+        if not (isinstance(count, int) or isinstance(count, long)):
+            raise TypeError
         self.out_msg['Count'] = str(count)
 
 

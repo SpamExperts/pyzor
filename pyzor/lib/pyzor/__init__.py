@@ -1,173 +1,24 @@
-"""networked spam-signature detection
+"""networked spam-signature detection"""
 
-CLIENT (pyzor):
-
-usage: pyzor [-d] [-c config] check|report|discover|ping [cmd_options]
-
-options:
-
--d:
-    turn on debugging
-
--c config:
-    use file 'config' instead of the default ~/.pyzor/config.
-
-
-commands:
-
-check:
-    Reads on standard input an rfc822 (email) message.
-    Exit code is zero (0) if and only if a match is found.
-
-    If multiple servers are listed in the configuration file,
-    the exit code will be zero (0) if and only if there
-    is a match found on at least one server.
-
-
-report [--mbox]:
-    Reads on standard input an RFC 822 (mail) message.
-    Sends to the server a digest of each message
-    in the mailbox.  Writes to standard output
-    a tuple of (error-code, message) from the server.
-
-    If --mbox is provided, then the input is assumed
-    to be a unix mailbox, and all messages in it
-    will be sent to the server.
-
-
-discover:
-    Finds Pyzor servers, and writes them to ~/.pyzor.
-    This may accomplished through querying already-known
-    servers or an HTTP call to a hard-coded address.
-
-
-ping:
-    Merely requests a response from the server.
-
-
-Using Pyzor in procmail:
-
-To use pyzor in a procmail system, consider the following
-simple recipe:
-
-:0 Wc
-| pyzor check
-:0 a
-pyzor-caught
-
-Or, to add merely add header:
-
-:0 Wc
-| pyzor check
-:0 Waf
-| formail -A 'X-Pyzor: spam'
-
-
-Differences from Razor clients:
-    Pyzor does not consult a white-list for you.  This
-    is best handled by other systems, such as other
-    procmail rules.
-
-Using pyzor with ReadyExec:
-    ReadyExec is a system to eliminate the high startup-cost
-    of executing scripts repeatedly.  If you execute
-    pyzor a lot, you might be interested in installing
-    ReadyExec and using it with pyzor.  You can
-    get ReadyExec from http://readyexec.sourceforge.net/
-
-    To use pyzor with ReadyExec, the readyexecd.py server
-    needs to be started as:
-    
-        readyexecd.py <sock_file> pyzor.client.run
-
-    Individual clients are then executed as:
-        readyexec <sockfile> report
-    or
-        readyexec <sockfile> check
-    etc.
-
-
-SERVER (pyzord):
-
-usage: pyzord [-d] dbfile port
-
--d:
-    turn on debugging
-
-dbfile:
-    where the database should be kept
-
-port:
-    port to listen on
-
-
-Sending a USR1 signal to the server process will result
-in it cleaning out digests not updated within the last 48 hours.
-
-
-FILES:
-
-~/pyzor/config:
-    Format is INI-style (name=value, divided into [section]'s).
-    All filenames can have shell-style ~'s in them.
-    Defaults are shown below.
-
-    [client]
-      ServersFile = ~/.pyzor/servers
-          Location of file which contains a list of servers,
-          host:ip per line
-
-      DiscoverServersURL = http://pyzor.sourceforge.net/cgi-bin/inform-servers
-          URL to discover servers from.
-
-    [server]
-      Port=24441
-          Port to listen on.
-
-      ListenAddress = 0.0.0.0
-          Address to listen on.
-
-      LogFile = ~/.pyzor/pyzord.log
-          Location of logfile. Logfile format:
-              epochtime,user,address,command,data
-
-      PidFile = ~/.pyzor/pyzord.pid
-          Location of file containing PID of server.
-
-      DigestDB = ~/.pyzor/pyzord.db
-          Location of digest database.
-
-      CleanupAge = 10368000
-          When cleaning the database, entries older than this number
-          of seconds are removed.
-
-
-TODO:
-    The portions of mail which are digested should be dynamic.
-
-    P2P between servers.
-
-
-Copyright (C) 2002 Frank J. Tobin <ftobin@neverending.org>
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, visit the following URL:
-http://www.gnu.org/copyleft/gpl.html
-"""
+# Copyright (C) 2002 Frank J. Tobin <ftobin@neverending.org>
+# 
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, visit the following URL:
+# http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.21 2002-06-07 16:15:11 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.22 2002-06-09 17:35:26 ftobin Exp $"
 
 import os
 import os.path
@@ -183,7 +34,6 @@ import time
 
 proto_name     = 'pyzor'
 proto_version  =  2.0
-anonymous_user = 'anonymous'
 
 class ProtocolError(Exception):
     pass
@@ -439,7 +289,7 @@ class ThreadedMessage(Message):
         return ThreadId(self['Thread'])
 
     def set_thread(self, i):
-        assert isinstance(i, ThreadId)
+        typecheck(i, ThreadId)
         self['Thread'] = str(i)
 
 
@@ -460,37 +310,38 @@ class MacEnvelope(Message):
         return apply(factory, (self.fp,))
     
     def verify_sig(self, user_key):
-        assert isinstance(user_key, str)
+        typecheck(user_key, long)
         
         user     = self['User']
         ts       = int(self['Time'])
         said_sig = self['Sig']
+
+        hashed_user_key = self.hash_user_key(user_key)
 
         if abs(time.time() - ts) > self.ts_diff_max:
             raise SignatureError, "timestamp not within allowed range"
 
         msg = self.get_submsg()
 
-        calc_sig = self.sign_msg(user_key, ts, msg).hexdigest()
+        calc_sig = self.sign_msg(hashed_user_key, ts, msg)
 
         if not (calc_sig == said_sig):
             raise SignatureError, "invalid signature"
 
-    def wrap(self, user, hashed_key, msg):
-        """This should be used to create a MacEnvelope
-
-        hashed_key is H(U + ':' + P)"""
+    def wrap(self, user, key, msg):
+        """This should be used to create a MacEnvelope"""
         
-        assert isinstance(user, str)
-        assert isinstance(msg, Message)
-        assert isinstance(hashed_key, str)
+        typecheck(user, str)
+        typecheck(msg, Message)
+        typecheck(key, long)
 
         env = apply(self)
         ts = int(time.time())
 
         env['User'] = user
         env['Time'] = str(ts)
-        env['Sig'] = self.sign_msg(hashed_key, ts, msg).hexdigest()
+        env['Sig'] = self.sign_msg(self.hash_key(key, user),
+                                   ts, msg)
 
         env.fp.write(str(msg))
 
@@ -501,34 +352,40 @@ class MacEnvelope(Message):
 
     def hash_msg(msg):
         """returns a digest object"""
-        assert isinstance(msg, Message)
-        h = sha.new()
-        h.update(str(msg))
-        return h
+        typecheck(msg, Message)
+
+        return sha.new(str(msg))
 
     hash_msg = staticmethod(hash_msg)
+
+
+    def hash_key(key, user):
+        """returns lower(H(U + ':' + lower(hex(K))))"""
+        typecheck(key, long)
+        typecheck(user, Username)
+        
+        return sha.new("%s:%x" % (Username, key)).hexdigest().lower()
+    
+    hash_key = staticmethod(hash_key)
 
 
     def sign_msg(self, hashed_key, ts, msg):
         """ts is timestamp for message (epoch seconds)
 
-        S = H (H(M) + T + K)
+        S = H(H(M) + ':' T + ':' + K)
         M is message
-        T is timestamp
+        T is decimal epoch timestamp
         K is hashed_key
         
         returns a digest object"""
-        assert isinstance(ts, int)
-        assert isinstance(msg, Message)
-        assert isinstance(hashed_key, str)
+        
+        typecheck(ts, int)
+        typecheck(msg, Message)
+        typecheck(hashed_key, str)
 
-        sig = sha.new()
         h_msg = self.hash_msg(msg)
 
-        sig.update(h_msg.digest())
-        sig.update(str(ts))
-        sig.update(hashed_key)
-        return sig
+        return sha.new("%s:%d:%s" % (h_msg.digest(), ts, hashed_key)).hexdigest().lower()
     
     sign_msg = classmethod(sign_msg)
 
@@ -590,8 +447,8 @@ class PingRequest(Request):
 
 class ReportRequest(Request):
     def __init__(self, digest, spec):
-        assert isinstance(digest, str)
-        assert isinstance(spec, PiecesDigestSpec)
+        typecheck(digest, str)
+        typecheck(spec, PiecesDigestSpec)
 
         super(ReportRequest, self).__init__()
 
@@ -606,7 +463,7 @@ class ReportRequest(Request):
 
 class CheckRequest(Request):
     def __init__(self, digest):
-        assert isinstance(digest, str)
+        typecheck(digest, str)
         
         super(CheckRequest, self).__init__()
 
@@ -616,7 +473,7 @@ class CheckRequest(Request):
 
 ##class CheckResponse(SuccessResponse):
 ##    def __init__(self, count):
-##        assert isinstance(count, int)
+##        typecheck(count, int)
         
 ##        super(CheckResponse, self).__init__()
 ##        self.setdefault('Count', str(count))
@@ -630,8 +487,8 @@ class CheckRequest(Request):
 
 class ErrorResponse(Response):
     def __init__(self, code, s):
-        assert isinstance(code, int)
-        assert isinstance(s, str)
+        typecheck(code, int)
+        typecheck(s, str)
         
         super(ErrorResponse, self).__init__()
         self.setdefault('Code', str(code))
@@ -662,8 +519,8 @@ class Address(tuple):
         self.validate()
 
     def validate(self):
-        assert isinstance(self[0], str)
-        assert isinstance(self[1], int)
+        typecheck(self[0], str)
+        typecheck(self[1], int)
         if len(self) != 2:
             raise ValueError, "invalid address: %s" % str(self)
     
@@ -704,3 +561,10 @@ def get_homedir():
         sys.exit(1)
 
     return os.path.join(userhome, '.pyzor')
+
+
+def typecheck(inst, type_):
+    if not isinstance(inst, type_):
+        raise TypeError
+
+anonymous_user = Username('anonymous')

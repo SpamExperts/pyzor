@@ -28,25 +28,20 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.15 2002-06-06 02:00:22 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.16 2002-06-09 17:35:26 ftobin Exp $"
 
 randfile = '/dev/random'
 
 
 class Client(object):
-    __slots__ = ['socket', 'output', 'user', 'auth']
+    __slots__ = ['socket', 'output', 'accounts']
     ttl = 4
     timeout = 4
     max_packet_size = 8192
-    user     = pyzor.anonymous_user
-    user_key = ''
     
-    def __init__(self, user=None, auth=None):
-        if user is not None:
-            self.user = user
-        if auth is not None:
-            self.auth = auth
-        self.output = Output()
+    def __init__(self, accounts):
+        self.accounts = accounts
+        self.output   = Output()
         self.build_socket()
 
     def ping(self, address):
@@ -69,7 +64,11 @@ class Client(object):
 
     def send(self, msg, address):
         msg.init_for_sending()
-        mac_msg_str = str(MacEnvelope.wrap(self.user, self.user_key, msg))
+        account = self.accounts[address]
+        
+        mac_msg_str = str(MacEnvelope.wrap(account.username,
+                                           account.keystuff.key,
+                                           msg))
         self.output.debug("sending: %s" % repr(mac_msg_str))
         self.socket.sendto(mac_msg_str, 0, address)
 
@@ -176,10 +175,9 @@ class ExecCall(object):
             download(config.get('client', 'DiscoverServersURL'), servers_fn)
 
 
-        self.load_servers(servers_fn)
-        self.load_accounts(config.get_filename('client', 'AccountsFile'))
-
-        self.client = Client()
+        self.servers  = self.get_servers(servers_fn)
+        self.client = Client(self.get_accounts(config.get_filename('client',
+                                                                   'AccountsFile')))
 
         try: 
             if command == 'discover':
@@ -293,7 +291,7 @@ class ExecCall(object):
 
 
     def report_digest(self, digest):
-        assert isinstance(digest, PiecesDigest)
+        typecheck(digest, PiecesDigest)
 
         self.output.debug("calculated digest: %s" % digest)
         
@@ -337,20 +335,26 @@ class ExecCall(object):
                                       pass_digest.hexdigest()))
 
 
-    def load_servers(self, servers_fn):
-        self.servers = ServerList()
-        self.servers.read(open(servers_fn))
+    def get_servers(servers_fn):
+        servers = ServerList()
+        servers.read(open(servers_fn))
 
-        if len(self.servers) == 0:
+        if len(servers) == 0:
             sys.stderr.write("No servers available!  Maybe try the 'discover' command\n")
             sys.exit(1)
+        return servers
+
+    get_servers = staticmethod(get_servers)
 
 
-    def load_accounts(self, accounts_fn):
-        self.accounts = AccountsDict()
+    def get_accounts(accounts_fn):
+        accounts = AccountsDict()
         if os.path.exists(accounts_fn):
             for address, account in AccountFile(open(accounts_fn)):
-                self.accounts[address] = account
+                accounts[address] = account
+        return accounts
+
+    get_accounts = staticmethod(get_accounts)
 
 
 
@@ -373,21 +377,14 @@ class MailboxDigester(object):
                                               seekable=False)
 
 
-class AccountsDict(dict):
-    """Key is pyzor.Address, value is Account"""
-    def __setitem__(self, k, v):
-        assert isinstance(k, pyzor.Address)
-        assert isinstance(v, Account)
-        super(AccountsDict, self).__setitem__(k, v)
-
 
 class Account(tuple):
     def __init__(self, v):
         self.validate()
 
     def validate(self):
-        assert isinstance(self.username, pyzor.Username)
-        assert isinstance(self.keystuff, Keystuff)
+        typecheck(self.username, pyzor.Username)
+        typecheck(self.keystuff, Keystuff)
 
     def username(self):
         return self[0]
@@ -440,6 +437,26 @@ class Keystuff(tuple):
     def key(self):
         return self[1]
     key = property(key)
+
+
+
+class AccountsDict(dict):
+    """Key is pyzor.Address, value is Account
+    When getting, defaults to anonymous_account"""
+    
+    anonymous_account = Account((pyzor.anonymous_user,
+                                 Keystuff((None, 0L))))
+    
+    def __setitem__(self, k, v):
+        typecheck(k, pyzor.Address)
+        typecheck(v, Account)
+        super(AccountsDict, self).__setitem__(k, v)
+
+    def __getitem__(self, k):
+        try:
+            return super(AccountsDict, self).__getitem__(k)
+        except KeyError:
+            return self.anonymous_account
 
 
 

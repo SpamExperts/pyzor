@@ -11,9 +11,9 @@ import ConfigParser
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.9 2002-06-08 23:58:22 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.10 2002-06-09 17:35:27 ftobin Exp $"
 
-default_anonymous_allows = ['check', 'report', 'ping']
+default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping'])
 
 def cleanup_server_handler(signum, frame):
     pyzor.server.DBHandle('c').cleanup()
@@ -32,9 +32,9 @@ def load_access_file(access_fn, server):
         output.warn("%s does not exist; using default ACL; allowing anonymous to do %s"
                     % (access_fn, default_anonymous_allows))
         for op in default_anonymous_allows:
-            server.acl.add_entry(pyzor.server.ACLEntry(op,
-                                                       pyzor.anonymous_user,
-                                                       True))
+            server.acl.add_entry(pyzor.server.ACLEntry((pyzor.anonymous_user,
+                                                        op,
+                                                        True)))
 
                                  
 def load_passwd_file(access_fn, server):
