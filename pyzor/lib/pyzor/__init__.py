@@ -167,7 +167,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.18 2002-06-06 02:00:22 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.19 2002-06-06 17:29:50 ftobin Exp $"
 
 import os
 import os.path
@@ -570,12 +570,12 @@ class Request(ThreadedMessage):
         super(Request, self).ensure_complete()
 
 
-class SuccessResponse(Response):
-    def init_for_sending(self):
-        super(SuccessResponse, self).init_for_sending()
+##class SuccessResponse(Response):
+##    def init_for_sending(self):
+##        super(SuccessResponse, self).init_for_sending()
 
-        self.setdefault('Code', str(self.ok_code))
-        self.setdefault('Diag', 'OK')
+##        self.setdefault('Code', str(self.ok_code))
+##        self.setdefault('Diag', 'OK')
 
 
 class PingRequest(Request):
@@ -584,8 +584,8 @@ class PingRequest(Request):
         self.setdefault('Op', 'ping')
 
 
-class PingResponse(SuccessResponse):
-    pass
+##class PingResponse(SuccessResponse):
+##    pass
 
 
 class ReportRequest(Request):
@@ -600,8 +600,8 @@ class ReportRequest(Request):
         self.setdefault('Op-Digest', str(digest))
 
 
-class ReportResponse(SuccessResponse):
-    pass
+##class ReportResponse(SuccessResponse):
+##    pass
 
 
 class CheckRequest(Request):
@@ -614,18 +614,18 @@ class CheckRequest(Request):
         self.setdefault('Op-Digest', digest)
 
 
-class CheckResponse(SuccessResponse):
-    def __init__(self, count):
-        assert isinstance(count, int)
+##class CheckResponse(SuccessResponse):
+##    def __init__(self, count):
+##        assert isinstance(count, int)
         
-        super(CheckResponse, self).__init__()
-        self.setdefault('Count', str(count))
+##        super(CheckResponse, self).__init__()
+##        self.setdefault('Count', str(count))
 
-    def ensure_complete(self):
-        if not self.has_key('Count'):
-            raise IncompleteMessageError, \
-                  "doesn't have fields for a CheckResponse"
-        super(CheckResponse, self).ensure_complete()
+##    def ensure_complete(self):
+##        if not self.has_key('Count'):
+##            raise IncompleteMessageError, \
+##                  "doesn't have fields for a CheckResponse"
+##        super(CheckResponse, self).ensure_complete()
 
 
 class ErrorResponse(Response):
@@ -640,7 +640,7 @@ class ErrorResponse(Response):
 
 class ThreadId(int):
     # (0, 1024) is reserved
-    full_range  = (0, 2**16)
+    full_range  = (0, sys.maxint)
     ok_range    = (1024, full_range[1])
     error_value = 0
     
