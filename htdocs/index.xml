@@ -68,7 +68,7 @@
 	See <a href="http://cr.yp.to/proto/netstrings.txt">http://cr.yp.to/proto/netstrings.txt</a>.
 	The maxium length for a netstring will be that which is
 	encoded by 16 digits (mainly because that is the same
-	limitation for <a href="#netlongs">netlongs</a>.
+	limitation for <a href="#netlongs">netlongs</a>).
       </dd>
       
       <dt>netlong</dt>
@@ -97,15 +97,15 @@
       messages.
     </p>
     <dl>
-      <dt>"<var>x</var>",</dt>
+      <dt><code>"<var>x</var>",</code></dt>
       <dd>netsring(<var>x</var>)</dd>
       
-      <dt><var>x</var>,</dt>
-      <dd>netlong(<var>x</var>)</dd>
+      <dt><code><var>x</var>,</code></dt>
+      <dd><code>netlong(<var>x</var>)</code></dd>
       <dd>The syntax is pretty much the same as a netstring without the quotes</dd>
 
-      <dt>[<var>x</var>],</dt>
-      <dd>netlist(<var>x</var>)</dd>
+      <dt><code>[<var>x</var>],</code></dt>
+      <dd><code.netlist(<var>x</var>)</code></dd>
     </dl>
     
     <h4>Common characteristics</h4>
@@ -165,23 +165,23 @@
 "ping",
 </pre>
       </dd>
-    </dl>
     
-    <dt>"ping" response</dt>
-    <dd>empty</dd>
+      <dt>"ping" response</dt>
+      <dd>empty</dd>
 	
     
-    <dt>error response</dt>
-    <dd>
+      <dt>error response</dt>
+      <dd>
       <p>
-	If the server encounters an error, it will send in the header
-	an error code that signifies an error (e.g., a non-200 code),
-	along with a description of the problem.
-      </p>
-<pre>
+	  If the server encounters an error, it will send in the header
+	  an error code that signifies an error (e.g., a non-200 code),
+	  along with a description of the problem.
+	</p>
+	<pre>
 "<var>message</var>",
-</pre>
-</dd>
+	</pre>
+      </dd>
+    </dl>
     
   </body>
 </html>
