@@ -4,6 +4,13 @@ To install this distribution, simply run the following:
 	python setup.py build
 	python setup.py install
 
+Note that your system might install the modules and scripts
+with non-world-readable permissions, with a command such as:
+
+	chmod -R a+rX /usr/share/doc/pyzor \
+		/usr/lib/python2.2/site-packages/pyzor \
+		/usr/bin/pyzor /usr/bin/pyzord
+
 To use the server, the Python gdbm module is required.
 You can generally check if you have the gdbm module
 by executing:
