@@ -167,7 +167,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.19 2002-06-06 17:29:50 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.20 2002-06-06 17:31:48 ftobin Exp $"
 
 import os
 import os.path
@@ -640,7 +640,7 @@ class ErrorResponse(Response):
 
 class ThreadId(int):
     # (0, 1024) is reserved
-    full_range  = (0, sys.maxint)
+    full_range  = (0, 2**16)
     ok_range    = (1024, full_range[1])
     error_value = 0
     
