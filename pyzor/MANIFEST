@@ -1,0 +1,11 @@
+COPYING
+ChangeLog
+INSTALL
+MANIFEST
+NEWS
+README
+lib/pyzor/__init__.py
+lib/pyzor/client.py
+lib/pyzor/server.py
+scripts/pyzor
+scripts/pyzord
