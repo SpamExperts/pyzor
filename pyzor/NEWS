@@ -11,7 +11,7 @@ Noteworthy changes in 0.3.0
 
     *	Documentation has moved from the source files
 	(e.g., 'pydoc pyzor') into a separate XHTML document,
-	located in docs/index.html, and normally installed
+	located in docs/usage.html, and normally installed
 	into a location such as /usr/share/doc/pyzor
 
     *	Messages are authenticated using digest-signing, similar
