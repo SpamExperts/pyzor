@@ -67,6 +67,10 @@ port:
     port to listen on
 
 
+Sending a USR1 signal to the server process will result
+in it cleaning out digests not updated within the last 48 hours.
+
+
 FILES:
 
 ~/pyzor:
@@ -104,7 +108,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.1.0"
-__revision__ = "$Id: __init__.py,v 1.4 2002-04-14 21:24:43 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.5 2002-04-14 21:33:50 ftobin Exp $"
 
 import re
 import sys
