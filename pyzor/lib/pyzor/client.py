@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.26 2002-08-21 03:13:58 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.27 2002-08-21 03:18:32 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -40,7 +40,7 @@ class Client(object):
     max_packet_size = 8192
     
     def __init__(self, accounts):
-        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.signal(signal.SIGALRM, handle_timeout)
         
         self.accounts = accounts
         self.output   = Output()
@@ -660,7 +660,7 @@ def run():
     ExecCall().run()
 
 
-def timeout_handler(signum, frame):
+def handle_timeout(signum, frame):
     raise TimeoutError
 
 
