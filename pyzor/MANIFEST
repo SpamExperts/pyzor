@@ -10,9 +10,9 @@ lib/pyzor/__init__.py
 lib/pyzor/client.py
 lib/pyzor/server.py
 scripts/access
-scripts/accounts
+scripts/bob/accounts
+scripts/bob/servers
 scripts/config
-scripts/config.bob
 scripts/passwd
 scripts/pyzor
 scripts/pyzord
