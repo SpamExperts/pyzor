@@ -22,13 +22,15 @@ import socket
 import signal
 import cStringIO
 import getopt
+import tempfile
+import mimetools
 
 import pyzor
 from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.27 2002-08-21 03:18:32 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.28 2002-08-22 22:39:57 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -509,6 +511,62 @@ class InfoClientRunner(ClientRunner):
             sys.stderr.write(message)
 
 
+
+class rfc822BodyCleaner(object):
+    def __init__(self, fp):
+        msg = mimetools.Message(fp, seekable=0)
+        self.type = msg.getmaintype()
+        self.multifile = None
+        self.curfile   = None
+
+        if self.type == 'text':
+            encoding = msg.getencoding()
+            if encoding == '7bit':
+                self.curfile = fp
+            else:
+                self.curfile = tempfile.TemporaryFile()
+                mimetools.decode(fp, self.curfile, encoding)
+                self.curfile.seek(0)
+                
+        elif self.type == 'multipart':
+            import multifile
+            self.multifile = multifile.MultiFile(fp, seekable=0)
+            self.multifile.push(msg.getparam('boundary'))
+            self.multifile.next()
+            self.curfile = self.__class__(self.multifile)
+
+
+        if self.type == 'text' or self.type == 'multipart':
+            assert self.curfile is not None
+        else:
+            assert self.curfile is None
+
+        
+    def readline(self):
+        l = None
+        if self.type == 'text':
+            l = self.curfile.readline()
+        elif self.type == 'multipart':
+            l = self.curfile.readline()
+            if not l and self.multifile.next():
+                self.curfile = self.__class__(self.multifile)
+                # recursion.  Could get messy if
+                # we get a bunch of empty multifile parts
+                l = self.readline()
+        else:
+            # If it's a type we dont' handle, we give nothing
+            l = ''
+        return l
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        l = self.readline()
+        if not l:
+            raise StopIteration
+        return l
+        
 
 class MailboxDigester(object):
     __slots__ = ['mbox', 'digest_spec']

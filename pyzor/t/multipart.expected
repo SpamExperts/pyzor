@@ -1,0 +1,132 @@
+Three rules for sounding like an expert:
+	(1) Oversimplify your explanations to the point of uselessness.
+	(2) Always point out second-order effects, but never point out
+	    when they can be ignored.
+	(3) Come up with three rules of your own.
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-us">
+
+<head>
+  <title>Dekan's Solace - Introduction</title>
+
+  <meta name="author" content="Frank Tobin, Dekan" />
+  <meta name="keywords" content="Frank Tobin, Dekan, ftobin" />
+
+  <link rev="Made" href="mailto:ftobin@neverending.org" />
+  <link rel="Copyright" href="#copyright" />
+  <link rel="Start" href="/~ftobin/" />
+  <link rel="Search" href="http://www.google.com/advanced_search?q=site:http://www.neverending.org+ftobin" />
+
+  <link rel="StyleSheet" title="Default" href="/~ftobin/style/grayish.css" type="text/css" />
+  <link rel="Alternate Stylesheet" title="Bright" href="/~ftobin/style/bright.css" type="text/css" />
+  <link rel="Alternate StyleSheet" title="Midnight" href="/~ftobin/style/midnight.css" type="text/css" />
+  
+
+  <link rel="Bookmark" title="Introduction" href="/~ftobin/" />
+  <link rel="Bookmark" title="Resources" href="/~ftobin/resources/" />
+  <link rel="Bookmark" title="Projects" href="/~ftobin/projects/" />
+  <link rel="Bookmark" title="Perl Tips" href="/~ftobin/perl_tips/" />
+  <link rel="Bookmark" title="Opinion" href="/~ftobin/opinion/" />
+  <link rel="Bookmark" title="Resume" href="/~ftobin/resume/" />
+  <link rel="Bookmark" title="About" href="/~ftobin/about/" />
+
+  <link rel="meta" href="/~ftobin/metadata/standard.rdf" />
+  <link rel="icon" href="/~ftobin/graphics/dcms-16.png" type="image/png" />
+
+</head>
+
+<body>
+
+<h1 class="site-banner">Dekan's Solace</h1>
+
+
+
+<ul class="navbar">
+
+  <li><a href="/~ftobin/">Introduction</a></li>
+  <li><a href="/~ftobin/resources/">Resources</a></li>
+  <li><a href="/~ftobin/projects/">Projects</a></li>
+  <li><a href="/~ftobin/perl_tips/">Perl Tips</a></li>
+  <li><a href="/~ftobin/opinion/">Opinion</a></li>
+  <li><a href="/~ftobin/resume/">Resume</a></li>
+  <li><a href="/~ftobin/about/">About</a></li>
+
+</ul>
+
+
+
+  <h1>Introduction</h1>
+
+  <div>
+    <img src="graphics/dcms.png" alt="" title="Draconis Combine Mustered Soldiery logo" longdesc="http://www.battletechcentral.nu/History/dchistory.htm" style="float: right" />
+  </div>
+
+  <p>
+    I hope your stay in Solace here will
+    let you learn a bit more about me, and that 
+    you may find something interesting here.
+  </p>
+
+  <h2>Other References to Me</h2>
+
+  <p>
+    My <a href="http://sourceforge.net/users/ftobin/">developer account</a>
+    at <a href="http://sourceforge.net/">SourceForge</a> may be
+    of interest; it contains my
+    <a href="http://sourceforge.net/developer/diary.php?diary_user=7577">public
+      diary</a>, which is generally related to
+    development stuff and projects I am working on.
+  </p>
+
+  <h2>Interesting Sayings</h2>
+
+  <p class="good-quote">
+    Est Sularus oth Mithas.
+  </p>
+
+  <p>
+    <q class="good-quote" style="display: block">One's real life is so often the life that one does not lead.</q>
+      <cite class="quote-attribution">
+	<a href="http://www.cp-tel.net/miller/BilLee/quotes/Wilde.html">Oscar Wilde</a> (1854-1900), Anglo-Irish playwright, author
+      </cite>
+  </p>
+
+  <p>
+    <q class="good-quote" style="display: block">To learn what is good and what is to be valued,
+      those truths which cannot be shaken or changed.</q>
+      <cite class="quote-attribution"><a href="http://sirrus.cyan.com/Online/D%27ni/Books/BookAtrus">Myst: The Book of Atrus</a></cite>
+  </p>
+
+
+<div class="footer">
+    
+<hr />
+
+<address><a href="mailto:ftobin@neverending.org">Frank J. Tobin</a></address>
+    
+<p id="copyright">
+Content is released under the
+<a href="http://www.gnu.org/copyleft/fdl.html">GNU Free Documentation License</a>,
+copyright held by <a href="mailto:ftobin@neverending.org">Frank J. Tobin</a>.
+</p>
+
+<p>This page is written in
+  <a href="http://validator.w3.org/check/referer"><img src="http://www.w3.org/Icons/valid-xhtml11" alt="valid XHTML" class="tag" /></a>
+  and
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img src="http://jigsaw.w3.org/css-validator/images/vcss" alt="valid CSS" class="tag" /></a>.
+</p>
+  
+</div>
+
+<!--
+  Don't send email to aaron7@neverending.org or mailto:aaron7@neverending.org
+-->
+
+</body>
+</html>
+
+Humor in the Court:
+Q: ...any suggestions as to what prevented this from being a murder trial 
+   instead of an attempted murder trial?
+A: The victim lived.

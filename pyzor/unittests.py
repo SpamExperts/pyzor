@@ -7,7 +7,7 @@ from pyzor import *
 from pyzor.server import *
 from pyzor.client import *
 
-__revision__ = "$Id: unittests.py,v 1.3 2002-08-19 01:56:39 ftobin Exp $"
+__revision__ = "$Id: unittests.py,v 1.4 2002-08-22 22:39:57 ftobin Exp $"
 
 
 class ACLTest(unittest.TestCase):
@@ -146,6 +146,14 @@ class NormalizationTest(unittest.TestCase):
                          'aaabbb')
         self.assertEqual(norm('aaa  bbb  ccc\n'), 'aaabbbccc')
         self.assertEqual(norm('aaa <! random tag > bbb'), 'aaabbb')
+
+
+
+class rfc822BodyCleanerTest(unittest.TestCase):
+    def test_cleaning(self):
+        expected = open('t/multipart.expected')
+        for line in rfc822BodyCleaner(open('t/multipart')):
+            self.assertEqual(line, expected.readline())
 
 
 

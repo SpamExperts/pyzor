@@ -21,5 +21,7 @@ scripts/servers
 scripts/test.in.0
 scripts/test.in.mbox
 scripts/test.sh
+t/mutlipart
+t/multipart.expected
 setup.py
 unittests.py
