@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+  <head>
+    <title>Pyzor</title>
+  </head>
+  <body>
+    <h1>Pyzor</h1>
+    
+    <h2>Introduction</h2>
+    
+    <p>
+      Pyzor is a Python implementation of a spam-blocking
+      networked system that spam signatures to identify them.
+      Concentrations will be on a clear, language-independent,
+      lightweight specification.
+    </p>
+    
+    <p>
+      Pyzor will contain both a client and server for the protocol.
+      The protocol will be designed and documented such that
+      it is not tied to the implementation.
+    </p>
+    
+    <p>
+      Pyzor initially started out to be merely a Python
+      implementation of <a href="http://razor.sourceforge.net/">Razor</a>,
+      but due to the protocol and other issues, I decided that
+      Pyzor should be based upon a new protocol.
+    </p>
+    
+    <h2>For Users</h2>
+    
+    <p>
+      As of yet, there has been no release of Pyzor.  However, I plan
+      to produce a release by 2002-04-15.  You are welcome to
+      join the <a href="https://sourceforge.net/mail/?group_id=50000">mailing
+	list</a>
+    </p>
+    
+    <h2>For Developers</h2>
+    
+    <p>
+      Here is the protocol that I plan on using for the initial release.
+      If you have comments, please let me know; as I plan on making an
+      initial release by 2002-04-15.
+    </p>
+    
+    <p>
+      Pyzor will implement a query-response system using UDP packets.
+      UDP is chosen for being leightweight, and being all that is needed
+      for a query and response that can be encapsulated in such a packet.
+      Furthermore, the <q>best effort</q> qualities of UDP are more
+      in line with the philosophies I'm using to design Pyzor.
+    </p>
+    
+    <p>
+      Before going on to describe the packets, here are some terms
+      that describe encoded elements in the packets.
+    </p>
+    
+    <h3>Definitions</h3>
+    
+    <dl>
+      <dt>netstring</dt>
+      <dd>A netstring is used to encode a string.
+	See <a href="http://cr.yp.to/proto/netstrings.txt">http://cr.yp.to/proto/netstrings.txt</a>.
+	The maxium length for a netstring will be that which is
+	encoded by 16 digits (mainly because that is the same
+	limitation for <a href="#netlongs">netlongs</a>.
+      </dd>
+      
+      <dt>netlong</dt>
+      <dd>
+	A netlong is used to encode a list.  A netlong matches the
+	regular expression <code>[:digit:]{1,16},</code>
+      </dd>
+      
+      <dt>netlist</dt>
+      <dd>
+	A netlist is used to encode a list netstrings or
+	netlongs.  Let the length
+	of the length of list <code>L</code> be <code>len(L)</code>. 
+	A netlist is built as:  <code>netlong(len(l))</code> followed
+	by a sequence of netlongs or netstrings of the elements of
+	<code>L</code>.
+      </dd>
+      
+    </dl>
+    
+    <h3>The messages</h3>
+    
+    <h4>Syntax</h4>
+    <p>
+      The following syntax shortcuts are used to describe
+      messages.
+    </p>
+    <dl>
+      <dt>"<var>x</var>",</dt>
+      <dd>netsring(<var>x</var>)</dd>
+      
+      <dt><var>x</var>,</dt>
+      <dd>netlong(<var>x</var>)</dd>
+      <dd>The syntax is pretty much the same as a netstring without the quotes</dd>
+
+      <dt>[<var>x</var>],</dt>
+      <dd>netlist(<var>x</var>)</dd>
+    </dl>
+    
+    <h4>Common characteristics</h4>
+    
+    <p>
+      All messges begin with the header:
+    </p>
+<pre>
+"pyzor","<var>protocol_version</var>",
+</pre>
+    
+    <p>
+      All responses begin with an error code.  The error codes
+      used will be similar in syntax and semantics as HTTP error codes.
+    </p>
+<pre>
+<var>error_code</var>,
+</pre>
+    
+    
+    <h4>Message-specific contents</h4>
+    
+    <dl>
+      <dt>"check" request</dt>
+      <dd>
+	<p>asks the server for information about a particular mail's signature.
+	  <var>digest-meta</var> will contain information about how the
+	  digest was calculated.  Not fully specified yet.
+	</p>
+	<pre>
+"check",<var>time-to-live</var>,"<var>digest-meta</var>", "<var>signature</var>"
+	</pre>
+      </dd>
+      
+      <dt>"check" response</dt>
+      <dd>
+<pre>
+<var>count</var>,
+</pre>
+      </dd>
+      
+      <dt>"report" request</dt>
+      <dd>
+	<p>Reports a spam signature to the server</p>
+<pre>
+"report",<var>time-to-live</var>,"<var>digest-meta</var>", "<var>digest</var>"
+</pre>
+      </dd>
+      
+      <dt>"report" response</dt>
+      <dd>empty</dd>
+      
+      <dt>"ping" request</dt>
+      <dd>
+	<p>Asks the server merely to send back an empty response.</p>
+<pre>
+"ping",
+</pre>
+      </dd>
+    </dl>
+    
+    <dt>"ping" response</dt>
+    <dd>empty</dd>
+	
+    
+    <dt>error response</dt>
+    <dd>
+      <p>
+	If the server encounters an error, it will send in the header
+	an error code that signifies an error (e.g., a non-200 code),
+	along with a description of the problem.
+      </p>
+<pre>
+"<var>message</var>",
+</pre>
+</dd>
+    
+  </body>
+</html>
