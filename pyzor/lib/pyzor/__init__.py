@@ -2,7 +2,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.3.1"
-__revision__ = "$Id: __init__.py,v 1.34 2002-09-04 03:37:44 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.35 2002-09-04 04:03:55 ftobin Exp $"
 
 import os
 import os.path
@@ -138,6 +138,9 @@ class PiecesDigest(str):
     # Note that an empty string will always be used to remove whitespace
     unwanted_txt_repl = ''
 
+    # this is mainly here for to help testing (boolean)
+    last_was_atomic = None
+
     def __init__(self, value):
         if len(value) != self.value_size:
             raise ValueError, "invalid digest value size"
@@ -171,7 +174,7 @@ class PiecesDigest(str):
         return bool(self.min_line_length <= len(s))
     should_handle_line = classmethod(should_handle_line)
 
-    def compute_from_file(self, fp, spec, seekable=1):
+    def compute_from_file(self, fp, spec, seekable=True):
         line_offsets = []
 
         if seekable:
@@ -206,6 +209,7 @@ class PiecesDigest(str):
 
         if len(line_offsets) <= self.atomic_num_lines:
             # digest everything
+            self.last_was_atomic = True
             fp.seek(0)
             for line in fp:
                 norm_line = self.normalize(line)
@@ -213,6 +217,7 @@ class PiecesDigest(str):
                     digest.update(norm_line)
         else:
             # digest stuff according to the spec
+            self.last_was_atomic = False
             for (perc_offset, length) in spec:
                 assert 0 <= perc_offset < 100
 

@@ -7,7 +7,7 @@ from pyzor import *
 from pyzor.server import *
 from pyzor.client import *
 
-__revision__ = "$Id: unittests.py,v 1.5 2002-09-04 03:37:44 ftobin Exp $"
+__revision__ = "$Id: unittests.py,v 1.6 2002-09-04 04:03:55 ftobin Exp $"
 
 
 class ACLTest(unittest.TestCase):
@@ -137,7 +137,7 @@ class ServerListTest(unittest.TestCase):
 
 
 
-class MessageCleanupTest(unittest.TestCase):
+class PiecesDigestTest(unittest.TestCase):
     def test_ptrns(self):
         norm = PiecesDigest.normalize
         self.assertEqual(norm('aaa me@example.com bbb'), 'aaabbb')
@@ -151,6 +151,19 @@ class MessageCleanupTest(unittest.TestCase):
         min_len = int(PiecesDigest.min_line_length)
         self.assert_(PiecesDigest.should_handle_line('a' * min_len))
         self.assert_(not PiecesDigest.should_handle_line('a' * (min_len-1)))
+
+
+    def test_atomicness(self):
+        PiecesDigest.compute_from_file(open('t/atomic'),
+                                       ExecCall.digest_spec,
+                                       seekable=True)
+        self.assert_(PiecesDigest.last_was_atomic)
+
+    def test_non_atomicness(self):
+        PiecesDigest.compute_from_file(open('t/atomic.not'),
+                                       ExecCall.digest_spec,
+                                       seekable=True)
+        self.assert_(not PiecesDigest.last_was_atomic)
 
 
 
