@@ -8,7 +8,7 @@ db='test.db'
 fail()
 {
     echo "failed"
-    [ ${server_pid:-0} ] && kill $server_pid
+    [ ${server_pid:-0} != 0 ] && kill $server_pid
     exit 1;
 }
 
@@ -19,12 +19,21 @@ server_pid=$!
 # time to grab the socket
 sleep 1
 
-[ `./pyzor check < test.in.0` = 0 ] || fail
+e=`./pyzor check < test.in.0`
+[ ${e:--1} = 0 ] || fail
+
 ./pyzor report < test.in.0 || fail
 ./pyzor report < test.in.0 || fail
-[ `./pyzor check < test.in.0` = 2 ] || fail
+
+e=`./pyzor check < test.in.0`
+[ ${e:--1} = 2 ] || fail
+
 ./pyzor report --mbox < test.in.mbox || fail
-[ `./pyzor check < test.in.0` = 3 ] || fail
+
+e=`./pyzor check < test.in.0`
+[ ${e:--1} = 3 ] || fail
+
 ./pyzor ping || fail
 
 kill $server_pid
+echo "all seems okay"
