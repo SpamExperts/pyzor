@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.38 2002-09-07 07:28:00 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.39 2002-09-08 01:57:27 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -194,19 +194,25 @@ class ExecCall(object):
                 sys.exit(1)
 
 
-    def usage(self):
+    def usage(self, s=None):
+        if s is not None:
+            sys.stderr.write("%s\n" % s)
         sys.stderr.write("""usage: %s [-d] [--homedir dir] command [cmd_opts]
 command is one of: check, report, discover, ping, digest, predigest,
                    genkey, shutdown
 Data is read on standard input (stdin).
 """
                          % sys.argv[0])
-        sys.exit(1)
+        sys.exit(2)
         return  # just to help xemacs
 
 
     def ping(self, args):
-        (options, args2) = getopt.getopt(args[1:], '')
+        getopt.getopt(args[1:], '')
+
+        if len(args) > 1:
+            self.usage("%s does not take any non-option arguments" % args[0])
+
         runner = ClientRunner(self.client.ping)
 
         for server in self.servers:
@@ -216,7 +222,10 @@ Data is read on standard input (stdin).
         
 
     def shutdown(self, args):
-        (options, args2) = getopt.getopt(args[1:], '')
+        (opts, args2) = getopt.getopt(args[1:], '')
+
+        if len(args2) > 1:
+            self.usage("%s does not take any non-option arguments" % args[0])
 
         runner = ClientRunner(self.client.shutdown)
 
@@ -228,8 +237,11 @@ Data is read on standard input (stdin).
 
 
     def info(self, args):
-        (options, args2) = getopt.getopt(args[1:], '')
+        getopt.getopt(args[1:], '')
         
+        if len(args) > 1:
+            self.usage("%s does not take any non-option arguments" % args[0])
+
         runner = InfoClientRunner(self.client.info)
 
         for digest in FileDigester(sys.stdin, self.digest_spec):
@@ -240,7 +252,10 @@ Data is read on standard input (stdin).
 
 
     def check(self, args):
-        (options, args2) = getopt.getopt(args[1:], '')
+        getopt.getopt(args[1:], '')
+
+        if len(args) > 1:
+            self.usage("%s does not take any non-option arguments" % args[0])
 
         runner = CheckClientRunner(self.client.check)
 
@@ -254,6 +269,9 @@ Data is read on standard input (stdin).
     def report(self, args):
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
         do_mbox = False
+
+        if len(args2) > 1:
+            self.usage("%s does not take any non-option arguments" % args[0])
 
         for (o, v) in options:
             if o == '--mbox':
@@ -282,6 +300,10 @@ Data is read on standard input (stdin).
 
     def whitelist(self, args):
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+
+        if len(args2) > 1:
+            self.usage("%s does not take any non-option arguments" % args[0])
+
         do_mbox = False
 
         for (o, v) in options:
@@ -300,6 +322,11 @@ Data is read on standard input (stdin).
 
     def digest(self, args):
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+
+        if len(args2) > 1:
+            self.usage("%s does not take any non-option arguments" % args[0])
+
+
         do_mbox = False
 
         for (o, v) in options:
@@ -315,6 +342,9 @@ Data is read on standard input (stdin).
     def print_digested(self, args):
         getopt.getopt(args[1:], '')
 
+        if len(args) > 1:
+            self.usage("%s does not take any non-option arguments" % args[0])
+
         def loop():
             for digest in FileDigester(sys.stdin, self.digest_spec):
                 pass
@@ -325,7 +355,10 @@ Data is read on standard input (stdin).
         return True
 
     def genkey(self, args):
-        (options, args2) = getopt.getopt(args[1:], '')
+        getopt.getopt(args[1:], '')
+
+        if len(args) > 1:
+            self.usage("%s does not take any non-option arguments" % args[0])
 
         import getpass
         p1 = getpass.getpass(prompt='Enter passphrase: ')
