@@ -1,3 +1,6 @@
+    *	Messages are now decoded if they are encoded,
+	and subparts that are not encoded text/* are ignored.
+
     *	Message normalization now removes HTML tags
 	(irregardless of Content-Type).
 

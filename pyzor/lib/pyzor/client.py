@@ -14,7 +14,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.29 2002-09-03 03:42:14 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.30 2002-09-03 03:56:19 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -370,7 +370,10 @@ class FileDigester(object):
         
         if mbox:
             import mailbox
-            self.mbox_digester = MailboxDigester(mailbox.PortableUnixMailbox(self.file), self.spec)
+            factory = rfc822BodyCleaner
+            self.mbox_digester = MailboxDigester(mailbox.PortableUnixMailbox(self.file,
+                                                                             factory),
+                                                 self.spec)
 
 
     def __iter__(self):
@@ -497,11 +500,14 @@ class InfoClientRunner(ClientRunner):
 
 
 class rfc822BodyCleaner(object):
+    __slots__ = ['fp', 'multifile', 'curfile', 'type']
+    
     def __init__(self, fp):
-        msg = mimetools.Message(fp, seekable=0)
-        self.type = msg.getmaintype()
+        msg            = mimetools.Message(fp, seekable=0)
+        self.type      = msg.getmaintype()
         self.multifile = None
         self.curfile   = None
+        self.fp        = fp
 
         if self.type == 'text':
             encoding = msg.getencoding()
