@@ -67,15 +67,15 @@ Using pyzor with ReadyExec:
     ReadyExec and using it with pyzor.  You can
     get ReadyExec from http://readyexec.sourceforge.net/
 
-    To use pyzor with ReadyExec, the py-readyexecd
+    To use pyzor with ReadyExec, the readyexecd.py server
     needs to be started as:
     
-        py-readyexecd <sock_file> pyzor.client.run
+        readyexecd.py <sock_file> pyzor.client.run
 
     Individual clients are then executed as:
-        re-conduit <sockfile> report
+        readyexec <sockfile> report
     or
-        re-conduit <sockfile> check
+        readyexec <sockfile> check
     etc.
 
 
@@ -134,7 +134,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.1.1"
-__revision__ = "$Id: __init__.py,v 1.9 2002-04-17 00:46:26 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.10 2002-04-21 01:56:09 ftobin Exp $"
 
 import re
 import sys
