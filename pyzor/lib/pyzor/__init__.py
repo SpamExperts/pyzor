@@ -1,6 +1,87 @@
 """networked spam-signature detection
 
-Copyright (C) 2000 Frank J. Tobin <ftobin@neverending.org>
+CLIENT (pyzor):
+
+usage: pyzor [-d] check|report|discover|ping
+
+-d:
+    turn on debugging
+
+check:
+    Reads on standard input an rfc822 (email) message.
+    Writes to standard output a count of the number
+    of matches found on the server.
+    Exit code is zero (0) if a match is found, and non-zero
+    if there are no matches.
+
+report:
+    Reads on standard input a unix mailbox.
+    Sends to the server a digest of each message
+    in the mailbox.  Writes to standard output
+    a tuple of (error-code, message) from the server.
+
+discover:
+    Finds Pyzor servers, and writes them to ~/.pyzor.
+    This may accomplished through querying already-known
+    servers or an HTTP call to a hard-coded address.
+
+ping:
+    Merely requests a response from the server.
+
+
+To use pyzor in a procmail system, consider the following
+simple recipe:
+
+:0 W
+| pyzor
+:0 a
+pyzor-caught
+
+Or, you may wish to simply use 'formail' to add a header
+so that pyzor is only part of a larger spam-detection system.
+You may also wish to act differently depending on the count
+that pyzor prints.
+
+
+Differences from Razor:
+    Pyzor does not consult a white-list for you.  This
+    is best handled by other systems, such as other
+    procmail rules.
+
+
+SERVER (pyzord):
+
+usage: pyzord [-d] dbfile port\n
+
+-d:
+    turn on debugging
+
+dbfile:
+    where the database should be kept
+
+port:
+    port to listen on
+
+
+FILES:
+
+~/pyzor:
+    Configuration file.  Format is "option-name value".
+    Comments (lines starting with #) and empty lines are ignored.
+    Current options are:
+        server ip:port
+            Add the ip:port host to the list of servers.
+            This option may be repeated.
+
+
+TODO:
+    Currently only the first server in the configuration file
+    is communicated with.
+
+    The portions of mail which are digested should be dynamic.
+
+
+Copyright (C) 2002 Frank J. Tobin <ftobin@neverending.org>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,7 +100,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.1.0"
-__revision__ = "$Id"
+__revision__ = "$Id: __init__.py,v 1.3 2002-04-14 19:52:51 ftobin Exp $"
 
 import re
 import sys

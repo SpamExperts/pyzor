@@ -5,7 +5,12 @@ import os.path
 import pyzor.client
 import getopt
 
-digest_spec = pyzor.client.PiecesDigestSpec([(5, 10), (0, 4)])
+__author__   = pyzor.__author__
+__version__  = pyzor.__version__
+__revision__ = "$Id: pyzor,v 1.3 2002-04-14 19:52:51 ftobin Exp $"
+
+# hard-coded for the moment
+digest_spec = pyzor.client.PiecesDigestSpec([(20, 3), (60, 3)])
 
 def usage():
     sys.stderr.write("usage: %s [-d] check|report|discover|ping\nData is read on standard input.\n"
@@ -42,13 +47,15 @@ def report(client, config):
 
 def run():
     debug = 0
-    (options, args) = getopt.getopt(sys.argv[1:], 'd')
+    (options, args) = getopt.getopt(sys.argv[1:], 'dh')
     if len(args) != 1:
         usage()
 
     for (o, v) in options:
         if o == '-d':
             debug = 1
+        elif o == '-h':
+            usage()
     
     command = args[0]
     

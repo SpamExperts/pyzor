@@ -1,6 +1,6 @@
 """networked spam-signature detection server
 
-Copyright (C) 2000 Frank J. Tobin <ftobin@neverending.org>
+Copyright (C) 2002 Frank J. Tobin <ftobin@neverending.org>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id"
+__revision__ = "$Id: server.py,v 1.4 2002-04-14 19:52:51 ftobin Exp $"
 
 
 class Record(object):

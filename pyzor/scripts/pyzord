@@ -5,6 +5,10 @@ import signal
 import getopt
 import pyzor.server
 
+__author__   = pyzor.__author__
+__version__  = pyzor.__version__
+__revision__ = "$Id: pyzord,v 1.3 2002-04-14 19:52:51 ftobin Exp $"
+
 def cleanup_server_handler(signum, frame):
     pyzor.server.DBHandle('c').cleanup()
 
@@ -13,13 +17,15 @@ def usage():
     sys.exit(1)
 
 debug = 0
-(options, args) = getopt.getopt(sys.argv[1:], 'd')
+(options, args) = getopt.getopt(sys.argv[1:], 'dh')
 if len(args) != 2:
     usage()
     
 for (o, v) in options:
     if o == '-d':
         debug = 1
+    elif o == '-h':
+        usage()
 
 (dbfile, port) = args
 
