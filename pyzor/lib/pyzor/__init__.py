@@ -9,10 +9,11 @@ usage: pyzor [-d] check|report|discover|ping [cmd_options]
 
 check:
     Reads on standard input an rfc822 (email) message.
-    Writes to standard output a count of the number
-    of matches found on the server.
-    Exit code is zero (0) if a match is found, and non-zero
-    if there are no matches.
+    Exit code is zero (0) if and only if a match is found.
+
+    If multiple servers are listed in the configuration file,
+    the exit code will be zero (0) if and only if there
+    is a match found on at least one server.
 
 
 report [--mbox]:
@@ -133,7 +134,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.1.1"
-__revision__ = "$Id: __init__.py,v 1.8 2002-04-16 18:17:11 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.9 2002-04-17 00:46:26 ftobin Exp $"
 
 import re
 import sys

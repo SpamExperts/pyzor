@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.7 2002-04-16 18:02:04 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.8 2002-04-17 00:46:26 ftobin Exp $"
 
 
 class ConfigError(Exception):
@@ -212,7 +212,9 @@ class ExecCall(object):
                 self.ping(args)
             else:
                self.usage()
-        except TimeoutError, e:
+        except TimeoutError:
+            # note that most of the methods will trap
+            # their own timeout error
             sys.stderr.write("timeout from server\n")
             sys.exit(1)
 
@@ -229,7 +231,12 @@ class ExecCall(object):
         return
     
     def ping(self, args):
-        print repr(self.client.ping(self.config.servers[0]))
+        for server in self.config.servers:
+            try:
+                result = self.client.ping(server)
+            except TimeoutError:
+                result = 'timeout'
+            sys.stdout.write("%s: %s\n" % (server, result))
         return
 
     def check(self, args):
@@ -240,11 +247,19 @@ class ExecCall(object):
                                                 self.digest_spec,
                                                 seekable=0)
 
-        result = self.client.check(digest, self.config.servers[0])
-        if result[0] == 200:
-            print result[1]
-            sys.exit(result[1] == 0)
-        sys.exit(1)
+        found_hit = 0
+        for server in self.config.servers:
+            try:
+                result = self.client.check(digest, server)
+                if result[0] == 200:
+                    output = result[1]
+                    if output > 0: found_hit = 1
+                else:
+                    output = result
+            except TimeoutError:
+                output = 'timeout'
+            sys.stdout.write("%s: %s\n" % (server, output))
+        sys.exit(not found_hit)
         return
 
     def report(self, args):
@@ -269,14 +284,18 @@ class ExecCall(object):
         digest = PiecesDigest.compute_from_file(fp,
                                                 self.digest_spec,
                                                 seekable=0)
-
-        print repr(self.client.report(digest, self.digest_spec,
-                                      self.config.servers[0]))
+        for server in self.config.servers:
+            try:
+                result = self.client.report(digest, self.digest_spec,
+                                            server)
+            except TimeoutError:
+                result = 'timeout'
+            sys.stdout.write("%s: %s\n" % (server, result))
         return
 
 
 def run():
     ExecCall().run()
 
-def timeout(signum, handler):
+def timeout(signum, frame):
     raise TimeoutError
