@@ -34,7 +34,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.20 2002-07-12 20:02:29 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.21 2002-07-28 02:13:38 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -363,16 +363,20 @@ class Record(object):
 
 
 class DBHandle(object):
-    __slots__ = ['db', 'output']
-    dbfile = None
+    __slots__ = ['output']
     db_lock = threading.Lock()
     max_age = 3600*24*30*4   # 3 months
+    db      = None
 
-    def __init__(self, mode='r'):
-        self.output = Output()
+    def __init__(self):
+        assert self.db is not None, "database was not initialized"
         self.db_lock.acquire()
-        self.db = gdbm.open(self.dbfile, mode)
         
+    def initialize(self, fn, mode):
+        self.output = Output()
+        self.db = gdbm.open(fn, mode)
+    initialize = classmethod(initialize)
+
     def __del__(self):
         self.db.sync()
         self.db_lock.release()
@@ -383,7 +387,7 @@ class DBHandle(object):
     def __setitem__(self, key, value):
         self.db[key] = value
 
-    def __delitem(self, key):
+    def __delitem__(self, key):
         del self.db[key]
 
 ##    # we shouldn't need these
@@ -409,9 +413,8 @@ class DBHandle(object):
                 del self.db[delkey]
         
         self.db.reorganize()
-        self.db.sync()
-
         
+
 
 class Server(SocketServer.ThreadingUDPServer, object):
     ttl = 4
@@ -426,11 +429,6 @@ class Server(SocketServer.ThreadingUDPServer, object):
 
         self.output.debug('listening on %s' % str(address))
         super(Server, self).__init__(address, RequestHandler)
-
-        self.ensure_db_exists()
-
-    def ensure_db_exists(self):
-        db = DBHandle('c')
 
     def serve_forever(self):
         self.pid = os.getpid()
@@ -494,7 +492,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.wfile.write(msg_str)
         
         if do_exit:
-            db_hold = DBHandle('r')  # to keep the db consistent
+            db_hold = DBHandle()  # to keep the db consistent
             self.finish()
             os.kill(self.server.pid, signal.SIGQUIT)
 
@@ -555,7 +553,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.op_arg = digest
         self.output.debug("request to check digest %s" % digest)
 
-        db = DBHandle('r')
+        db = DBHandle()
         try:
             rec = Record.from_str(db[digest])
             r_count  = rec.r_count
@@ -573,7 +571,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.op_arg = digest
         self.output.debug("request to report digest %s" % digest)
 
-        db = DBHandle('c')
+        db = DBHandle()
         try:
             rec = Record.from_str(db[digest])
         except KeyError:
@@ -587,7 +585,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.op_arg = digest
         self.output.debug("request to whitelist digest %s" % digest)
 
-        db = DBHandle('c')
+        db = DBHandle()
         try:
             rec = Record.from_str(db[digest])
         except KeyError:
@@ -601,7 +599,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.op_arg = digest
         self.output.debug("request to check digest %s" % digest)
 
-        db = DBHandle('r')
+        db = DBHandle()
         try:
             record = Record.from_str(db[digest])
         except KeyError:
