@@ -7,7 +7,7 @@ from pyzor import *
 from pyzor.server import *
 from pyzor.client import *
 
-__revision__ = "$Id: unittests.py,v 1.4 2002-08-22 22:39:57 ftobin Exp $"
+__revision__ = "$Id: unittests.py,v 1.5 2002-09-04 03:37:44 ftobin Exp $"
 
 
 class ACLTest(unittest.TestCase):
@@ -137,7 +137,7 @@ class ServerListTest(unittest.TestCase):
 
 
 
-class NormalizationTest(unittest.TestCase):
+class MessageCleanupTest(unittest.TestCase):
     def test_ptrns(self):
         norm = PiecesDigest.normalize
         self.assertEqual(norm('aaa me@example.com bbb'), 'aaabbb')
@@ -146,6 +146,11 @@ class NormalizationTest(unittest.TestCase):
                          'aaabbb')
         self.assertEqual(norm('aaa  bbb  ccc\n'), 'aaabbbccc')
         self.assertEqual(norm('aaa <! random tag > bbb'), 'aaabbb')
+
+    def test_should_handle_line(self):
+        min_len = int(PiecesDigest.min_line_length)
+        self.assert_(PiecesDigest.should_handle_line('a' * min_len))
+        self.assert_(not PiecesDigest.should_handle_line('a' * (min_len-1)))
 
 
 

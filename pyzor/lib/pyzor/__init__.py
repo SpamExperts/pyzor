@@ -2,7 +2,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.3.1"
-__revision__ = "$Id: __init__.py,v 1.33 2002-09-03 03:42:14 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.34 2002-09-04 03:37:44 ftobin Exp $"
 
 import os
 import os.path
@@ -108,7 +108,15 @@ class PiecesDigest(str):
     value_size = sha.digest_size * 2
     
     bufsize = 1024
+
+    # minimum line length for it to be included as part
+    # of the digest.  I forget the purpose, however.
+    # Someone remind me so I can document it here.
     min_line_length = 8
+
+    # if a message is this many lines or less, then
+    # we digest the whole message
+    atomic_num_lines = 4
 
     # We're not going to try to match email addresses
     # as per the spec because it's too freakin difficult
@@ -157,8 +165,11 @@ class PiecesDigest(str):
         # the previous patterns rely on whitespace
         s2 = self.ws_ptrn.sub('', s2)
         return s2
-    
     normalize = classmethod(normalize)
+
+    def should_handle_line(self, s):
+        return bool(self.min_line_length <= len(s))
+    should_handle_line = classmethod(should_handle_line)
 
     def compute_from_file(self, fp, spec, seekable=1):
         line_offsets = []
@@ -192,24 +203,32 @@ class PiecesDigest(str):
             return None
             
         digest = sha.new()
-        
-        for (perc_offset, length) in spec:
-            assert 0 <= perc_offset < 100
 
-            offset = line_offsets[int(perc_offset * len(line_offsets)
-                                      / 100.0)]
-            fp.seek(offset)
-
-            i = 0
-            while i < length:
-                line = fp.readline()
-                if not line:
-                    break
+        if len(line_offsets) <= self.atomic_num_lines:
+            # digest everything
+            fp.seek(0)
+            for line in fp:
                 norm_line = self.normalize(line)
-                if len(norm_line) < self.min_line_length:
-                    continue
-                digest.update(norm_line)
-                i += 1
+                if self.should_handle_line(norm_line):
+                    digest.update(norm_line)
+        else:
+            # digest stuff according to the spec
+            for (perc_offset, length) in spec:
+                assert 0 <= perc_offset < 100
+
+                offset = line_offsets[int(perc_offset * len(line_offsets)
+                                          / 100.0)]
+                fp.seek(offset)
+
+                i = 0
+                while i < length:
+                    line = fp.readline()
+                    if not line:
+                        break
+                    norm_line = self.normalize(line)
+                    if self.should_handle_line(norm_line):
+                        digest.update(norm_line)
+                        i += 1
 
         return apply(self, (digest.hexdigest(),))
     
