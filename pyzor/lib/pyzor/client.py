@@ -16,7 +16,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.46 2002-10-21 21:38:35 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.47 2002-10-24 20:16:53 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -251,7 +251,7 @@ Data is read on standard input (stdin).
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
         do_mbox = False
 
-        if len(args2) > 1:
+        if len(args2) > 0:
             self.usage("%s does not take any non-option arguments" % args[0])
 
         for (o, v) in options:
@@ -285,7 +285,7 @@ Data is read on standard input (stdin).
     def whitelist(self, args):
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
 
-        if len(args2) > 1:
+        if len(args2) > 0:
             self.usage("%s does not take any non-option arguments" % args[0])
 
         do_mbox = False
@@ -307,7 +307,7 @@ Data is read on standard input (stdin).
     def digest(self, args):
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
 
-        if len(args2) > 1:
+        if len(args2) > 0:
             self.usage("%s does not take any non-option arguments" % args[0])
 
 
@@ -648,10 +648,15 @@ class rfc822BodyCleaner(BasicIterator):
             if encoding == '7bit':
                 self.curfile = msg.fp
             else:
+                import binascii
                 self.curfile = tempfile.TemporaryFile()
-                mimetools.decode(msg.fp, self.curfile, encoding)
+                try:
+                    mimetools.decode(msg.fp, self.curfile, encoding)
+                except binascii.Error, e:
+                    sys.stderr.write("%s: %s\n" % (e.__class__, e))
+                    self.curfile = cStringIO.StringIO()
                 self.curfile.seek(0)
-                
+        
         elif self.type == 'multipart':
             self.multifile = multifile.MultiFile(msg.fp, seekable=False)
             self.multifile.push(msg.getparam('boundary'))
