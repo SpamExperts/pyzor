@@ -11,7 +11,15 @@
     *	Upped the allowed signed timestamp difference to be up to
 	5 minutes (up from 3 minutes).
 
-    *	Client code how using threading to catch timeouts,
+    *	Removed the 'shutdown' command; implementation of
+	'meta' commands need to be re-thought.
+
+    *	Rewrite of threads locking to access the database.
+
+    *	pyzord no longer handles USR1 signals; instead, it now
+	automatically reorganizes and cleans-up the database daily.
+
+    *	Client code now uses threading to catch timeouts,
 	rather than an alarm signal.
 
 
