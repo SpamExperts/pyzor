@@ -8,8 +8,10 @@ THANKS
 lib/pyzor/__init__.py
 lib/pyzor/client.py
 lib/pyzor/server.py
+scripts/config
 scripts/pyzor
 scripts/pyzord
+scripts/servers
 scripts/test.in.0
 scripts/test.in.mbox
 scripts/test.sh
