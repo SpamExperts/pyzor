@@ -13,14 +13,6 @@
     <p>
       Pyzor is a Python implementation of a spam-blocking
       networked system that use spam signatures to identify them.
-      Concentrations will be on a clear, language-independent,
-      lightweight specification.
-    </p>
-    
-    <p>
-      Pyzor will contain both a client and server for the protocol.
-      The protocol will be designed and documented such that
-      it is not tied to the implementation.
     </p>
     
     <p>
@@ -28,16 +20,23 @@
       implementation of <a href="http://razor.sourceforge.net/">Razor</a>,
       but due to the protocol and the fact that Razor's server
       is not Free Software, I decided to Pyzor should be based
-      upon a new protocol.
+      upon a new, lighter, more language-independent protocol.
     </p>
     
     <h2>For Users</h2>
     
     <p>
       <a href="https://sourceforge.net/project/showfiles.php?group_id=50000">Pyzor
-	0.1.0</a> has been released.  You are welcome to
+	0.1.1</a> has been released.  You are welcome to
       join the <a href="https://sourceforge.net/mail/?group_id=50000">mailing
 	list</a>.
+    </p>
+    
+    <p>
+      Users are encouraged to read <a href="blocking.html">Steps
+	to block spam with Pyzor</a> so they are aware of how
+      Pyzor should fit into their overall scheme, and to realize
+      that Pyzor is meant to <em>complement</em> other techniques.
     </p>
     
   </body>

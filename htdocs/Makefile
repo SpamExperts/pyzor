@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1.1.1 2002-04-13 06:38:39 ftobin Exp $
+# $Id: Makefile,v 1.2 2002-04-16 22:05:36 ftobin Exp $
 
 # Makefile.inc should define
 # XSLT_PROG
@@ -16,7 +16,7 @@ NAVBAR_INC         = navbar/navbar.inc-html
 NAVBAR_XML         = navbar/navbar.xml
 HEAD_BOOKMARKS_INC = navbar/head-bookmarks.inc-html
 
-all : index.html
+all : index.html blocking.html
 
 .PHONY : perms
 
