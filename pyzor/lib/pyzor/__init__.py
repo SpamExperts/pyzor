@@ -2,7 +2,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.4.0"
-__revision__ = "$Id: __init__.py,v 1.36 2002-09-04 04:05:14 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.37 2002-09-04 17:35:26 ftobin Exp $"
 
 import os
 import os.path
@@ -136,6 +136,7 @@ class PiecesDigest(str):
 
     # we might want to change this in the future.
     # Note that an empty string will always be used to remove whitespace
+    # relying on this is not thread-safe
     unwanted_txt_repl = ''
 
     # this is mainly here for to help testing (boolean)
