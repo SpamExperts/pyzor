@@ -31,7 +31,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.5 2002-04-14 20:33:05 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.6 2002-04-14 21:30:10 ftobin Exp $"
 
 
 class Record(object):
@@ -47,7 +47,6 @@ class Record(object):
         # overflow prevention
         if self.count < 2**30:
             self.count += 1
-            sys.stderr.write("count is now %d\n" % self.count)
         self.update()
 
     def update(self):
