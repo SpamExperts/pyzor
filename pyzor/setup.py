@@ -1,7 +1,8 @@
 import sys
+import distutils.core
+
 sys.path.insert(0, 'lib')
 import pyzor
-import distutils.core
 
 long_description = """
 Pyzor is spam-blocking networked system that uses spam signatures
@@ -13,7 +14,7 @@ distutils.core.setup( name = 'pyzor',
                       description = 'networked spam-signature detection',
 		      long_description = long_description,
                       author = 'Frank J. Tobin',
-                      author_email = 'ftobin@users.sourceforge.net',
+                      author_email = 'ftobin@neverending.org',
 		      license = 'GPL',
 		      platforms = 'POSIX',
 		      keywords = 'spam',
@@ -21,4 +22,5 @@ distutils.core.setup( name = 'pyzor',
                       scripts=['scripts/pyzor', 'scripts/pyzord'],
                       package_dir = {'': 'lib'},
                       packages = ['pyzor'],
+                      data_files=[('share/doc/pyzor', ['docs/index.html'])],
                       )
