@@ -105,7 +105,7 @@
       <dd>The syntax is pretty much the same as a netstring without the quotes</dd>
 
       <dt><code>[<var>x</var>],</code></dt>
-      <dd><code.netlist(<var>x</var>)</code></dd>
+      <dd><code>netlist(<var>x</var>)</code></dd>
     </dl>
     
     <h4>Common characteristics</h4>
@@ -181,6 +181,7 @@
 "<var>message</var>",
 	</pre>
       </dd>
+      
     </dl>
     
   </body>
