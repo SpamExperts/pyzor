@@ -11,7 +11,7 @@ import ConfigParser
 
 _author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.12 2002-06-19 17:41:07 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.13 2002-06-30 03:28:03 ftobin Exp $"
 
 default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping'
                                               'info'])
@@ -79,7 +79,7 @@ defaults = {'port':          '24441',
             'digestdb':      os.path.join(homedir, 'pyzord.db'),
             'passwdfile':    os.path.join(homedir, 'pyzord.passwd'),
             'accessfile':    os.path.join(homedir, 'pyzord.access'),
-            'CleanupAge':    str(pyzor.server.DBHandle.max_age),
+            'CleanupAge':    "%d" % pyzor.server.DBHandle.max_age,
             }
 
 config = pyzor.Config()
