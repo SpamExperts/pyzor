@@ -4,7 +4,6 @@ from __future__ import division
 
 import os
 import sys
-import signal
 import SocketServer
 import time
 import gdbm
@@ -17,7 +16,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.28 2002-10-09 00:33:44 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.29 2002-10-09 00:45:45 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -468,8 +467,6 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
 
 
     def handle(self):
-        do_exit = False
-        
         try:
             self._really_handle()
         except UnsupportedVersionError, e:
@@ -484,8 +481,6 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
             self.handle_error(401, "Unauthorized: %s" % e)
         except SignatureError, e:
             self.handle_error(401, "Unauthorized, Signature Error: %s" % e)
-        except SystemExit, e:
-            do_exit = True
         except Exception, e:
             self.handle_error(500, "Internal Server Error: %s" % e)
             traceback.print_exc()
@@ -501,11 +496,6 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.output.debug("sending: %s" % repr(msg_str))
         self.wfile.write(msg_str)
         
-        if do_exit:
-            db_hold = DBHandle()  # to keep the db consistent
-            self.finish()
-            os.kill(self.server.pid, signal.SIGTERM)
-
 
     def _really_handle(self):
         """handle() without the exception handling"""
@@ -628,14 +618,9 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.out_msg['WL-Count'] = "%d" % wl_count
 
 
-    def handle_shutdown(self):
-        raise SystemExit
-
-
     dispatches = { 'check':     handle_check,
                    'report':    handle_report,
                    'ping':      None,
                    'info':      handle_info,
-                   'shutdown':  handle_shutdown,
                    'whitelist': handle_whitelist,
                    }

@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.44 2002-10-05 01:55:22 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.45 2002-10-09 00:45:45 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -52,11 +52,6 @@ class Client(object):
 
     def check(self, digest, address):
         msg = CheckRequest(digest)
-        self.send(msg, address)
-        return self.read_response(msg.get_thread())
-
-    def shutdown(self, address):
-        msg = ShutdownRequest()
         self.send(msg, address)
         return self.read_response(msg.get_thread())
 
@@ -199,7 +194,7 @@ class ExecCall(object):
             sys.stderr.write("%s\n" % s)
         sys.stderr.write("""usage: %s [-d] [--homedir dir] command [cmd_opts]
 command is one of: check, report, discover, ping, digest, predigest,
-                   genkey, shutdown
+                   genkey
 Data is read on standard input (stdin).
 """
                          % sys.argv[0])
@@ -220,21 +215,6 @@ Data is read on standard input (stdin).
 
         return runner.all_ok
         
-
-    def shutdown(self, args):
-        (opts, args2) = getopt.getopt(args[1:], '')
-
-        if len(args2) > 1:
-            self.usage("%s does not take any non-option arguments" % args[0])
-
-        runner = ClientRunner(self.client.shutdown)
-
-        for arg in args2:
-            server = Address.from_str(arg)
-            runner.run(server, (server,))
-                    
-        return runner.all_ok
-
 
     def info(self, args):
         getopt.getopt(args[1:], '')
@@ -414,7 +394,6 @@ Data is read on standard input (stdin).
                   'report':    report,
                   'ping' :     ping,
                   'genkey':    genkey,
-                  'shutdown':  shutdown,
                   'info':      info,
                   'whitelist': whitelist,
                   'digest':    digest,

@@ -159,10 +159,5 @@ check && fail
 echo "checking for logfile"
 [ -s pyzord.log ] || fail
 
-echo "anonymous: shutting down server"
-pyzor shutdown 127.0.0.1:9999 && fail
-
-echo "bob: shutting down server"
-pyzor_bob shutdown 127.0.0.1:9999 || fail
-
+kill_server
 echo "passed"
