@@ -18,7 +18,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.3.1"
-__revision__ = "$Id: __init__.py,v 1.30 2002-08-16 16:29:26 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.31 2002-08-16 20:16:49 ftobin Exp $"
 
 import os
 import os.path
@@ -196,7 +196,7 @@ class PiecesDigest(str):
             fp = newfp
 
         # did we get an empty file?
-        if not line_offsets:
+        if len(line_offsets) == 0:
             return None
             
         digest = sha.new()
