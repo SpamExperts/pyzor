@@ -9,3 +9,4 @@ lib/pyzor/client.py
 lib/pyzor/server.py
 scripts/pyzor
 scripts/pyzord
+setup.py
