@@ -28,7 +28,9 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.13 2002-05-08 03:26:23 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.14 2002-05-17 20:58:15 ftobin Exp $"
+
+randfile = '/dev/random'
 
 
 class Client(object):
@@ -36,7 +38,7 @@ class Client(object):
     ttl = 4
     timeout = 4
     max_packet_size = 8192
-    user     = ''
+    user     = pyzor.anonymous_user
     user_key = ''
     
     def __init__(self, user=None, auth=None):
@@ -189,6 +191,8 @@ class ExecCall(object):
                 self.report(args)
             elif command == 'ping':
                 self.ping(args)
+            elif command == 'genkey':
+                self.genkey(args)
             else:
                self.usage()
         except TimeoutError:
@@ -304,6 +308,31 @@ class ExecCall(object):
         return
 
 
+    def genkey(self, args):
+        import getpass
+        p1 = getpass.getpass(prompt='Enter passphrase: ')
+        p2 = getpass.getpass(prompt='Enter passphrase again: ')
+        if p1 != p2:
+            sys.stderr.write("Passwords do not match.\n")
+            sys.exit(1)
+
+        del p2
+
+        import sha
+        saltfile = open(randfile)
+        salt = saltfile.read(sha.digest_size)
+        del saltfile
+
+        salt_digest = sha.new(salt)
+
+        pass_digest = sha.new()
+        pass_digest.update(salt_digest.digest())
+        pass_digest.update(p1)
+
+        sys.stdout.write("%s,%s\n" % (salt_digest.hexdigest(),
+                                      pass_digest.hexdigest()))
+
+
 class MailboxDigester(object):
     __slots__ = ['mbox', 'digest_spec']
     
@@ -321,6 +350,14 @@ class MailboxDigester(object):
         return PiecesDigest.compute_from_file(next_msg.fp,
                                               self.digest_spec,
                                               seekable=False)
+
+
+class Keyring(dict):
+    
+
+
+class KeyFile(object):
+    pass
 
 
 def run():

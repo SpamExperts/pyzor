@@ -31,13 +31,205 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.11 2002-05-08 03:26:23 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.12 2002-05-17 20:58:15 ftobin Exp $"
 
 
 class AuthorizationError(Exception):
     """signature was valid, but not permitted to
     do the requested action"""
     pass
+
+
+class ACL(object):
+    __slots__ = ['entries']
+    default_allow = False
+
+    def __init__(self):
+        self.entries = []
+
+    def add_entry(self, entry):
+        assert isinstance(entry, ACLEntry)
+        self.entries.appen(entry)
+
+    def allows(self, user, op):
+        assert isinstance(user, Username)
+        assert isinstance(op,   Opname)
+        
+        for entry in self.entries:
+            if entry.allows(user, op):
+                return True
+            if entry.denies(user, op):
+                return False
+        return self.default_allow
+
+
+def ACLEntry(tuple):
+    all_keyword = 'ALL'
+    
+    def __init__(self, user, op, allow):
+        assert isinstance(user,  Username)
+        assert isinstance(op,    Opname)
+        assert allow == True or allow == False
+
+        super(ACLEntry, self).__init__((user, op, bool(allow)))
+
+    def user(self):
+        return self[0]
+    user = property(user)
+
+    def op(self):
+        return self[1]
+    op = property(op)
+
+    def allow(self):
+        return bool(self[2])
+    allow = property(allow)
+
+    def allows(self, user, op):
+        return self._says(user, op, True)
+
+    def denies(self, user, op):
+        return self._says(user, op, False)
+
+    def _says(self, user, op, allow):
+        """If allow is True, we return true if and only if we allow user to do op.
+        If allow is False, we return true if and only if we deny user to do op
+        """
+        assert isinstance(user,  Username)
+        assert isinstance(op,    Opname)
+        
+        return bool(self.allow == allow
+                    and (self.user == user or self.user == self.all_keyword)
+                    and (self.op == op     or self.op   == self.all_keyword))
+
+
+class AccessFile(object):
+    # I started doing an iterator protocol for this, but it just
+    # got too complicated keeping track of everything on the line
+    __slots__ = ['file', 'output']
+    allow_keyword = 'allow'
+    deny_keyword = 'deny'
+    
+    def __init__(self, f):
+        self.output = Output()
+        self.file = f
+
+    def feed_into(self, acl):
+        assert isinstance(acl, ACL)
+    
+        for orig_line in self.file:
+            line = orig_line.strip()
+            if not line or line.startswith('#'):
+                continue
+            
+            parts = line.split(':')
+
+            if len(parts) != 3:
+                self.output.warn("invalid number of parts for line: %s"
+                                 % repr(orig_line))
+                continue
+            
+            (ops_str, users_str, allow_str) = parts
+
+            ops = []
+            for o in ops_str.split():
+                try:
+                    op = Opname(o)
+                except ValueError, e:
+                    self.output.warn("invalud opname %s: %s"
+                                     % (repr(o), e))
+                else:
+                    ops.append(op)
+
+            users = []
+            for u in users_str.split():
+                try:
+                    user = Username(u)
+                except ValueError, e:
+                    self.output.warn("invalid username %s: %s"
+                                     % (repr(u), e))
+                else:
+                    users.append(user)
+
+            allow_str = allow_str.strip()
+            if allow_str.lower() == self.allow_keyword:
+                allow = True
+            elif allow_str.lower() == self.deny_keyword:
+                allow = False
+            else:
+                self.output.warn("invalid allow/deny keyword %s"
+                                 % repr(allow_str))
+                continue
+
+            for op in ops:
+                for user in users:
+                    acl.add_entry(ACLEntry(user, op, allow))
+
+
+class Passwd(dict):
+    def __init__(self):
+        super(Passwd, self).__init__(self)
+        self.output = Output()
+    
+    def add_entry(self, entry):
+        assert isinstance(entry, PasswdEntry)
+        self[entry.user] = entry.key
+
+            
+class PasswdFile(object):
+    __slots__ = ['file', 'output']
+
+    def __init__(self, f):
+        self.file = f
+        self.output = Output()
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        while 1:
+            orig_line = self.file.readline()
+            if not orig_line:
+                raise StopIteration
+            line = orig_line.strip()
+            if not line or line.startswith('#'):
+                continue
+            fields = line.split(':')
+            fields = map(lambda x: x.strip(), fields)
+
+            if len(fields) == 2:
+                username = Username(fields[0])
+                try:
+                    entry = PasswdEntry(username, fields[1])
+                except ValueError, e:
+                    self.output.warn("invalid passwd entry: %s" % e)
+                else:
+                    return entry
+            else:
+                self.output.warn("passwd line %s is invalid"
+                                 % repr(orig_line))
+
+
+class PasswdEntry(tuple):
+    user_pattern = re.compile(r'^[-\.\w]+$')
+    
+    def __init__(self, user, key):
+        assert isinstance(user, Username)
+        assert isinstance(key, str)
+
+        super(PasswdEntry, self).__init__((user, key))
+        
+        if not self.user_pattern.match(self.user):
+            raise ValueError, "user %s is invalid" % repr(user)
+
+    def user(self):
+        return self[0]
+    user = property(user)
+    
+    def key(self):
+        return self[1]
+    key = property(key)
+
 
 
 class Log(object):
@@ -192,8 +384,10 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
             self.handle_error(400, "Bad request: %s" % e)
         except TimeoutError, e:
             self.handle_error(503, "Gateway timeout: %s" % e)
-        except AuthorizationError:
-            self.handle_error(401, "Unauthorized")
+        except AuthorizationError, e:
+            self.handle_error(401, "Unauthorized: %s" % e)
+        except SignatureError, e:
+            self.handle_error(401, "Unauthorized, Signature Error: %s" % e)
         except Exception, e:
             self.handle_error(500, "Internal Server Error: %s" % e)
             traceback.print_exc()
@@ -215,13 +409,14 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         
         signed_msg = MacEnvelope(self.rfile)
 
-        self.user = signed_msg.get('User', None)
+        self.user = Username(signed_msg['User'])
 
-        if self.user:
-            raise NotImplementedError
-            user_key    = None
-            signed_msg.verify_sig(user_key)
-
+        if self.user != pyzor.anonymous_user:
+            if self.server.passwd.has_key(self.user):
+                signed_msg.verify_sig(user_key)
+            else:
+                raise SignatureError, "unknown user"
+        
         self.in_msg = signed_msg.get_submsg(pyzor.Request)
 
         # We take the int() of the proto versions because
@@ -232,7 +427,9 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.msg_thread = self.in_msg.get_thread()
         self.out_msg.set_thread(self.msg_thread)
 
-        self.op = self.in_msg.get_op()
+        self.op = Opname(self.in_msg.get_op())
+        if not self.server.acl.allows(user, self.op):
+            raise AuthorizationError
         
         self.output.debug("got a %s command from %s" %
                           (self.op, self.client_address))

@@ -11,7 +11,10 @@ import ConfigParser
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.6 2002-04-22 00:17:40 ftobin Exp $"
+__revision__ = "$Id: pyzord,v 1.7 2002-05-17 20:58:16 ftobin Exp $"
+
+default_anonymous_allows = ['check', 'report', 'ping']
+
 
 def cleanup_server_handler(signum, frame):
     pyzor.server.DBHandle('c').cleanup()
@@ -49,6 +52,8 @@ defaults = {'port':          '24441',
             'logfile':       os.path.join(homedir, 'pyzord.log'),
             'pidfile':       os.path.join(homedir, 'pyzord.pid'),
             'digestdb':      os.path.join(homedir, 'pyzord.db'),
+            'passwd':        os.path.join(homedir, 'pyzord.passwd'),
+            'access':        os.path.join(homedir, 'pyzord.access'),
             'CleanupAge':    str(pyzor.server.DBHandle.max_age),
             }
 
@@ -64,18 +69,38 @@ config.read(config_fn)
 port       = config.getint('server', 'port')
 listen_adr = config.get('server', 'ListenAddress')
 
-log_fn = config.get_filename('server', 'logfile')
-pid_fn = config.get_filename('server', 'pidfile')
-dbfile = config.get_filename('server', 'DigestDB')
+log_fn    = config.get_filename('server', 'logfile')
+pid_fn    = config.get_filename('server', 'pidfile')
+dbfile    = config.get_filename('server', 'DigestDB')
+passwd_fn = config.get_filename('server', 'passwd')
+access_fn = config.get_filename('server', 'access')
 pyzor.server.DBHandle.max_age = config.getint('server', 'CleanupAge')
 
-logfile = open(log_fn, 'a')
-
-pyzor.server.DBHandle.dbfile = dbfile
 output = pyzor.Output(debug=debug)
+
+logfile = open(log_fn, 'a')
+pyzor.server.DBHandle.dbfile = dbfile
 
 server = pyzor.server.Server((listen_adr, port),
                              pyzor.server.Log(logfile))
+
+
+server.passwd = pyzor.server.Passwd()
+if os.path.exists(passwd_fn):
+    for entry in pyzor.server.PasswdFile(open(passwd_fn)):
+        server.passwd.add_entry(entry)
+
+server.acl = ACL()
+if os.path.exists(access_fn):
+    pyzor.server.AccessFile(open(access_fn)).feed_into(server.acl)
+else:
+    output.warn("%s does not exist; using default ACL; allowing anonymous to do %s"
+                % (access_fn, default_anonymous_allows))
+    for op in default_anonymous_allows:
+        server.acl.add_entry(pyzor.server.ACLEntry(op,
+                                                   pyzor.anonymous_user,
+                                                   True)
+
 
 if not debug:
     # This step is required so that the new process is guaranteed

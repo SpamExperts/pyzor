@@ -167,7 +167,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.16 2002-05-08 03:26:23 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.17 2002-05-17 20:58:15 ftobin Exp $"
 
 import os
 import os.path
@@ -181,8 +181,9 @@ import rfc822
 import cStringIO
 import time
 
-proto_name    = 'pyzor'
-proto_version =  2.0
+proto_name     = 'pyzor'
+proto_version  =  2.0
+anonymous_user = 'anonymous'
 
 class ProtocolError(Exception):
     pass
@@ -197,7 +198,8 @@ class UnsupportedVersionError(ProtocolError):
     pass
 
 class SignatureError(Exception):
-    """signature on msg invalid or not within allowed time range"""
+    """unknown user, signature on msg invalid,
+    or not within allowed time range"""
     pass
 
 
@@ -208,6 +210,30 @@ class Singleton(object):
         if it is None:
             cls.__it__ = object.__new__(cls)
         return cls.__it__
+
+
+class Username(str):
+    user_pattern = re.compile(r'^[-\.\w]+$')
+    
+    def __init__(self, s):
+        super(Username, self).__init__(s)
+        self.validate()
+
+    def validate(self):
+        if not self.user_patter.match(self):
+            raise ValueError, "%s is an invalid username" % self
+
+
+class Opname(str):
+    op_pattern = re.compile(r'^[-\.\w]+$')
+    
+    def __init__(self, s):
+        super(Username, self).__init__(s)
+        self.validate()
+
+    def validate(self):
+        if not self.user_patter.match(self):
+            raise ValueError, "%s is an invalid username" % self
 
 
 class Output(Singleton):
