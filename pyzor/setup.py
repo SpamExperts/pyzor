@@ -22,5 +22,5 @@ distutils.core.setup( name = 'pyzor',
                       scripts=['scripts/pyzor', 'scripts/pyzord'],
                       package_dir = {'': 'lib'},
                       packages = ['pyzor'],
-                      data_files=[('share/doc/pyzor', ['docs/index.html'])],
+                      data_files=[('share/doc/pyzor', ['docs/usage.html'])],
                       )

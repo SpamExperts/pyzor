@@ -5,7 +5,7 @@ MANIFEST
 NEWS
 README
 THANKS
-docs/index.html
+docs/usage.html
 lib/pyzor/__init__.py
 lib/pyzor/client.py
 lib/pyzor/server.py
