@@ -34,7 +34,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.18 2002-06-29 23:14:59 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.19 2002-07-04 20:59:35 ftobin Exp $"
 
 
 class AuthorizationError(pyzor.CommError):
@@ -233,24 +233,27 @@ class Log(object):
     def __init__(self, fp=None):
         self.fp = fp
 
-    def log(self, address, user=None, command=None, arg=None):
+    def log(self, address, user=None, command=None, arg=None, code=None):
         # we don't use defaults because we want to be able
         # to pass in None
         if user    is None: user = ''
         if command is None: command = ''
         if arg     is None: arg = ''
+        if code    is None: code = -1
         
         # We duplicate the time field merely so that
         # humans can peruse through the entries without processing
         ts = int(time.time())
         if self.fp is not None:
             self.fp.write("%s\n" %
-                          ','.join((str(ts),
+                          ','.join((("%d" % ts),
                                     time.ctime(ts),
                                     user,
                                     address[0],
                                     command,
-                                    repr(arg))))
+                                    repr(arg),
+                                    ("%d" % code)
+                                    )))
             self.fp.flush()
 
 
@@ -450,6 +453,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.user       = None
         self.op         = None
         self.op_arg     = None
+        self.out_code   = None
         self.msg_thread = None
 
 
@@ -484,7 +488,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         self.out_msg.setdefault('Diag', 'OK')
         self.out_msg.init_for_sending()
 
-        self.log.log(self.client_address, self.user, self.op, self.op_arg)
+        self.log.log(self.client_address, self.user, self.op, self.op_arg,
+                     int(self.out_msg['Code']))
         
         msg_str = str(self.out_msg)
         self.output.debug("sending: %s" % repr(msg_str))
@@ -494,6 +499,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
             db_hold = DBHandle('r')  # to keep the db consistent
             self.finish()
             os.kill(self.server.pid, signal.SIGQUIT)
+
 
     def _really_handle(self):
         """handle() without the exception handling"""
