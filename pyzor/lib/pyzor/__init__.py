@@ -18,7 +18,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.3.1"
-__revision__ = "$Id: __init__.py,v 1.29 2002-08-13 20:51:41 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.30 2002-08-16 16:29:26 ftobin Exp $"
 
 import os
 import os.path
@@ -162,7 +162,7 @@ class PiecesDigest(str):
         s2 = self.url_ptrn.sub('', s2)
         s2 = self.longstr_ptrn.sub('', s2)
         # make sure we do the whitespace last because some of
-        # the previous patterns rely in whitespace
+        # the previous patterns rely on whitespace
         s2 = self.ws_ptrn.sub('', s2)
         return s2
     
@@ -181,11 +181,12 @@ class PiecesDigest(str):
             cur_offset = 0
             newfp = tempfile.TemporaryFile()
 
-        while 1:
+        while True:
             buf = fp.read(self.bufsize)
             line_offsets.extend(map(lambda x: cur_offset + x,
                                     self.get_line_offsets(buf)))
-            if not buf: break
+            if not buf:
+                break
             cur_offset += len(buf)
             
             if newfp:
@@ -203,7 +204,8 @@ class PiecesDigest(str):
         for (perc_offset, length) in spec:
             assert 0 <= perc_offset < 100
 
-            offset = line_offsets[int(perc_offset/100 * len(line_offsets))]
+            offset = line_offsets[int(perc_offset * len(line_offsets)
+                                      / 100.0)]
             fp.seek(offset)
 
             i = 0
