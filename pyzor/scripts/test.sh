@@ -18,6 +18,7 @@ server_pid=$!
 # time to grab the socket
 sleep 1
 
+[ `./pyzor check < test.in.0` = 0 ] || fail
 ./pyzor report < test.in.0 || fail
 ./pyzor report < test.in.0 || fail
 [ `./pyzor check < test.in.0` = 2 ] || fail

@@ -31,7 +31,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.6 2002-04-14 21:30:10 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.7 2002-04-14 22:23:08 ftobin Exp $"
 
 
 class Record(object):
@@ -65,7 +65,7 @@ class DBHandle(object):
     dbfile = None
     db_lock = threading.Lock()
 
-    def __init__(self, mode):
+    def __init__(self, mode='r'):
         self.output = Output()
         self.db_lock.acquire()
         self.db = gdbm.open(self.dbfile, mode)
@@ -114,6 +114,11 @@ class Server(SocketServer.ThreadingUDPServer, object):
     def __init__(self, address, debug=None):
         RequestHandler.output = Output(debug=debug)
         super(Server, self).__init__(address, RequestHandler)
+        self.ensure_db_exists()
+        
+
+    def ensure_db_exists(self):
+        db = DBHandle('c')
 
 
 class RequestHandler(SocketServer.DatagramRequestHandler, object):
