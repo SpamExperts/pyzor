@@ -2,7 +2,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.4.0"
-__revision__ = "$Id: __init__.py,v 1.41 2002-09-07 01:12:12 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.42 2002-09-12 01:17:27 ftobin Exp $"
 
 import os
 import os.path
@@ -227,7 +227,7 @@ class ThreadedMessage(Message):
 
 
 class MacEnvelope(Message):
-    ts_diff_max = 180
+    ts_diff_max = 300
     
     def ensure_complete(self):
         if not (self.has_key('User')

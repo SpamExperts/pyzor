@@ -1,3 +1,7 @@
+    *	Upped timestamp difference to be up to 5 minutes
+	(up from 3 minutes).
+
+
 Noteworthy changes in 0.4.0
 -----------------------------------------------------------------
 
