@@ -19,7 +19,7 @@ kill_server()
 
 fail()
 {
-    echo "failed"
+    echo "failed: $1"
     kill_server
     exit 1;
 }
@@ -32,6 +32,11 @@ setcount()
 setcount_bob()
 {
   count=`$PYZOR check < test.in.0 | cut -f 3`
+}
+
+fail_cmp()
+{
+  fail "got $1; expected $2"
 }
 
 rm -f pyzord.*
@@ -72,8 +77,8 @@ check || fail
 
 echo "bob: counting reports"
 setcount_bob
-[ ${count:--1} = 2 ] || fail
-check.bob || fail
+[ ${count:--1} = 2 ] || fail_cmp ${count:--1} 2
+check.bob || fail "checking failed"
 
 
 echo "bob: reporting a mailbox"
@@ -82,8 +87,8 @@ $PYZOR_BOB report --mbox < test.in.mbox || fail
 
 echo "bob: counting reports"
 setcount_bob
-[ ${count:--1} = 3 ] || fail
-check.bob || fail
+[ ${count:--1} = 3 ] || fail_cmp ${count:--1} 3
+check.bob || fail "checking exit code failed"
 
 
 echo "bob: getting info"
@@ -109,7 +114,7 @@ $PYZOR_BOB info < test.in.0 || fail
 
 echo "bob: counting reports"
 setcount_bob
-[ ${count:--1} = 0 ] || fail
+[ ${count:--1} = 0 ] || fail_cmp ${count:--1} 0
 check && fail
 
 

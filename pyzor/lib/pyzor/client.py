@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.34 2002-09-06 00:56:08 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.35 2002-09-07 01:12:12 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -310,6 +310,18 @@ Data is read on standard input (stdin)."""
         return True
 
 
+    def print_digested(self, args):
+        getopt.getopt(args[1:], '')
+
+        def loop():
+            for digest in FileDigester(sys.stdin, self.digest_spec):
+                pass
+
+        modglobal_apply(globals(), {'DataDigester': PrintingDataDigester},
+                        loop)
+
+        return True
+
     def genkey(self, args):
         (options, args2) = getopt.getopt(args[1:], '')
 
@@ -360,24 +372,25 @@ Data is read on standard input (stdin)."""
     get_accounts = staticmethod(get_accounts)
 
 
-    dispatches = {'check':     check,
-                  'report':    report,
-                  'ping' :     ping,
-                  'genkey':    genkey,
-                  'shutdown':  shutdown,
-                  'info':      info,
-                  'whitelist': whitelist,
-                  'digest':    digest,
-                  'discover':  None,  # handled earlier
+    dispatches = {'check':      check,
+                  'report':     report,
+                  'ping' :      ping,
+                  'genkey':     genkey,
+                  'shutdown':   shutdown,
+                  'info':       info,
+                  'whitelist':  whitelist,
+                  'digest':     digest,
+                  'pre-digest': print_digested,
+                  'discover':   None,  # handled earlier
                   }
 
 
 
 class DataDigester(object):
-    __slots__ = ['_atomic', '_value', '_used_line', '_digest']
+    """The major workhouse class"""
+    __slots__ = ['_atomic', '_value', '_used_line', '_digest',
+                 'seekable']
     
-    bufsize = 1024
-
     # minimum line length for it to be included as part
     # of the digest.  I forget the purpose, however.
     # Someone remind me so I can document it here.
@@ -411,9 +424,60 @@ class DataDigester(object):
         self._atomic    = None
         self._value     = None
         self._used_line = None
-        line_offsets = []
+        self.seekable   = seekable
 
-        if seekable:
+        (fp, offsets) = self.get_line_offsets(fp)
+        
+        # did we get an empty file?
+        if len(offsets) == 0:
+            return None
+
+        self._digest = sha.new()
+
+        if len(offsets) <= self.atomic_num_lines:
+            self.handle_atomic(fp)
+        else:
+            self.handle_pieced(fp, spec, offsets)
+
+        self._value = DataDigest(self._digest.hexdigest())
+
+        assert self._atomic is not None
+        assert self._value is not None
+
+
+    def handle_atomic(self, fp):
+        """we digest everything"""
+        self._atomic = True
+        fp.seek(0)
+        for line in fp:
+            self.handle_line(line)
+
+
+    def handle_pieced(self, fp, spec, offsets):
+        self._atomic = False
+        """digest stuff according to the spec"""
+        for (perc_offset, length) in spec:
+            assert 0 <= perc_offset < 100
+
+            offset = offsets[int(perc_offset * len(offsets)
+                                 / 100.0)]
+            fp.seek(offset)
+
+            for i in range(length):
+                line = fp.readline()
+                if not line:
+                    break
+                self.handle_line(line)
+
+
+    def get_line_offsets(self, fp):
+        """return tuple of (fp2, line offsets)
+        If we are not seekable, fp will be copied into a tempfile,
+        and fp2 is hence re-usable.
+        If we are not seekable, we also normalize the lines while
+        copying them into the tempfile.
+        """
+        if self.seekable:
             cur_offset = fp.tell()
             newfp = None
         else:
@@ -423,67 +487,53 @@ class DataDigester(object):
             cur_offset = 0
             newfp = tempfile.TemporaryFile()
 
-        while True:
-            buf = fp.read(self.bufsize)
-            line_offsets.extend(map(lambda x: cur_offset + x,
-                                    self.get_line_offsets(buf)))
-            if not buf:
-                break
-            cur_offset += len(buf)
-            
-            if newfp:
-                newfp.write(buf)
 
-        if newfp:
+        offsets = []
+        
+        for line in fp:
+            norm = self.normalize(line)
+            should_handle = self.should_handle_line(norm)
+
+            if should_handle:
+                offsets.append(cur_offset)
+
+            # the thing to remember about cur_offset is that it should
+            # be used to specify where to seek to in the
+            # 'output' document, not where we currently are in fp
+            # Remember, the output document is static if we are seekable
+            # (because we don't have to write out a tempfile),
+            # but it's *not the same* if we're writing out a new document,
+            # since we don't need to write out all the lines.
+            moved = 0
+            if self.seekable:
+                moved = len(line)
+            elif should_handle:
+                moved = len(norm)
+
+            cur_offset += moved
+
+            if should_handle and not self.seekable:
+                newfp.write("%s\n" % norm)
+
+        if not self.seekable:
             fp = newfp
 
-        # did we get an empty file?
-        if len(line_offsets) == 0:
-            return None
-            
-        self._digest = sha.new()
-
-        if len(line_offsets) <= self.atomic_num_lines:
-            # digest everything
-            self._atomic = True
-            fp.seek(0)
-            for line in fp:
-                self.handle_line(line)
-        else:
-            # digest stuff according to the spec
-            self._atomic = False
-            for (perc_offset, length) in spec:
-                assert 0 <= perc_offset < 100
-
-                offset = line_offsets[int(perc_offset * len(line_offsets)
-                                          / 100.0)]
-                fp.seek(offset)
-
-                i = 0
-                while i < length:
-                    line = fp.readline()
-                    if not line:
-                        break
-                    self.handle_line(line)
-                    if self._used_line:
-                        i += 1
-
-        self._value = DataDigest(self._digest.hexdigest())
-        
-        assert self._atomic is not None
-        assert self._value is not None
+        return (fp, offsets)
 
 
     def handle_line(self, line):
-        norm_line = self.normalize(line)
-        if self.should_handle_line(norm_line):
-            self._used_line = True
-            self._really_handle_line(norm_line)
-        self._used_line = False
-        assert self._used_line is not None
+        # seekable indicates that
+        # the line was not normalized
+        # when we first ran over it to get the line offsets
+        if self.seekable:
+            buf = self.normalize(line)
+        else:
+            # we at least have to strip the newline
+            buf = line.rstrip()
+        self._really_handle_buf(buf)
 
-    def _really_handle_line(self, line):
-        self._digest.update(line)
+    def _really_handle_buf(self, buf):
+        self._digest.update(buf)
 
     def is_atomic(self):
         if self._atomic is None:
@@ -491,20 +541,7 @@ class DataDigester(object):
         return bool(self._atomic)
 
     def get_digest(self):
-        return self._value        
-        
-    def get_line_offsets(buf):
-        cur_offset = 0
-        offsets = []
-        while True:
-            i = buf.find('\n', cur_offset)
-            if i == -1:
-                return offsets
-            offsets.append(i)
-            cur_offset = i + 1
-        return
-    get_line_offsets = staticmethod(get_line_offsets)
-
+        return self._value
 
     def normalize(self, s):
         repl = self.unwanted_txt_repl
@@ -528,9 +565,9 @@ class DataDigester(object):
 class PrintingDataDigester(DataDigester):
     """extends DataDigester: prints out what we're digesting"""
 
-    def _really_handle_line(self, line):
-        sys.stdout.write("%s\n" % line)
-        super(PrintingDataDigester, self)._really_handle_line(self)
+    def _really_handle_buf(self, buf):
+        sys.stdout.write("%s\n" % buf)
+        super(PrintingDataDigester, self)._really_handle_buf(buf)
 
 
 
@@ -555,7 +592,7 @@ def get_file_digester(fp, spec, mbox, seekable=False):
     if mbox:
         return MailboxDigester(fp, spec)
 
-    return (DataDigester(rfc822BodyCleaner(fp).fp,
+    return (DataDigester(rfc822BodyCleaner(fp),
                          spec, seekable).get_digest(),)
 
 
@@ -574,7 +611,7 @@ class MailboxDigester(BasicIterator):
         next_msg = self.mbox.next()
         if next_msg is None:
             raise StopIteration
-        return DataDigester(next_msg.fp, self.digest_spec,
+        return DataDigester(next_msg, self.digest_spec,
                             seekable=self.seekable).get_digest()
 
 
@@ -587,7 +624,6 @@ class rfc822BodyCleaner(BasicIterator):
         self.type      = msg.getmaintype()
         self.multifile = None
         self.curfile   = None
-        self.fp        = fp
 
         if self.type == 'text':
             encoding = msg.getencoding()
@@ -614,18 +650,15 @@ class rfc822BodyCleaner(BasicIterator):
         
     def readline(self):
         l = None
-        if self.type == 'text':
+        if self.type in ('text', 'multipart'):
             l = self.curfile.readline()
-        elif self.type == 'multipart':
-            l = self.curfile.readline()
+
+        if self.type == 'multipart':
             if not l and self.multifile.next():
                 self.curfile = self.__class__(self.multifile)
                 # recursion.  Could get messy if
                 # we get a bunch of empty multifile parts
                 l = self.readline()
-        else:
-            # If it's a type we dont' handle, we give nothing
-            l = ''
         return l
 
 

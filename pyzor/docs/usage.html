@@ -9,7 +9,7 @@
   <body>
     <h1>Pyzor Usage Documentation</h1>
 
-    <p id="cvsid">$Id: usage.html,v 1.5 2002-09-04 20:34:48 ftobin Exp $</p>
+    <p id="cvsid">$Id: usage.html,v 1.6 2002-09-07 01:12:12 ftobin Exp $</p>
     
     <ul>
       <li><a href="#client"><kbd>pyzor</kbd> (client)</a></li>
@@ -154,6 +154,17 @@ pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>
 	  If <kbd>--mbox</kbd> is provided, then the input is
 	  assumed to be a unix mailbox, each message's digest
 	  is written to standard output, separated by newlines.
+	</p>
+      </dd>
+
+      <dt id="predigest"><kbd>predigest</kbd></dt>
+      <dd>
+	<p>
+	  Reads on standard input an RFC 822 (email) message.
+	  Writes to standard output the normalized lines
+	  of data that are digested, with the exception
+	  that the lines printed have newlines (all whitespace
+	  is removed before digesting).
 	</p>
       </dd>
 

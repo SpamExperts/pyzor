@@ -2,7 +2,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.4.0"
-__revision__ = "$Id: __init__.py,v 1.40 2002-09-05 02:17:09 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.41 2002-09-07 01:12:12 ftobin Exp $"
 
 import os
 import os.path
@@ -492,5 +492,26 @@ def get_homedir(specified):
 def typecheck(inst, type_):
     if not isinstance(inst, type_):
         raise TypeError
+
+
+def modglobal_apply(globs, repl, obj, varargs=(), kwargs=None):
+    """temporarily modify globals during a call.
+    globs is the globals to modify (e.g., the return from globals())
+    repl is a dictionary of name: value replacements for the global
+    dict."""
+    if kwargs is None:
+        kwargs = {}
+    
+    saved = {}
+    for (k, v) in repl.items():
+        saved[k] = globs[k]
+        globs[k] = v
+
+    r = apply(obj, varargs, kwargs)
+
+    globs.update(saved)
+
+    return r
+
 
 anonymous_user = Username('anonymous')
