@@ -15,7 +15,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.36 2002-09-07 06:08:50 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.37 2002-09-07 06:12:53 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -374,16 +374,16 @@ Data is read on standard input (stdin).
     get_accounts = staticmethod(get_accounts)
 
 
-    dispatches = {'check':      check,
-                  'report':     report,
-                  'ping' :      ping,
-                  'genkey':     genkey,
-                  'shutdown':   shutdown,
-                  'info':       info,
-                  'whitelist':  whitelist,
-                  'digest':     digest,
-                  'pre-digest': print_digested,
-                  'discover':   None,  # handled earlier
+    dispatches = {'check':     check,
+                  'report':    report,
+                  'ping' :     ping,
+                  'genkey':    genkey,
+                  'shutdown':  shutdown,
+                  'info':      info,
+                  'whitelist': whitelist,
+                  'digest':    digest,
+                  'predigest': print_digested,
+                  'discover':  None,  # handled earlier
                   }
 
 
