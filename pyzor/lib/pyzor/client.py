@@ -16,7 +16,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.47 2002-10-24 20:16:53 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.48 2003-02-01 10:29:42 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -588,31 +588,36 @@ class PrintingDataDigester(DataDigester):
 
 
 
-class FileDigester(BasicIterator):
-    __slots__ = ['digester']
-
-    def __init__(self, fp, spec, mbox=False):
-        self.digester = iter(get_file_digester(fp, spec, mbox))
-        self.output = pyzor.Output()
-
-    def next(self):
-        digest = self.digester.next()
-        self.output.debug("calculated digest: %s" % digest)
-        return digest
-
-
-
-def get_file_digester(fp, spec, mbox, seekable=False):
+def get_input_handler(fp, spec, style='msg', seekable=False):
     """Return an object that can be iterated over
     to get all the digests from fp according to spec.
     mbox is a boolean"""
-    if mbox:
+    if style == 'msg':
+        return filter(lambda x: x is not None,
+                      (DataDigester(rfc822BodyCleaner(fp),
+                                    spec, seekable).get_digest(),)
+                      )
+
+    elif style =='mbox':
         return MailboxDigester(fp, spec)
 
-    return filter(lambda x: x is not None,
-                  (DataDigester(rfc822BodyCleaner(fp),
-                                spec, seekable).get_digest(),)
-                  )
+    elif style == 'digests':
+        return JustDigestsIterator(fp)
+
+    raise ValueError, "unknown input style"
+
+
+class JustDigestsIterator(BasicIterator):
+    __slots__ = ['fp']
+    
+    def __init__(self, fp):
+        self.fp = fp
+
+    def next(self):
+        l = fp.readline()
+        if not l:
+            raise StopIteration
+        return l.rstrip()
 
 
 class MailboxDigester(BasicIterator):
