@@ -3,19 +3,19 @@
 import os
 import os.path
 import socket
-import signal
 import cStringIO
 import getopt
 import tempfile
 import mimetools
 import sha
+import threading
 
 import pyzor
 from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.42 2002-09-24 02:29:51 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.43 2002-09-24 03:13:17 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -26,8 +26,6 @@ class Client(object):
     max_packet_size = 8192
     
     def __init__(self, accounts):
-        signal.signal(signal.SIGALRM, handle_timeout)
-        
         self.accounts = accounts
         self.output   = Output()
         self.build_socket()
@@ -81,11 +79,12 @@ class Client(object):
 
     def time_call(self, call, varargs=(), kwargs=None):
         if kwargs is None:  kwargs  = {}
-        signal.alarm(self.timeout)
+        timer = threading.Timer(self.timeout, raise_timeout)
+        timer.start()
         try:
             return apply(call, varargs, kwargs)
         finally:
-            signal.alarm(0)
+            timer.cancel()
 
     def read_response(self, expect_id):
         (packet, address) = self.recv()
@@ -935,7 +934,7 @@ def run():
     ExecCall().run()
 
 
-def handle_timeout(signum, frame):
+def raise_timeout():
     raise TimeoutError
 
 

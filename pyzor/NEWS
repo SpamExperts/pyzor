@@ -11,6 +11,9 @@
     *	Upped the allowed signed timestamp difference to be up to
 	5 minutes (up from 3 minutes).
 
+    *	Client code how using threading to catch timeouts,
+	rather than an alarm signal.
+
 
 Noteworthy changes in 0.4.0
 -----------------------------------------------------------------
