@@ -3,4 +3,5 @@ networked system that use spam signatures to identify them.
 
 http://pyzor.sourceforge.net/
 
+See INSTALL for install documentation.
 See docs/usage.html for usage documentation.
