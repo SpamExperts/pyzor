@@ -20,7 +20,7 @@ import os
 import os.path
 import socket
 import signal
-import StringIO
+import cStringIO
 import getopt
 
 import pyzor
@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.12 2002-04-22 15:59:31 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.13 2002-05-08 03:26:23 ftobin Exp $"
 
 
 class Client(object):
@@ -36,8 +36,8 @@ class Client(object):
     ttl = 4
     timeout = 4
     max_packet_size = 8192
-    user = ''
-    auth = ''
+    user     = ''
+    user_key = ''
     
     def __init__(self, user=None, auth=None):
         if user is not None:
@@ -48,43 +48,28 @@ class Client(object):
         self.build_socket()
 
     def ping(self, address):
-        msg = Message()
-        msg.add_string(self.user)
-        msg.add_string(self.auth)
-        msg.add_string('ping')
-        thread_id = msg.thread
+        msg = PingRequest()
         self.send(msg, address)
-        return self.read_error_code(thread_id)
+        return self.read_response(msg.get_thread())
         
     def report(self, digest, spec, address):
-        msg = Message()
-        thread_id = msg.thread
-        msg.add_string(self.user)
-        msg.add_string(self.auth)
-        msg.add_string('report')
-        msg.add_int(self.ttl)
-        msg.add_netenc(spec.netenc())
-        msg.add_string(digest)
+        msg = ReportRequest(digest, spec)
         self.send(msg, address)
-        return self.read_error_code(thread_id)
+        return self.read_response(msg.get_thread())
 
     def check(self, digest, address):
-        msg = Message()
-        thread_id = msg.thread
-        msg.add_string(self.user)
-        msg.add_string(self.auth)
-        msg.add_string('check')
-        msg.add_int(self.ttl)
-        msg.add_string(digest)
+        msg = CheckRequest(digest)
         self.send(msg, address)
-        return self.read_error_code(thread_id)
+        return self.read_response(msg.get_thread())
 
     def build_socket(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     def send(self, msg, address):
-        self.output.debug("sending: %s" % repr(str(msg)))
-        self.socket.sendto(str(msg), 0, address)
+        msg.init_for_sending()
+        mac_msg_str = str(MacEnvelope.wrap(self.user, self.user_key, msg))
+        self.output.debug("sending: %s" % repr(mac_msg_str))
+        self.socket.sendto(mac_msg_str, 0, address)
 
     def recv(self):
         return self.time_call(self.socket.recvfrom, (self.max_packet_size,))
@@ -100,27 +85,24 @@ class Client(object):
             signal.alarm(0)
             signal.signal(signal.SIGALRM, saved_handler)
 
-    def read_error_code(self, expect_id):
+    def read_response(self, expect_id):
         (packet, address) = self.recv()
         self.output.debug("received: %s" % repr(packet))
-        fp = StringIO.StringIO(packet)
-        self.expect(fp, proto_name,    read_netstring, "protocol name")
-        self.expect(fp, proto_version, read_netstring, "protocol version")
+        msg = Response(cStringIO.StringIO(packet))
 
-        thread_id = pyzor.ThreadID(read_netint(fp))
-        if not thread_id.in_ok_range():
-            self.output.warn("received error thread id of %d" % thread_id)
-        elif thread_id != expect_id:
-            raise ProtocolError, \
-                  "received unexpected thread id %d (expected %d)" \
-                  % (thread_id, expect_id)
+        msg.ensure_complete()
 
-        error_code = read_netint(fp)
-        message    = read_netstring(fp)
-        return (error_code, message)
+        try:
+            thread_id = msg.get_thread()
+            if thread_id != expect_id:
+                raise ProtocolError, \
+                      "received unexpected thread id %d (expected %d)" \
+                      % (thread_id, expect_id)
+        except KeyError:
+            self.output.warn("no thread id received")
 
-    def expect(self, fp, expected, factory, descr=None):
-        pyzor.expect(fp, expected, factory, descr)
+        return msg
+
 
 
 class ServerList(list):
@@ -225,79 +207,120 @@ class ExecCall(object):
 
     def ping(self, args):
         for server in self.servers:
+            self.output.debug("pinging %s" % str(server))
+            message = "%s\t" % str(server)
             try:
-                self.output.debug("pinging %s" % str(server))
-                result = self.client.ping(server)
+                response = self.client.ping(server)
+                sys.stdout.write(message + str(response.head_tuple())
+                                 + '\n')
             except TimeoutError:
-                result = 'timeout'
-            sys.stdout.write("%s\t%s\n" % (server, result))
+                sys.stderr.write(message + 'timeout\n')
         return
 
     def check(self, args):
         import rfc822
-        fp = rfc822.Message(sys.stdin, seekable=0).fp
+        fp = rfc822.Message(sys.stdin, seekable=False).fp
         
         self.output.debug("digest spec is %s" % self.digest_spec)
         digest = PiecesDigest.compute_from_file(fp,
                                                 self.digest_spec,
-                                                seekable=0)
+                                                seekable=False)
         if digest is None:
             return
         
         self.output.debug("calculated digest: %s" % digest)
 
-        found_hit = 0
+        found_hit = False
         for server in self.servers:
+            self.output.debug("sending to %s" % str(server))
+            message = "%s\t" % str(server)
             try:
-                self.output.debug("sending to %s" % str(server))
-                result = self.client.check(digest, server)
-                if result[0] == 200:
-                    output = result[1]
-                    if output > 0: found_hit = 1
-                else:
-                    output = result
+                response = self.client.check(digest, server)
+                message += "%s\t" % str(response.head_tuple())
+
+                if response.is_ok():
+                    if not response.has_key('Count'):
+                        raise IncompleteMessageError, "no count received"
+                    count = int(response['Count'])
+
+                    if count > 0:
+                        found_hit = True
+                    message += str(count)
+                sys.stdout.write(message + '\n')
+                
             except TimeoutError:
-                output = 'timeout'
-            sys.stdout.write("%s\t%s\n" % (server, output))
-        sys.exit(not found_hit)
+                sys.stderr.write(message + 'timeout\n')
+            except IncompleteMessageError, e:
+                sys.stderr.write(message + 'incomplete response: '
+                                 + str(e) + '\n')
+
+        # return 'success', 0, if we found a hit.
+        sys.exit(bool(not found_hit))
         return
 
     def report(self, args):
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
-        do_mbox = 0
+        do_mbox = False
+
         for (o, v) in options:
             if o == '--mbox':
-                do_mbox = 1
+                do_mbox = True
                 
+        self.output.debug("digest spec is %s" % self.digest_spec)
+
         if do_mbox:
             import mailbox
             mbox = mailbox.PortableUnixMailbox(sys.stdin)
-            for msg in mbox:
-                self.report_fp(msg.fp)
+            for digest in MailboxDigester(mbox, self.digest_spec):
+                if digest is not None:
+                    self.report_digest(digest)
         else:
             import rfc822
-            self.report_fp(rfc822.Message(sys.stdin).fp)
+            digest = PiecesDigest.compute_from_file(rfc822.Message(sys.stdin).fp,
+                                                    self.digest_spec,
+                                                    seekable=False)
+            if digest is not None:
+                self.report_digest(digest)
         return
 
 
-    def report_fp(self, fp):
-        self.output.debug("digest spec is %s" % self.digest_spec)
-        digest = PiecesDigest.compute_from_file(fp,
-                                                self.digest_spec,
-                                                seekable=0)
-        if digest is None:
-            return
-        
+    def report_digest(self, digest):
+        assert isinstance(digest, PiecesDigest)
+
         self.output.debug("calculated digest: %s" % digest)
+        
         for server in self.servers:
+            message = "%s\t" % str(server)
+            self.output.debug("sending to %s" % str(server))
             try:
-                self.output.debug("sending to %s" % str(server))
-                result = self.client.report(digest, self.digest_spec,
-                                            server)
+                response = self.client.report(digest, self.digest_spec,
+                                              server)
+                sys.stdout.write(message + str(response.head_tuple()) + '\n')
+            except IncompleteMessageError, e:
+                sys.stderr.write(message + 'incomplete response: '
+                                 + str(e) + '\n')
             except TimeoutError:
-                result = 'timeout'
-            sys.stdout.write("%s\t%s\n" % (server, result))
+                sys.stderr.write(message + 'timeout\n')
         return
+
+
+class MailboxDigester(object):
+    __slots__ = ['mbox', 'digest_spec']
+    
+    def __init__(self, mbox, digest_spec):
+        self.mbox = mbox
+        self.digest_spec = digest_spec
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        next_msg = self.mbox.next()
+        if next_msg is None:
+            raise StopIteration
+        return PiecesDigest.compute_from_file(next_msg.fp,
+                                              self.digest_spec,
+                                              seekable=False)
 
 
 def run():

@@ -1,3 +1,21 @@
+Noteworthy changes in 0.3.0
+-----------------------------------------------------------------
+
+    *	Pyzor now requires Python 2.2.1.
+
+    *	Much code re-written.
+
+    *	pyzrod logfile now contains a human-readable timestamp
+	field in addition to the epoch-seconds field.
+
+
+Noteworthy changes in 0.2.1
+-----------------------------------------------------------------
+
+    *   Fixed major bug where the incorrect exit
+	code is given.
+
+
 Noteworthy changes in 0.2.0
 -----------------------------------------------------------------
 

@@ -60,7 +60,7 @@ Or, to add merely add header:
 :0 Wc
 | pyzor check
 :0 Waf
-| formail -A "X-Pyzor: spam"
+| formail -A 'X-Pyzor: spam'
 
 
 Differences from Razor clients:
@@ -167,7 +167,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.2.0"
-__revision__ = "$Id: __init__.py,v 1.15 2002-04-22 17:37:25 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.16 2002-05-08 03:26:23 ftobin Exp $"
 
 import os
 import os.path
@@ -177,15 +177,29 @@ import sha
 import tempfile
 import random
 import ConfigParser
+import rfc822
+import cStringIO
+import time
 
 proto_name    = 'pyzor'
-proto_version =  '1.0'
+proto_version =  2.0
 
 class ProtocolError(Exception):
     pass
 
 class TimeoutError(Exception):
     pass
+
+class IncompleteMessageError(ProtocolError):
+    pass
+
+class UnsupportedVersionError(ProtocolError):
+    pass
+
+class SignatureError(Exception):
+    """signature on msg invalid or not within allowed time range"""
+    pass
+
 
 class Singleton(object):
     __slots__ = []
@@ -197,8 +211,8 @@ class Singleton(object):
 
 
 class Output(Singleton):
-    do_debug = 0
-    quiet    = 0
+    do_debug = False
+    quiet    = False
     def __init__(self, quiet=None, debug=None):
         if quiet is not None: self.quiet = quiet
         if debug is not None: self.do_debug = debug
@@ -225,8 +239,12 @@ class PiecesDigest(str):
     # same goes for URL's
     url_ptrn = re.compile(r'[a-z]+:\S+', re.IGNORECASE)
 
-    ws_ptrn = re.compile(r'\s')
+    # We also want to remove anything that is so long it
+    # looks like possibly a unique identifier
+    longstr_ptrn = re.compile(r'\S{10,}')
     
+    ws_ptrn = re.compile(r'\s')
+
     def __init__(self, value):
         if len(value) != self.value_size:
             raise ValueError, "invalid digest value size"
@@ -248,6 +266,7 @@ class PiecesDigest(str):
         s2 = s
         s2 = self.email_ptrn.sub('', s2)
         s2 = self.url_ptrn.sub('', s2)
+        s2 = self.longstr_ptrn.sub('', s2)
         # make sure we do the whitespace last because some of
         # the previous patterns rely in whitespace
         s2 = self.ws_ptrn.sub('', s2)
@@ -308,76 +327,304 @@ class PiecesDigest(str):
 
 
 class PiecesDigestSpec(list):
-    __slots__ = []
-    
-    def netenc(self):
-        return netlist(map(lambda x: ','.join(map(str, x)), self),
-                       netstring)
+    """a list of tuples, (perc_offset, length)"""
 
-    def from_netenc(self, f):
+    def validate(self):
+        for t in self:
+            self.validate_tuple(t)
+
+    def validate_tuple(t):
+        (perc_offset, length) = t
+        if not (0 <= perc_offset < 100):
+            raise ValueError, "offset percentage out of bounds"
+        if not length > 0:
+            raise ValueError, "piece lengths must be positive"
+        
+    validate_tuple = staticmethod(validate_tuple)
+
+    def netstring(self):
+        # flattened, commified
+        return ','.join(map(str, reduce(lambda x, y: x + y, self, ())))
+
+    def from_netstring(self, s):
         new_spec = apply(self)
 
-        for el in read_netlist(f, read_netstring):
-            (perc_offset, length) = el.split(',', 2)
-            perc_offset = int(perc_offset)
-            length      = int(length)
-            if not (0 <= perc_offset < 100):
-                raise ValueError, "offset percentage out of bounds"
-            if not length > 0:
-                raise ValueError, "piece lengths must be positive"
+        expanded_list = s.split(',')
+        if len(extended_list) % 2 != 0:
+            raise ValueError, "invalid list parity"
+
+        for i in range(0, len(expanded_list), 2):
+            perc_offset = int(expanded_list[i])
+            length      = int(expanded_list[i+1])
+
+            self.validate_tuple(perc_offset, length)
             new_spec.append((perc_offset, length))
-        
+            
         return new_spec
 
-    from_netenc = classmethod(from_netenc)
+    from_netstring = classmethod(from_netstring)
 
 
-class Message(object):
-    __slots__ = ['data', 'thread']
+class Message(rfc822.Message, object):
+    def __init__(self, fp=None):
+        if fp is None:
+            fp = cStringIO.StringIO()
+            
+        super(Message, self).__init__(fp)
 
-    def __init__(self, thread=None):
-        if thread is None:
-            thread = ThreadID.generate()
-        self.thread = thread
-        self.clear()
-
-    def clear(self):
-        self.data = ''
-
-    def add_int(self, i):
-        self.data += netint(i)
-
-    def add_string(self, s):
-        self.data += netstring(s)
-
-    def add_netenc(self, s):
-        """add some data that is already net-encoded"""
-        self.data += s
-
-    def __nonzero__(self):
-        # XXX this should be moved to returning bool after
-        # 2.2.1 is more wide-spread
-        if self.data: return 1
-        return 0
+    def init_for_sending(self):
+        if __debug__:
+            self.ensure_complete()
 
     def __str__(self):
-        return netstring(proto_name) \
-               + netstring(proto_version) \
-               + netint(self.thread) \
-               + self.data
+        s = ''.join(self.headers)
+        s += '\n'
+        self.rewindbody()
+
+        # okay to slurp since we're dealing with UDP
+        s += self.fp.read()
+
+        return s
+
+    def __nonzero__(self):
+        # just to make sure some old code doesn't try to use this
+        raise NotImplementedError
+
+    def ensure_complete(self):
+        pass
+
+
+class ThreadedMessage(Message):
+    def init_for_sending(self):
+        if not self.has_key('Thread'):
+            self.set_thread(ThreadId.generate())
+        assert self.has_key('Thread')
+
+        self.setdefault('PV', str(proto_version))
+        super(ThreadedMessage, self).init_for_sending()
+        
+    def ensure_complete(self):
+        if not (self.has_key('PV') and self.has_key('Thread')):
+            raise IncompleteMessageError, \
+                  "doesn't have fields for a ThreadedMessage"
+        super(ThreadedMessage, self).ensure_complete()
+    
+    def get_protocol_version(self):
+        return float(self['PV'])
+
+    def get_thread(self):
+        return ThreadId(self['Thread'])
+
+    def set_thread(self, i):
+        assert isinstance(i, ThreadId)
+        self['Thread'] = str(i)
 
 
 
-class ThreadID(int):
-    __slots__ = []
+class MacEnvelope(Message):
+    ts_diff_max = 180
+    
+    def ensure_complete(self):
+        if not (self.has_key('User')
+                and self.has_key('Time')
+                and self.has_key('Sig')):
+             raise IncompleteMessageError, \
+                   "doesn't have fields for a MacEnvelope"
+        super(MacEnvelope, self).ensure_complete()
+
+    def get_submsg(self, factory=ThreadedMessage):
+        self.rewindbody()
+        return apply(factory, (self.fp,))
+    
+    def verify_sig(self, user_key):
+        assert isinstance(user_key, str)
+        
+        user     = self['User']
+        ts       = int(self['Time'])
+        said_sig = self['Sig']
+
+        if abs(time.time() - ts) > self.ts_diff_max:
+            raise SignatureError, "timestamp not within allowed range"
+
+        msg = self.get_submsg()
+
+        calc_sig = self.sign_msg(user_key, ts, msg).hexdigest()
+
+        if not (calc_sig == said_sig):
+            raise SignatureError, "invalid signature"
+
+    def wrap(self, user, hashed_key, msg):
+        """This should be used to create a MacEnvelope
+
+        hashed_key is H(U + ':' + P)"""
+        
+        assert isinstance(user, str)
+        assert isinstance(msg, Message)
+        assert isinstance(hashed_key, str)
+
+        env = apply(self)
+        ts = int(time.time())
+
+        env['User'] = user
+        env['Time'] = str(ts)
+        env['Sig'] = self.sign_msg(hashed_key, ts, msg).hexdigest()
+
+        env.fp.write(str(msg))
+
+        return env
+
+    wrap = classmethod(wrap)
+
+
+    def hash_msg(msg):
+        """returns a digest object"""
+        assert isinstance(msg, Message)
+        h = sha.new()
+        h.update(str(msg))
+        return h
+
+    hash_msg = staticmethod(hash_msg)
+
+
+    def sign_msg(self, hashed_key, ts, msg):
+        """ts is timestamp for message (epoch seconds)
+
+        S = H (H(M) + T + K)
+        M is message
+        T is timestamp
+        K is hashed_key
+        
+        returns a digest object"""
+        assert isinstance(ts, int)
+        assert isinstance(msg, Message)
+        assert isinstance(hashed_key, str)
+
+        sig = sha.new()
+        h_msg = self.hash_msg(msg)
+
+        sig.update(h_msg.digest())
+        sig.update(str(ts))
+        sig.update(hashed_key)
+        return sig
+    
+    sign_msg = classmethod(sign_msg)
+
+
+
+class Response(ThreadedMessage):
+    ok_code = 200
+
+    def ensure_complete(self):
+        if not(self.has_key('Code') and self.has_key('Diag')):
+            raise IncompleteMessageError, \
+                  "doesn't have fields for a Response"
+        super(Response, self).ensure_complete()
+
+    def is_ok(self):
+        return self.get_code() == self.ok_code
+
+    def get_code(self):
+        return int(self['Code'])
+
+    def get_diag(self):
+        return self['Diag']
+
+    def head_tuple(self):
+        return (self.get_code(), self.get_diag())
+
+
+class Request(ThreadedMessage):
+    """this is class that should be used to read in Requests of any type.
+    subclasses are responsible for setting 'Op' if they are generating
+    a message"""
+    def get_op(self):
+        return self['Op']
+
+    def ensure_complete(self):
+        if not self.has_key('Op'):
+            raise IncompleteMessageError, \
+                  "doesn't have fields for a Request"
+        super(Request, self).ensure_complete()
+
+
+class SuccessResponse(Response):
+    def init_for_sending(self):
+        super(SuccessResponse, self).init_for_sending()
+
+        self.setdefault('Code', str(self.ok_code))
+        self.setdefault('Diag', 'OK')
+
+
+class PingRequest(Request):
+    def __init__(self):
+        super(PingRequest, self).__init__()
+        self.setdefault('Op', 'ping')
+
+
+class PingResponse(SuccessResponse):
+    pass
+
+
+class ReportRequest(Request):
+    def __init__(self, digest, spec):
+        assert isinstance(digest, str)
+        assert isinstance(spec, PiecesDigestSpec)
+
+        super(ReportRequest, self).__init__()
+
+        self.setdefault('Op',        'report')
+        self.setdefault('Op-Spec',   spec.netstring())
+        self.setdefault('Op-Digest', str(digest))
+
+
+class ReportResponse(SuccessResponse):
+    pass
+
+
+class CheckRequest(Request):
+    def __init__(self, digest):
+        assert isinstance(digest, str)
+        
+        super(CheckRequest, self).__init__()
+
+        self.setdefault('Op',        'check')
+        self.setdefault('Op-Digest', digest)
+
+
+class CheckResponse(SuccessResponse):
+    def __init__(self, count):
+        assert isinstance(count, int)
+        
+        super(CheckResponse, self).__init__()
+        self.setdefault('Count', str(count))
+
+    def ensure_complete(self):
+        if not self.has_key('Count'):
+            raise IncompleteMessageError, \
+                  "doesn't have fields for a CheckResponse"
+        super(CheckResponse, self).ensure_complete()
+
+
+class ErrorResponse(Response):
+    def __init__(self, code, s):
+        assert isinstance(code, int)
+        assert isinstance(s, str)
+        
+        super(ErrorResponse, self).__init__()
+        self.setdefault('Code', str(code))
+        self.setdefault('Diag', s)
+
+
+class ThreadId(int):
     # (0, 1024) is reserved
-    full_range = (0, 2**16)
-    ok_range   = (1024, full_range[1])
+    full_range  = (0, 2**16)
+    ok_range    = (1024, full_range[1])
+    error_value = 0
     
     def __init__(self, i):
-        if not (self.full_range[0] <= i < self.full_range[1]):
+        super(ThreadId, self).__init__(i)
+        if not (self.full_range[0] <= self < self.full_range[1]):
             raise ValueError, "value outside of range"
-        super(ThreadID, self).__init__(i)
 
     def generate(self):
         return apply(self, (apply(random.randrange, self.ok_range),))
@@ -385,14 +632,16 @@ class ThreadID(int):
 
     def in_ok_range(self):
         return (self >= self.ok_range[0] and self < self.ok_range[1])
-    
+
 
 class Address(tuple):
     def __init__(self, *varargs, **kwargs):
         super(Address, self).__init__(*varargs, **kwargs)
+        self.validate()
 
+    def validate(self):
         if len(self) != 2:
-            ValueError, "invalid address: %s" % str(self)
+            raise ValueError, "invalid address: %s" % str(self)
     
     def __str__(self):
         return (self[0] + ':' + str(self[1]))
@@ -400,11 +649,8 @@ class Address(tuple):
     def from_str(self, s):
         fields = s.split(':')
 
-        try:
-            fields[1] = int(fields[1])
-            return apply(self, (fields,))
-        except ValueError:
-            ValueError, "invalid address: %s" % repr(s)
+        fields[1] = int(fields[1])
+        return apply(self, (fields,))
 
     from_str = classmethod(from_str)
 
@@ -434,47 +680,3 @@ def get_homedir():
         sys.exit(1)
 
     return os.path.join(userhome, '.pyzor')
-
-
-def netint(i):
-    return "%u\n" % i
-
-
-def read_netint(f):
-    try:
-        return int(f.readline())
-    except ValueError, e:
-        raise ProtocolError, e
-
-
-def netstring(s):
-    return "%s\n" % s
-
-
-def read_netstring(f):
-    line = f.readline()
-    if not line:
-        raise ProtocolError, "unexpected EOF"
-    return line.splitlines()[0]
-
-def netlist(l, factory):
-    return netint(len(l)) + reduce(lambda x,y: x + factory(y), l, '')
-
-
-def read_netlist(fp, factory):
-    length = read_netint(fp)
-    if not length >= 0:
-        raise ProtocolError, "invalid length for netlist"
-    l = []
-    for i in range(0, length):
-        l.append(apply(factory, (fp,)))
-
-    return l
-
-def expect(fp, expected, factory, descr=None):
-    got = apply(factory, (fp,))
-    if got != expected:
-        msg = "expected %s, got %s" % (repr(expected), repr(got))
-        if descr is not None:
-            msg += " while trying to read %s" % descr
-        raise ProtocolError, msg

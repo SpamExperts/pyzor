@@ -22,7 +22,7 @@ from __future__ import division
 import SocketServer
 import time
 import gdbm
-import StringIO
+import cStringIO
 import traceback
 import threading
 
@@ -31,15 +31,11 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: server.py,v 1.10 2002-04-22 00:17:40 ftobin Exp $"
+__revision__ = "$Id: server.py,v 1.11 2002-05-08 03:26:23 ftobin Exp $"
 
-
-class AuthenticationError(Exception):
-    """user/auth combo is invalid"""
-    pass
 
 class AuthorizationError(Exception):
-    """user/auth combo was valid, but not permitted to
+    """signature was valid, but not permitted to
     do the requested action"""
     pass
 
@@ -50,10 +46,20 @@ class Log(object):
     def __init__(self, fp=None):
         self.fp = fp
 
-    def log(self, user, address, command, arg=''):
+    def log(self, address, user=None, command=None, arg=None):
+        # we don't use defaults because we want to be able
+        # to pass in None
+        if user    is None: user = ''
+        if command is None: command = ''
+        if arg     is None: arg = ''
+        
+        # We duplicate the time field merely so that
+        # humans can peruse through the entries without processing
+        ts = int(time.time())
         if self.fp is not None:
             self.fp.write("%s\n" %
-                          ','.join((str(int(time.time())),
+                          ','.join((str(ts),
+                                    time.ctime(ts),
                                     user,
                                     address[0],
                                     command,
@@ -137,6 +143,7 @@ class Server(SocketServer.ThreadingUDPServer, object):
     ttl = 4
     timeout = 3
     max_packet_size = 8192
+    time_diff_allowance = 180
 
     def __init__(self, address, log):
         self.output = Output()
@@ -158,91 +165,112 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
 
         # This is to work around a bug in current versions
         # of Python.  The bug has been reported, and fixed
-        # in CVS.
-        self.wfile = StringIO.StringIO()
+        # in Python's CVS.
+        self.wfile = cStringIO.StringIO()
 
         self.client_address = Address(self.client_address)
-        self.msg = Message(thread=0)
+        
+        self.out_msg    = Response()
+        self.user       = None
+        self.op         = None
+        self.op_arg     = None
+        self.msg_thread = None
+
 
     def handle(self):
-        # we initialize there here so we can for sure use
-        # them in our log message below
-        self.op_arg = ''
-        op = ''
-        user = ''
-        self.output.debug("received: %s" % repr(self.packet))
-        
         try:
-            self.expect(proto_name,    read_netstring, "protocol name")
-            self.expect(proto_version, read_netstring, "protocol version")
-            thread_id = self.read_thread()
-            self.msg.thread = thread_id
-
-            user = self.read_string()
-            auth = self.read_string()
-            self.authenticate(user, auth)
-
-            op = self.read_string()
-            self.output.debug("got a %s command from %s" %
-                              (op, self.client_address))
-            
-            if op == 'ping':
-                pass
-            elif op == 'check':
-                self.handle_check()
-            elif op == 'report':
-                self.handle_report()
-            else:
-                raise NotImplementedError, op
+            self._really_handle()
+        except UnsupportedVersionError, e:
+            self.handle_error(505, "Version Not Supported: %s" % e)
         except NotImplementedError, e:
             self.handle_error(501, "Not implemented: %s" % e)
+        except KeyError, e:
+            # We assume that KeyErrors are due to not
+            # finding a key in the RFC822 message
+            self.handle_error(400, "Bad request: %s" % e)
         except ProtocolError, e:
             self.handle_error(400, "Bad request: %s" % e)
-            traceback.print_exc()
         except TimeoutError, e:
             self.handle_error(503, "Gateway timeout: %s" % e)
+        except AuthorizationError:
+            self.handle_error(401, "Unauthorized")
         except Exception, e:
             self.handle_error(500, "Internal Server Error: %s" % e)
             traceback.print_exc()
-        except AuthenticationError:
-            self.handle_error(401, "Unauthorized")
+
+        self.out_msg.setdefault('Code', str(self.out_msg.ok_code))
+        self.out_msg.setdefault('Diag', 'OK')
+        self.out_msg.init_for_sending()
+
+        self.log.log(self.client_address, self.user, self.op, self.op_arg)
+        
+        msg_str = str(self.out_msg)
+        self.output.debug("sending: %s" % repr(msg_str))
+        self.wfile.write(msg_str)
+
+    def _really_handle(self):
+        """handle() without the exception handling"""
+
+        self.output.debug("received: %s" % repr(self.packet))
+        
+        signed_msg = MacEnvelope(self.rfile)
+
+        self.user = signed_msg.get('User', None)
+
+        if self.user:
+            raise NotImplementedError
+            user_key    = None
+            signed_msg.verify_sig(user_key)
+
+        self.in_msg = signed_msg.get_submsg(pyzor.Request)
+
+        # We take the int() of the proto versions because
+        # if the int()'s are the same, then they should be compatible
+        if int(self.in_msg.get_protocol_version()) != int(proto_version):
+            raise UnsupportedVersionError
+        
+        self.msg_thread = self.in_msg.get_thread()
+        self.out_msg.set_thread(self.msg_thread)
+
+        self.op = self.in_msg.get_op()
+        
+        self.output.debug("got a %s command from %s" %
+                          (self.op, self.client_address))
+            
+        if self.op == 'ping':
+            pass
+        elif self.op == 'check':
+            self.handle_check()
+        elif self.op == 'report':
+            self.handle_report()
         else:
-            if not self.msg:
-                self.handle_error(200, "OK")
-
-        self.log.log(user, self.client_address, op, self.op_arg)
-
-        self.output.debug("sending: %s" % repr(str(self.msg)))
-        self.wfile.write(str(self.msg))
-
-    def authenticate(self, user, auth):
-        """raises AuthenticationError if invalid user/auth combo"""
-        pass
+            raise NotImplementedError, self.op
+        
 
     def handle_error(self, code, s):
-        self.msg.clear()
-        self.msg.add_int(code)
-        self.msg.add_string(s)
+        self.out_msg = ErrorResponse(code, s)
+        if self.msg_thread is not None:
+            self.out_msg.set_thread(self.msg_thread)
 
     def handle_check(self):
-        ttl    = self.read_ttl()
-        digest = self.read_digest()
+        digest = self.in_msg['Op-Digest']
         self.op_arg = digest
-        self.output.debug("request is for digest %s" % digest)
-        self.msg.add_int(200)
+        self.output.debug("request to check digest %s" % digest)
 
         db = DBHandle('r')
         if db.has_key(digest):
-            self.msg.add_int(Record.from_str(db[digest]).count)
+            count = Record.from_str(db[digest]).count
         else:
-            self.msg.add_int(0)
+            count = 0
+
+        assert isinstance(count, int) or isinstance(count, long)
+        self.out_msg['Count'] = str(count)
+
 
     def handle_report(self):
-        ttl    = self.read_ttl()
-        spec   = self.read_digest_spec()
-        digest = self.read_digest()
+        digest = self.in_msg['Op-Digest']
         self.op_arg = digest
-        self.output.debug("request is for digest %s" % digest)
+        self.output.debug("request to report digest %s" % digest)
 
         db = DBHandle('c')
         if not db.has_key(digest):
@@ -250,52 +278,3 @@ class RequestHandler(SocketServer.DatagramRequestHandler, object):
         rec = Record.from_str(db[digest])
         rec.increment()
         db[digest] = str(rec)
-
-    def read_ttl(self):
-        x = self.read_int()
-        #self.output.debug("read ttl %s" % x)
-        return x
-
-    def read_digest(self):
-        try:
-            x = PiecesDigest(self.read_string())
-            #self.output.debug("read digest %s" % x)
-        except ValueError, e:
-            raise ProtocolError, e
-        return x
-
-    def read_digest_spec(self):
-        try:
-            return PiecesDigestSpec(self.read_list(read_netstring))
-        except ValueError, e:
-            raise ProtocolError, e
-
-    def read_digest(self):
-        try:
-            return PiecesDigest(self.read_string())
-        except ValueError, e:
-            raise ProtocolError, e
-
-    def read_thread(self):
-        try:
-            return ThreadID(self.read_int())
-        except ValueError, e:
-            raise ProtocolError, e
-
-    def read_string(self):
-        s = read_netstring(self.rfile)
-        #self.output.debug("read string %s" % repr(s))
-        return s
-
-    def read_int(self):
-        i = read_netint(self.rfile)
-        #self.output.debug("read int %s" % repr(i))
-        return i
-
-    def read_list(self, factory):
-        l = read_netlist(self.rfile, factory)
-        #self.output.debug("read list %s" % repr(l))
-        return l
-
-    def expect(self, expected, factory, descr=None):
-        pyzor.expect(self.rfile, expected, factory, descr)
