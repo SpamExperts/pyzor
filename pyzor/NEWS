@@ -13,6 +13,9 @@ Noteworthy changes in 0.4.0
     *	Messages having less than or equal to 4 lines are entirely
 	digested.
 
+    *	Implemented 'digest' command, which simply prints
+	out the digest(s) of the messages encountered.
+
     *	If HOME is unspecified and no --homedir is given,
 	The the config directory is /etc/pyzor
 

@@ -7,7 +7,7 @@ from pyzor import *
 from pyzor.server import *
 from pyzor.client import *
 
-__revision__ = "$Id: unittests.py,v 1.6 2002-09-04 04:03:55 ftobin Exp $"
+__revision__ = "$Id: unittests.py,v 1.7 2002-09-04 20:34:47 ftobin Exp $"
 
 
 class ACLTest(unittest.TestCase):
@@ -137,9 +137,9 @@ class ServerListTest(unittest.TestCase):
 
 
 
-class PiecesDigestTest(unittest.TestCase):
+class DataDigestTest(unittest.TestCase):
     def test_ptrns(self):
-        norm = PiecesDigest.normalize
+        norm = DataDigester.normalize
         self.assertEqual(norm('aaa me@example.com bbb'), 'aaabbb')
         self.assertEqual(norm('aaa http://www.example.com/ bbb'), 'aaabbb')
         self.assertEqual(norm('aaa Supercalifragilisticexpialidocious bbb'),
@@ -148,23 +148,20 @@ class PiecesDigestTest(unittest.TestCase):
         self.assertEqual(norm('aaa <! random tag > bbb'), 'aaabbb')
 
     def test_should_handle_line(self):
-        min_len = int(PiecesDigest.min_line_length)
-        self.assert_(PiecesDigest.should_handle_line('a' * min_len))
-        self.assert_(not PiecesDigest.should_handle_line('a' * (min_len-1)))
+        min_len = int(DataDigester.min_line_length)
+        self.assert_(DataDigester.should_handle_line('a' * min_len))
+        self.assert_(not DataDigester.should_handle_line('a' * (min_len-1)))
 
 
     def test_atomicness(self):
-        PiecesDigest.compute_from_file(open('t/atomic'),
-                                       ExecCall.digest_spec,
-                                       seekable=True)
-        self.assert_(PiecesDigest.last_was_atomic)
+        self.assert_(DataDigester(open('t/atomic'),
+                                  ExecCall.digest_spec,
+                                  seekable=True).is_atomic())
 
     def test_non_atomicness(self):
-        PiecesDigest.compute_from_file(open('t/atomic.not'),
-                                       ExecCall.digest_spec,
-                                       seekable=True)
-        self.assert_(not PiecesDigest.last_was_atomic)
-
+        self.assert_(not DataDigester(open('t/atomic.not'),
+                                      ExecCall.digest_spec,
+                                      seekable=True).is_atomic())
 
 
 class rfc822BodyCleanerTest(unittest.TestCase):

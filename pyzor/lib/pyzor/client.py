@@ -8,13 +8,14 @@ import cStringIO
 import getopt
 import tempfile
 import mimetools
+import sha
 
 import pyzor
 from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.30 2002-09-03 03:56:19 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.31 2002-09-04 20:34:48 ftobin Exp $"
 
 randfile = '/dev/random'
 
@@ -127,7 +128,7 @@ class ExecCall(object):
     __slots__ = ['client', 'servers', 'output']
     
     # hard-coded for the moment
-    digest_spec = PiecesDigestSpec([(20, 3), (60, 3)])
+    digest_spec = DataDigestSpec([(20, 3), (60, 3)])
 
     def run(self):
         debug = 0
@@ -194,7 +195,9 @@ class ExecCall(object):
 
 
     def usage(self):
-        sys.stderr.write("usage: %s [-d] [--homedir dir] check|report|discover|ping|genkey|shutdown [cmd_options]\nData is read on standard input.\n"
+        sys.stderr.write("""usage: %s [-d] [--homedir dir] command [cmd_opts]
+command is one of: check, report, discover, ping, digest, genkey, shutdown
+Data is read on standard input (stdin)."""
                          % sys.argv[0])
         sys.exit(1)
         return  # just to help xemacs
@@ -265,7 +268,7 @@ class ExecCall(object):
 
 
     def send_digest(self, digest, spec, client_method):
-        typecheck(digest, PiecesDigest)
+        typecheck(digest, DataDigest)
 
         runner = ClientRunner(client_method)
 
@@ -293,6 +296,20 @@ class ExecCall(object):
         return all_ok
 
 
+    def digest(self, args):
+        (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+        do_mbox = False
+
+        for (o, v) in options:
+            if o == '--mbox':
+                do_mbox = True
+                
+        for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
+            sys.stdout.write("%s\n" % digest)
+
+        return True
+
+
     def genkey(self, args):
         (options, args2) = getopt.getopt(args[1:], '')
 
@@ -305,7 +322,6 @@ class ExecCall(object):
 
         del p2
 
-        import sha
         saltfile = open(randfile)
         salt = saltfile.read(sha.digest_size)
         del saltfile
@@ -351,6 +367,7 @@ class ExecCall(object):
                   'shutdown':  shutdown,
                   'info':      info,
                   'whitelist': whitelist,
+                  'digest':    digest,
                   'discover':  None,  # handled earlier
                   }
 
@@ -391,15 +408,158 @@ class FileDigester(object):
                 digest = self.mbox_digester.next()
         else:
             import rfc822
-            digest = PiecesDigest.compute_from_file(rfc822.Message(self.file).fp,
-                                                    self.spec,
-                                                    seekable=False)
+            digest = DataDigester(rfc822.Message(self.file).fp,
+                                  self.spec,
+                                  seekable=False).get_digest()
             if digest is None:
                 raise StopIteration
             self.stop = True
 
         self.output.debug("calculated digest: %s" % digest)
         return digest
+
+
+
+class DataDigester(object):
+    __slots__ = ['_atomic', '_value']
+    
+    bufsize = 1024
+
+    # minimum line length for it to be included as part
+    # of the digest.  I forget the purpose, however.
+    # Someone remind me so I can document it here.
+    min_line_length = 8
+
+    # if a message is this many lines or less, then
+    # we digest the whole message
+    atomic_num_lines = 4
+
+    # We're not going to try to match email addresses
+    # as per the spec because it's too freakin difficult
+    # Plus, regular expressions don't work well for them.
+    # (BNF is better at balanced parens and such)
+    email_ptrn = re.compile(r'\S+@\S+')
+
+    # same goes for URL's
+    url_ptrn = re.compile(r'[a-z]+:\S+', re.IGNORECASE)
+
+    # We also want to remove anything that is so long it
+    # looks like possibly a unique identifier
+    longstr_ptrn = re.compile(r'\S{10,}')
+
+    html_tag_ptrn = re.compile(r'<.*?>')
+    ws_ptrn       = re.compile(r'\s')
+
+    # we might want to change this in the future.
+    # Note that an empty string will always be used to remove whitespace
+    unwanted_txt_repl = ''
+
+    def __init__(self, fp, spec, seekable=True):
+        self._atomic = None
+        self._value  = None
+        line_offsets = []
+
+        if seekable:
+            cur_offset = fp.tell()
+            newfp = None
+        else:
+            # we need a seekable file because to make
+            # line-based skipping around to be more efficient
+            # than loading the whole thing into memory
+            cur_offset = 0
+            newfp = tempfile.TemporaryFile()
+
+        while True:
+            buf = fp.read(self.bufsize)
+            line_offsets.extend(map(lambda x: cur_offset + x,
+                                    self.get_line_offsets(buf)))
+            if not buf:
+                break
+            cur_offset += len(buf)
+            
+            if newfp:
+                newfp.write(buf)
+
+        if newfp:
+            fp = newfp
+
+        # did we get an empty file?
+        if len(line_offsets) == 0:
+            return None
+            
+        digest = sha.new()
+
+        if len(line_offsets) <= self.atomic_num_lines:
+            # digest everything
+            self._atomic = True
+            fp.seek(0)
+            for line in fp:
+                norm_line = self.normalize(line)
+                if self.should_handle_line(norm_line):
+                    digest.update(norm_line)
+        else:
+            # digest stuff according to the spec
+            self._atomic = False
+            for (perc_offset, length) in spec:
+                assert 0 <= perc_offset < 100
+
+                offset = line_offsets[int(perc_offset * len(line_offsets)
+                                          / 100.0)]
+                fp.seek(offset)
+
+                i = 0
+                while i < length:
+                    line = fp.readline()
+                    if not line:
+                        break
+                    norm_line = self.normalize(line)
+                    if self.should_handle_line(norm_line):
+                        digest.update(norm_line)
+                        i += 1
+
+        self._value = DataDigest(digest.hexdigest())
+        
+        assert self._atomic is not None
+        assert self._value is not None
+
+
+    def is_atomic(self):
+        if self._atomic is None:
+            raise RuntimeError, "digest not calculated yet"
+        return bool(self._atomic)
+
+    def get_digest(self):
+        return self._value        
+        
+    def get_line_offsets(buf):
+        cur_offset = 0
+        offsets = []
+        while True:
+            i = buf.find('\n', cur_offset)
+            if i == -1:
+                return offsets
+            offsets.append(i)
+            cur_offset = i + 1
+        return
+    get_line_offsets = staticmethod(get_line_offsets)
+
+
+    def normalize(self, s):
+        repl = self.unwanted_txt_repl
+        s2 = s
+        s2 = self.email_ptrn.sub(repl, s2)
+        s2 = self.url_ptrn.sub(repl, s2)
+        s2 = self.longstr_ptrn.sub(repl, s2)
+        s2 = self.html_tag_ptrn.sub(repl, s2)
+        # make sure we do the whitespace last because some of
+        # the previous patterns rely on whitespace
+        s2 = self.ws_ptrn.sub('', s2)
+        return s2
+    normalize = classmethod(normalize)
+
+    def should_handle_line(self, s):
+        return bool(self.min_line_length <= len(s))
+    should_handle_line = classmethod(should_handle_line)
 
 
 
@@ -572,9 +732,9 @@ class MailboxDigester(object):
         next_msg = self.mbox.next()
         if next_msg is None:
             raise StopIteration
-        return PiecesDigest.compute_from_file(next_msg.fp,
-                                              self.digest_spec,
-                                              seekable=False)
+        return DataDigester(next_msg.fp,
+                            self.digest_spec,
+                            seekable=False).get_digest()
 
 
 

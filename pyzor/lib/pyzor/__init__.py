@@ -2,7 +2,7 @@
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.4.0"
-__revision__ = "$Id: __init__.py,v 1.38 2002-09-04 17:55:03 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.39 2002-09-04 20:34:48 ftobin Exp $"
 
 import os
 import os.path
@@ -103,146 +103,17 @@ class Output(Singleton):
 
 
 
-class PiecesDigest(str):
+class DataDigest(str):
     # hex output doubles digest size
-    value_size = sha.digest_size * 2
-    
-    bufsize = 1024
-
-    # minimum line length for it to be included as part
-    # of the digest.  I forget the purpose, however.
-    # Someone remind me so I can document it here.
-    min_line_length = 8
-
-    # if a message is this many lines or less, then
-    # we digest the whole message
-    atomic_num_lines = 4
-
-    # We're not going to try to match email addresses
-    # as per the spec because it's too freakin difficult
-    # Plus, regular expressions don't work well for them.
-    # (BNF is better at balanced parens and such)
-    email_ptrn = re.compile(r'\S+@\S+')
-
-    # same goes for URL's
-    url_ptrn = re.compile(r'[a-z]+:\S+', re.IGNORECASE)
-
-    # We also want to remove anything that is so long it
-    # looks like possibly a unique identifier
-    longstr_ptrn = re.compile(r'\S{10,}')
-
-    html_tag_ptrn = re.compile(r'<.*?>')
-    ws_ptrn       = re.compile(r'\s')
-
-    # we might want to change this in the future.
-    # Note that an empty string will always be used to remove whitespace
-    # relying on this is not thread-safe
-    unwanted_txt_repl = ''
-
-    # this is mainly here for to help testing (boolean)
-    last_was_atomic = None
+    value_size = sha.digest_size * 2    
 
     def __init__(self, value):
         if len(value) != self.value_size:
             raise ValueError, "invalid digest value size"
 
-    def get_line_offsets(buf):
-        cur_offset = 0
-        offsets = []
-        while True:
-            i = buf.find('\n', cur_offset)
-            if i == -1:
-                return offsets
-            offsets.append(i)
-            cur_offset = i + 1
-            
-    get_line_offsets = staticmethod(get_line_offsets)
-
-    def normalize(self, s):
-        repl = self.unwanted_txt_repl
-        s2 = s
-        s2 = self.email_ptrn.sub(repl, s2)
-        s2 = self.url_ptrn.sub(repl, s2)
-        s2 = self.longstr_ptrn.sub(repl, s2)
-        s2 = self.html_tag_ptrn.sub(repl, s2)
-        # make sure we do the whitespace last because some of
-        # the previous patterns rely on whitespace
-        s2 = self.ws_ptrn.sub('', s2)
-        return s2
-    normalize = classmethod(normalize)
-
-    def should_handle_line(self, s):
-        return bool(self.min_line_length <= len(s))
-    should_handle_line = classmethod(should_handle_line)
-
-    def compute_from_file(self, fp, spec, seekable=True):
-        line_offsets = []
-
-        if seekable:
-            cur_offset = fp.tell()
-            newfp = None
-        else:
-            # we need a seekable file because to make
-            # line-based skipping around to be more efficient
-            # than loading the whole thing into memory
-            cur_offset = 0
-            newfp = tempfile.TemporaryFile()
-
-        while True:
-            buf = fp.read(self.bufsize)
-            line_offsets.extend(map(lambda x: cur_offset + x,
-                                    self.get_line_offsets(buf)))
-            if not buf:
-                break
-            cur_offset += len(buf)
-            
-            if newfp:
-                newfp.write(buf)
-
-        if newfp:
-            fp = newfp
-
-        # did we get an empty file?
-        if len(line_offsets) == 0:
-            return None
-            
-        digest = sha.new()
-
-        if len(line_offsets) <= self.atomic_num_lines:
-            # digest everything
-            self.last_was_atomic = True
-            fp.seek(0)
-            for line in fp:
-                norm_line = self.normalize(line)
-                if self.should_handle_line(norm_line):
-                    digest.update(norm_line)
-        else:
-            # digest stuff according to the spec
-            self.last_was_atomic = False
-            for (perc_offset, length) in spec:
-                assert 0 <= perc_offset < 100
-
-                offset = line_offsets[int(perc_offset * len(line_offsets)
-                                          / 100.0)]
-                fp.seek(offset)
-
-                i = 0
-                while i < length:
-                    line = fp.readline()
-                    if not line:
-                        break
-                    norm_line = self.normalize(line)
-                    if self.should_handle_line(norm_line):
-                        digest.update(norm_line)
-                        i += 1
-
-        return apply(self, (digest.hexdigest(),))
-    
-    compute_from_file = classmethod(compute_from_file)
 
 
-
-class PiecesDigestSpec(list):
+class DataDigestSpec(list):
     """a list of tuples, (perc_offset, length)"""
 
     def validate(self):
@@ -514,7 +385,7 @@ class InfoRequest(SimpleDigestBasedRequest):
 class SimpleDigestSpecBasedRequest(SimpleDigestBasedRequest):
     def __init__(self, digest, spec):
         typecheck(digest, str)
-        typecheck(spec, PiecesDigestSpec)
+        typecheck(spec, DataDigestSpec)
 
         super(SimpleDigestSpecBasedRequest, self).__init__(digest)
         self.setdefault('Op-Spec',   spec.netstring())
