@@ -59,6 +59,24 @@ Differences from Razor clients:
     is best handled by other systems, such as other
     procmail rules.
 
+Using pyzor with ReadyExec:
+    ReadyExec is a system to eliminate the high startup-cost
+    of executing scripts repeatedly.  If you execute
+    pyzor a lot, you might be interested in installing
+    ReadyExec and using it with pyzor.  You can
+    get ReadyExec from http://readyexec.sourceforge.net/
+
+    To use pyzor with ReadyExec, the py-readyexecd
+    needs to be started as:
+    
+        py-readyexecd <sock_file> pyzor.client.run
+
+    Individual clients are then executed as:
+        re-conduit <sockfile> report
+    or
+        re-conduit <sockfile> check
+    etc.
+
 
 SERVER (pyzord):
 
@@ -115,7 +133,7 @@ http://www.gnu.org/copyleft/gpl.html
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
 __version__  = "0.1.1"
-__revision__ = "$Id: __init__.py,v 1.7 2002-04-16 15:56:35 ftobin Exp $"
+__revision__ = "$Id: __init__.py,v 1.8 2002-04-16 18:17:11 ftobin Exp $"
 
 import re
 import sys
