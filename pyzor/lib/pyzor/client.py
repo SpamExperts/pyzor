@@ -28,7 +28,7 @@ from pyzor import *
 
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
-__revision__ = "$Id: client.py,v 1.10 2002-04-22 00:17:40 ftobin Exp $"
+__revision__ = "$Id: client.py,v 1.11 2002-04-22 00:38:01 ftobin Exp $"
 
 
 class Client(object):
@@ -241,6 +241,9 @@ class ExecCall(object):
         digest = PiecesDigest.compute_from_file(fp,
                                                 self.digest_spec,
                                                 seekable=0)
+        if digest is None:
+            return
+        
         self.output.debug("calculated digest: %s" % digest)
 
         found_hit = 0
@@ -282,6 +285,9 @@ class ExecCall(object):
         digest = PiecesDigest.compute_from_file(fp,
                                                 self.digest_spec,
                                                 seekable=0)
+        if digest is None:
+            return
+        
         self.output.debug("calculated digest: %s" % digest)
         for server in self.servers:
             try:
