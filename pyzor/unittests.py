@@ -7,7 +7,7 @@ from pyzor import *
 from pyzor.server import *
 from pyzor.client import *
 
-__revision__ = "$Id: unittests.py,v 1.7 2002-09-04 20:34:47 ftobin Exp $"
+__revision__ = "$Id: unittests.py,v 1.8 2002-09-07 22:45:03 ftobin Exp $"
 
 
 class ACLTest(unittest.TestCase):
@@ -154,12 +154,32 @@ class DataDigestTest(unittest.TestCase):
 
 
     def test_atomicness(self):
-        self.assert_(DataDigester(open('t/atomic'),
+        self.assert_(DataDigester(StringIO.StringIO("""
+        It is contrary to reasoning to say that there is a vacuum or space in
+        which there is absolutely nothing.
+                -- Descartes
+        """),
                                   ExecCall.digest_spec,
                                   seekable=True).is_atomic())
 
     def test_non_atomicness(self):
-        self.assert_(not DataDigester(open('t/atomic.not'),
+        self.assert_(not DataDigester(StringIO.StringIO("""
+        If builders built buildings the way programmers write programs,
+        Jolt Cola would be a Fortune-500 company.
+
+        If builders built buildings the way programmers write programs,
+        you'd be able to buy a nice little colonial split-level at
+        Babbages for $34.95.
+
+        If programmers wrote programs the way builders build buildings,
+        we'd still be using autocoder and running compile decks.
+
+        ---
+
+        Love is always open arms.  With arms open you allow love to come and
+        go as it wills, freely, for it will do so anyway.  If you close your
+        arms about love you'll find you are left only holding yourself.
+        """),
                                       ExecCall.digest_spec,
                                       seekable=True).is_atomic())
 
