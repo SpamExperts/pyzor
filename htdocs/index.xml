@@ -7,6 +7,14 @@
   </head>
   <body>
     <h1>Pyzor</h1>
+
+    <h2>News</h2>
+
+    <dl>
+      <dt>2003-02-10</dt>
+      <dd>The public server at 167.206.208.233 has shut down; please
+          re-run 'pyzor discover' to find the new server.</dd>
+    </dl>
     
     <h2>Introduction</h2>
     
