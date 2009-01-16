@@ -654,7 +654,8 @@ class rfc822BodyCleaner(BasicIterator):
 
     def __init__(self, fp):
         msg            = mimetools.Message(fp, seekable=0)
-        self.type      = msg.getmaintype()
+        # Default type is text.  See #1529694.
+        self.type      = msg.getmaintype() or "text"
         self.multifile = None
         self.curfile   = None
 
