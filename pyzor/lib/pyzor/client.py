@@ -25,7 +25,7 @@ class Client(object):
     __slots__ = ['socket', 'output', 'accounts']
     timeout = 5
     max_packet_size = 8192
-    
+
     def __init__(self, accounts):
         self.accounts = accounts
         self.output   = Output()
@@ -40,7 +40,7 @@ class Client(object):
         msg = InfoRequest(digest)
         self.send(msg, address)
         return self.read_response(msg.get_thread())
-        
+
     def report(self, digest, spec, address):
         msg = ReportRequest(digest, spec)
         self.send(msg, address)
@@ -62,7 +62,7 @@ class Client(object):
     def send(self, msg, address):
         msg.init_for_sending()
         account = self.accounts[address]
-        
+
         mac_msg_str = str(MacEnvelope.wrap(account.username,
                                            account.keystuff.key,
                                            msg))
@@ -108,7 +108,7 @@ class Client(object):
 
 class ServerList(list):
     inform_url = 'http://pyzor.sourceforge.net/cgi-bin/inform-servers-0-3-x'
-    
+
     def read(self, serverfile):
         for line in serverfile:
             orig_line = line
@@ -120,7 +120,7 @@ class ServerList(list):
 
 class ExecCall(object):
     __slots__ = ['client', 'servers', 'output']
-    
+
     # hard-coded for the moment
     digest_spec = DataDigestSpec([(20, 3), (60, 3)])
 
@@ -139,7 +139,7 @@ class ExecCall(object):
                self.usage()
             elif o == '--homedir':
                 specified_homedir = v
-        
+
         self.output = Output(debug=debug)
 
         homedir = pyzor.get_homedir(specified_homedir)
@@ -155,12 +155,12 @@ class ExecCall(object):
 
         for k, v in defaults.items():
             config.set('client', k, v)
-        
+
         config.read(os.path.join(homedir, 'config'))
-        
+
         servers_fn = config.get_filename('client', 'ServersFile')
         Client.timeout = config.getint('client', 'Timeout')
-        
+
         if not os.path.exists(homedir):
             os.mkdir(homedir)
 
@@ -215,17 +215,19 @@ Data is read on standard input (stdin).
             runner.run(server, (server,))
 
         return runner.all_ok
-        
+
 
     def info(self, args):
         getopt.getopt(args[1:], '')
-        
+
         if len(args) > 1:
             self.usage("%s does not take any non-option arguments" % args[0])
 
         runner = InfoClientRunner(self.client.info)
 
         for digest in FileDigester(sys.stdin, self.digest_spec):
+            if not digest:
+                continue
             for server in self.servers:
                 response = runner.run(server, (digest, server))
 
@@ -241,9 +243,11 @@ Data is read on standard input (stdin).
         runner = CheckClientRunner(self.client.check)
 
         for digest in FileDigester(sys.stdin, self.digest_spec):
+            if not digest:
+                continue
             for server in self.servers:
                 runner.run(server, (digest, server))
-                
+
         return (runner.found_hit and not runner.whitelisted)
 
 
@@ -257,14 +261,16 @@ Data is read on standard input (stdin).
         for (o, v) in options:
             if o == '--mbox':
                 do_mbox = True
-                
+
         all_ok = True
 
         for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
+            if not digest:
+                continue
             if not self.send_digest(digest, self.digest_spec,
                                     self.client.report):
                 all_ok = False
-        
+
         return all_ok
 
 
@@ -278,7 +284,7 @@ Data is read on standard input (stdin).
 
         for server in self.servers:
             runner.run(server, (digest, spec, server))
-        
+
         return runner.all_ok
 
 
@@ -293,14 +299,16 @@ Data is read on standard input (stdin).
         for (o, v) in options:
             if o == '--mbox':
                 do_mbox = True
-                
+
         all_ok = True
 
         for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
+            if not digest:
+                continue
             if not self.send_digest(digest, self.digest_spec,
                                     self.client.whitelist):
                 all_ok = False
-        
+
         return all_ok
 
 
@@ -316,8 +324,10 @@ Data is read on standard input (stdin).
         for (o, v) in options:
             if o == '--mbox':
                 do_mbox = True
-                
+
         for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
+            if not digest:
+                continue
             sys.stdout.write("%s\n" % digest)
 
         return True
@@ -408,7 +418,7 @@ class DataDigester(object):
     """The major workhouse class"""
     __slots__ = ['_atomic', '_value', '_used_line', '_digest',
                  'seekable']
-    
+
     # minimum line length for it to be included as part
     # of the digest.  I forget the purpose, however.
     # Someone remind me so I can document it here.
@@ -445,7 +455,7 @@ class DataDigester(object):
         self.seekable   = seekable
 
         (fp, offsets) = self.get_line_offsets(fp)
-        
+
         # did we get an empty file?
         if len(offsets) == 0:
             return
@@ -507,7 +517,7 @@ class DataDigester(object):
 
 
         offsets = []
-        
+
         for line in fp:
             norm = self.normalize(line)
             should_handle = self.should_handle_line(norm)
@@ -609,7 +619,7 @@ def get_input_handler(fp, spec, style='msg', seekable=False):
 
 class JustDigestsIterator(BasicIterator):
     __slots__ = ['fp']
-    
+
     def __init__(self, fp):
         self.fp = fp
 
@@ -622,7 +632,7 @@ class JustDigestsIterator(BasicIterator):
 
 class MailboxDigester(BasicIterator):
     __slots__ = ['mbox', 'digest_spec', 'seekable']
-    
+
     def __init__(self, fp, digest_spec, seekable=False):
         import mailbox
         self.mbox        = mailbox.PortableUnixMailbox(fp,
@@ -641,7 +651,7 @@ class MailboxDigester(BasicIterator):
 
 class rfc822BodyCleaner(BasicIterator):
     __slots__ = ['fp', 'multifile', 'curfile', 'type']
-    
+
     def __init__(self, fp):
         msg            = mimetools.Message(fp, seekable=0)
         self.type      = msg.getmaintype()
@@ -661,7 +671,7 @@ class rfc822BodyCleaner(BasicIterator):
                     sys.stderr.write("%s: %s\n" % (e.__class__, e))
                     self.curfile = cStringIO.StringIO()
                 self.curfile.seek(0)
-        
+
         elif self.type == 'multipart':
             self.multifile = multifile.MultiFile(msg.fp, seekable=False)
             self.multifile.push(msg.getparam('boundary'))
@@ -674,7 +684,7 @@ class rfc822BodyCleaner(BasicIterator):
         else:
             assert self.curfile is None
 
-        
+
     def readline(self):
         l = ''
         if self.type in ('text', 'multipart'):
@@ -694,7 +704,7 @@ class rfc822BodyCleaner(BasicIterator):
         except multifile.Error, e:
             sys.stderr.write("%s: %s\n" % (e.__class__, e))
             raise StopIteration
-            
+
         if not l:
             raise StopIteration
         return l
@@ -702,11 +712,11 @@ class rfc822BodyCleaner(BasicIterator):
 
 class ClientRunner(object):
     __slots__ = ['routine', 'all_ok']
-    
+
     def __init__(self, routine):
         self.routine = routine
         self.setup()
-        
+
     def setup(self):
         self.all_ok = True
 
@@ -730,7 +740,7 @@ class ClientRunner(object):
             self.all_ok = False
         sys.stdout.write(message + str(response.head_tuple())
                          + '\n')
-    
+
 
 
 class CheckClientRunner(ClientRunner):
@@ -744,10 +754,10 @@ class CheckClientRunner(ClientRunner):
         self.found_hit   = False
         self.whitelisted = False
         super(CheckClientRunner, self).setup()
-    
+
     def handle_response(self, response, message):
         message += "%s\t" % str(response.head_tuple())
-        
+
         if response.is_ok():
             wl_count = int(response['WL-Count'])
             if wl_count > 0:
@@ -757,7 +767,7 @@ class CheckClientRunner(ClientRunner):
                 count = int(response['Count'])
                 if count > 0:
                     self.found_hit = True
-            
+
             message += "%d\t%d" % (count, wl_count)
             sys.stdout.write(message + '\n')
         else:
@@ -768,11 +778,11 @@ class CheckClientRunner(ClientRunner):
 class InfoClientRunner(ClientRunner):
     def handle_response(self, response, message):
         message += "%s\n" % str(response.head_tuple())
-        
+
         if response.is_ok():
             count = int(response['Count'])
             message += "\tCount: %d\n" % count
-            
+
             if count > 0:
                 for f in ('Entered', 'Updated', 'WL-Entered', 'WL-Updated'):
                     if response.has_key(f):
@@ -787,9 +797,9 @@ class InfoClientRunner(ClientRunner):
                         if f is 'WL-Entered':
                             message += ("\tWhiteList Count: %d\n"
                                         % int(response['WL-Count']))
-                        
+
                         message += ("\t%s: %s\n" % (f, stringed))
-            
+
             sys.stdout.write(message)
         else:
             sys.stderr.write(message)
@@ -827,13 +837,13 @@ class Keystuff(tuple):
         # be removed
         if self[1] is None:
             raise ValueError, "no key information"
-        
+
         for x in self:
             if not (isinstance(x, long) or x is None):
                 raise ValueError, "Keystuff must be long's or None's"
 
         # make sure we didn't get all None's
-        if not filter(lambda x: x is not None, self): 
+        if not filter(lambda x: x is not None, self):
             raise ValueError, "keystuff can't be all None's"
 
     def from_hexstr(self, s):
@@ -863,10 +873,10 @@ class Keystuff(tuple):
 class AccountsDict(dict):
     """Key is pyzor.Address, value is Account
     When getting, defaults to anonymous_account"""
-    
+
     anonymous_account = Account((pyzor.anonymous_user,
                                  Keystuff((None, 0L))))
-    
+
     def __setitem__(self, k, v):
         typecheck(k, pyzor.Address)
         typecheck(v, Account)
@@ -887,7 +897,7 @@ class AccountsFile(object):
     host : port ; username : keystuff
     """
     __slots__ = ['fp', 'lineno', 'output']
-    
+
     def __init__(self, fp):
         self.fp     = fp
         self.lineno = 0
@@ -900,7 +910,7 @@ class AccountsFile(object):
         while 1:
             orig_line = self.fp.readline()
             self.lineno += 1
-            
+
             if not orig_line:
                 raise StopIteration
             line = orig_line.strip()
@@ -908,7 +918,7 @@ class AccountsFile(object):
                 continue
             fields = line.split(':')
             fields = map(lambda x: x.strip(), fields)
-            
+
             if len(fields) != 4:
                 self.output.warn("account file: invalid line %d: wrong number of parts"
                                  % self.lineno)
