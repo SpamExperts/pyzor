@@ -126,7 +126,10 @@ class ExecCall(object):
 
     def run(self):
         debug = 0
-        (options, args) = getopt.getopt(sys.argv[1:], 'dh:', ['homedir='])
+        log = None
+
+        (options, args) = getopt.getopt(sys.argv[1:], 'dh:',
+                                        ['homedir=', 'log'])
         if len(args) < 1:
            self.usage()
 
@@ -139,10 +142,16 @@ class ExecCall(object):
                self.usage()
             elif o == '--homedir':
                 specified_homedir = v
+            elif o == '--log':
+                log = 1
 
         self.output = Output(debug=debug)
 
         homedir = pyzor.get_homedir(specified_homedir)
+
+        if log:
+            sys.stderr = open(homedir + "/pyzor.log", 'a')
+            sys.stderr.write("\npyzor[" + repr (os.getpid()) + "]:\n")
 
         config = pyzor.Config(homedir)
         config.add_section('client')

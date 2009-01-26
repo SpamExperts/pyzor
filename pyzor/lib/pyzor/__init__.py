@@ -75,7 +75,7 @@ class BasicIterator(object):
 
 class Username(str):
     user_pattern = re.compile(r'^[-\.\w]+$')
-    
+
     def __init__(self, s):
         self.validate()
 
@@ -87,7 +87,7 @@ class Username(str):
 
 class Opname(str):
     op_pattern = re.compile(r'^[-\.\w]+$')
-    
+
     def __init__(self, s):
         self.validate()
 
@@ -106,15 +106,15 @@ class Output(Singleton):
     def data(self, msg):
         print msg
     def warn(self, msg):
-        if not self.quiet: sys.__stderr__.write('%s\n' % msg)
+        if not self.quiet: sys.stderr.write('%s\n' % msg)
     def debug(self, msg):
-        if self.do_debug: sys.__stderr__.write('%s\n' % msg)
+        if self.do_debug: sys.stderr.write('%s\n' % msg)
 
 
 
 class DataDigest(str):
     # hex output doubles digest size
-    value_size = sha.digest_size * 2    
+    value_size = sha.digest_size * 2
 
     def __init__(self, value):
         if len(value) != self.value_size:
@@ -135,7 +135,7 @@ class DataDigestSpec(list):
             raise ValueError, "offset percentage out of bounds"
         if not length > 0:
             raise ValueError, "piece lengths must be positive"
-        
+
     validate_tuple = staticmethod(validate_tuple)
 
     def netstring(self):
@@ -155,7 +155,7 @@ class DataDigestSpec(list):
 
             self.validate_tuple(perc_offset, length)
             new_spec.append((perc_offset, length))
-            
+
         return new_spec
 
     from_netstring = classmethod(from_netstring)
@@ -166,7 +166,7 @@ class Message(rfc822.Message, object):
     def __init__(self, fp=None):
         if fp is None:
             fp = cStringIO.StringIO()
-            
+
         super(Message, self).__init__(fp)
         self.setup()
 
@@ -207,13 +207,13 @@ class ThreadedMessage(Message):
 
         self.setdefault('PV', str(proto_version))
         super(ThreadedMessage, self).init_for_sending()
-        
+
     def ensure_complete(self):
         if not (self.has_key('PV') and self.has_key('Thread')):
             raise IncompleteMessageError, \
                   "doesn't have fields for a ThreadedMessage"
         super(ThreadedMessage, self).ensure_complete()
-    
+
     def get_protocol_version(self):
         return float(self['PV'])
 
@@ -228,7 +228,7 @@ class ThreadedMessage(Message):
 
 class MacEnvelope(Message):
     ts_diff_max = 300
-    
+
     def ensure_complete(self):
         if not (self.has_key('User')
                 and self.has_key('Time')
@@ -240,15 +240,15 @@ class MacEnvelope(Message):
     def get_submsg(self, factory=ThreadedMessage):
         self.rewindbody()
         return apply(factory, (self.fp,))
-    
+
     def verify_sig(self, user_key):
         typecheck(user_key, long)
-        
+
         user     = Username(self['User'])
         ts       = int(self['Time'])
         said_sig = self['Sig']
         hashed_user_key = self.hash_key(user_key, user)
-        
+
         if abs(time.time() - ts) > self.ts_diff_max:
             raise SignatureError, "timestamp not within allowed range"
 
@@ -261,7 +261,7 @@ class MacEnvelope(Message):
 
     def wrap(self, user, key, msg):
         """This should be used to create a MacEnvelope"""
-        
+
         typecheck(user, str)
         typecheck(msg, Message)
         typecheck(key, long)
@@ -294,9 +294,9 @@ class MacEnvelope(Message):
         """returns lower(H(U + ':' + lower(hex(K))))"""
         typecheck(key, long)
         typecheck(user, Username)
-        
+
         return sha.new("%s:%x" % (Username, key)).hexdigest().lower()
-    
+
     hash_key = staticmethod(hash_key)
 
 
@@ -307,9 +307,9 @@ class MacEnvelope(Message):
         M is message
         T is decimal epoch timestamp
         K is hashed_key
-        
+
         returns a digest object"""
-        
+
         typecheck(ts, int)
         typecheck(msg, Message)
         typecheck(hashed_key, str)
@@ -317,7 +317,7 @@ class MacEnvelope(Message):
         h_msg = self.hash_msg(msg)
 
         return sha.new("%s:%d:%s" % (h_msg.digest(), ts, hashed_key)).hexdigest().lower()
-    
+
     sign_msg = classmethod(sign_msg)
 
 
@@ -349,7 +349,7 @@ class Request(ThreadedMessage):
     """this is class that should be used to read in Requests of any type.
     subclasses are responsible for setting 'Op' if they are generating
     a message"""
-    
+
     def get_op(self):
         return self['Op']
 
@@ -365,7 +365,7 @@ class ClientSideRequest(Request):
     def setup(self):
         super(Request, self).setup()
         self.setdefault('Op', self.op)
-        
+
 
 
 class PingRequest(ClientSideRequest):
@@ -412,7 +412,7 @@ class ErrorResponse(Response):
     def __init__(self, code, s):
         typecheck(code, int)
         typecheck(s, str)
-        
+
         super(ErrorResponse, self).__init__()
         self.setdefault('Code', str(code))
         self.setdefault('Diag', s)
@@ -424,7 +424,7 @@ class ThreadId(int):
     full_range  = (0, 2**16)
     ok_range    = (1024, full_range[1])
     error_value = 0
-    
+
     def __init__(self, i):
         super(ThreadId, self).__init__(i)
         if not (self.full_range[0] <= self < self.full_range[1]):
@@ -448,7 +448,7 @@ class Address(tuple):
         typecheck(self[1], int)
         if len(self) != 2:
             raise ValueError, "invalid address: %s" % str(self)
-    
+
     def __str__(self):
         return (self[0] + ':' + str(self[1]))
 
@@ -468,7 +468,7 @@ class Config(ConfigParser.ConfigParser, object):
         assert isinstance(homedir, str)
         self.homedir = homedir
         super(Config, self).__init__()
-    
+
     def get_filename(self, section, option):
         fn = os.path.expanduser(self.get(section, option))
         if not os.path.isabs(fn):
@@ -478,14 +478,14 @@ class Config(ConfigParser.ConfigParser, object):
 
 def get_homedir(specified):
     homedir = os.path.join('/etc', 'pyzor')
-    
+
     if specified is not None:
         homedir = specified
     else:
         userhome = os.getenv('HOME')
         if userhome is not None:
             homedir = os.path.join(userhome, '.pyzor')
-    
+
     return homedir
 
 
@@ -501,12 +501,12 @@ def modglobal_apply(globs, repl, obj, varargs=(), kwargs=None):
     dict."""
     if kwargs is None:
         kwargs = {}
-    
+
     saved = {}
     for (k, v) in repl.items():
         saved[k] = globs[k]
         globs[k] = v
-        
+
     try:
         r = apply(obj, varargs, kwargs)
     finally:
