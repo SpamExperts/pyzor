@@ -234,7 +234,7 @@ Data is read on standard input (stdin).
 
         runner = InfoClientRunner(self.client.info)
 
-        for digest in FileDigester(sys.stdin, self.digest_spec):
+        for digest in get_input_handler(sys.stdin, self.digest_spec):
             if not digest:
                 continue
             for server in self.servers:
@@ -251,7 +251,7 @@ Data is read on standard input (stdin).
 
         runner = CheckClientRunner(self.client.check)
 
-        for digest in FileDigester(sys.stdin, self.digest_spec):
+        for digest in get_input_handler(sys.stdin, self.digest_spec):
             if not digest:
                 continue
             for server in self.servers:
@@ -262,18 +262,18 @@ Data is read on standard input (stdin).
 
     def report(self, args):
         (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
-        do_mbox = False
+        do_mbox = "msg"
 
         if len(args2) > 0:
             self.usage("%s does not take any non-option arguments" % args[0])
 
         for (o, v) in options:
             if o == '--mbox':
-                do_mbox = True
+                do_mbox = "mbox"
 
         all_ok = True
 
-        for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
+        for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
             if not digest:
                 continue
             if not self.send_digest(digest, self.digest_spec,
@@ -303,15 +303,15 @@ Data is read on standard input (stdin).
         if len(args2) > 0:
             self.usage("%s does not take any non-option arguments" % args[0])
 
-        do_mbox = False
+        do_mbox = "msg"
 
         for (o, v) in options:
             if o == '--mbox':
-                do_mbox = True
+                do_mbox = "mbox"
 
         all_ok = True
 
-        for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
+        for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
             if not digest:
                 continue
             if not self.send_digest(digest, self.digest_spec,
@@ -328,13 +328,13 @@ Data is read on standard input (stdin).
             self.usage("%s does not take any non-option arguments" % args[0])
 
 
-        do_mbox = False
+        do_mbox = "msg"
 
         for (o, v) in options:
             if o == '--mbox':
-                do_mbox = True
+                do_mbox = "mbox"
 
-        for digest in FileDigester(sys.stdin, self.digest_spec, do_mbox):
+        for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
             if not digest:
                 continue
             sys.stdout.write("%s\n" % digest)
@@ -349,7 +349,7 @@ Data is read on standard input (stdin).
             self.usage("%s does not take any non-option arguments" % args[0])
 
         def loop():
-            for digest in FileDigester(sys.stdin, self.digest_spec):
+            for digest in get_input_handler(sys.stdin, self.digest_spec):
                 pass
 
         modglobal_apply(globals(), {'DataDigester': PrintingDataDigester},
