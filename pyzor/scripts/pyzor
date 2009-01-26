@@ -1,4 +1,8 @@
-#!/usr/bin/python2
+#!/usr/bin/python
+
+import os
+# set umask
+os.umask(0077)
 
 import pyzor.client
 pyzor.client.run()

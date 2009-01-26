@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python
 
 import os
 import os.path
@@ -34,7 +34,7 @@ def load_access_file(access_fn, server):
                                                         op,
                                                         True)))
 
-                                 
+
 def load_passwd_file(access_fn, server):
     server.passwd = pyzor.server.Passwd()
     if os.path.exists(passwd_fn):
@@ -44,6 +44,9 @@ def load_passwd_file(access_fn, server):
 
 ########################################################################
 # functions above, run below
+
+# set umask
+os.umask(0077)
 
 debug = 0
 (options, args) = getopt.getopt(sys.argv[1:], 'dh:', ['homedir='])
