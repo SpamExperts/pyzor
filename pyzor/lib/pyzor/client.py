@@ -650,7 +650,12 @@ class MailboxDigester(BasicIterator):
         self.seekable    = seekable
 
     def next(self):
-        next_msg = self.mbox.next()
+        try:
+            next_msg = self.mbox.next()
+        except IOError:
+            print "Error: Please feed mailbox files in on stdin, i.e."
+            print "    pyzor digest --mbox < my_mbox_file"
+            next_msg = None
         if next_msg is None:
             raise StopIteration
         return DataDigester(next_msg, self.digest_spec,
@@ -680,13 +685,20 @@ class rfc822BodyCleaner(BasicIterator):
                 except binascii.Error, e:
                     sys.stderr.write("%s: %s\n" % (e.__class__, e))
                     self.curfile = cStringIO.StringIO()
+                except ValueError, e:
+                    #sys.stderr.write("%s: %s\n" % (e.__class__, e))
+                    self.curfile = msg.fp
                 self.curfile.seek(0)
 
         elif self.type == 'multipart':
-            self.multifile = multifile.MultiFile(msg.fp, seekable=False)
-            self.multifile.push(msg.getparam('boundary'))
-            self.multifile.next()
-            self.curfile = self.__class__(self.multifile)
+            try:
+                self.multifile = multifile.MultiFile(msg.fp, seekable=False)
+                self.multifile.push(msg.getparam('boundary'))
+                self.multifile.next()
+                self.curfile = self.__class__(self.multifile)
+            except (TypeError, AttributeError, multifile.Error):
+                # ignore errors, pass msg as is
+                self.curfile = msg.fp
 
 
         if self.type == 'text' or self.type == 'multipart':
@@ -697,14 +709,17 @@ class rfc822BodyCleaner(BasicIterator):
 
     def readline(self):
         l = ''
-        if self.type in ('text', 'multipart'):
-            l = self.curfile.readline()
+        try:
+            if self.type in ('text', 'multipart'):
+                l = self.curfile.readline()
 
-        if self.type == 'multipart' and not l and self.multifile.next():
-            self.curfile = self.__class__(self.multifile)
-            # recursion.  Could get messy if
-            # we get a bunch of empty multifile parts
-            l = self.readline()
+            if self.type == 'multipart' and not l and self.multifile.next():
+                self.curfile = self.__class__(self.multifile)
+                # recursion.  Could get messy if
+                # we get a bunch of empty multifile parts
+                l = self.readline()
+        except (TypeError, AttributeError, multifile.Error):
+            pass
         return l
 
 
