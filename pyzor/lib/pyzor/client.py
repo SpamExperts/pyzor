@@ -127,9 +127,14 @@ class ExecCall(object):
     def run(self):
         debug = 0
         log = None
+        options = None
 
-        (options, args) = getopt.getopt(sys.argv[1:], 'dh:',
-                                        ['homedir=', 'log'])
+        try:
+            (options, args) = getopt.getopt(sys.argv[1:], 'dh:',
+                                            ['homedir=', 'log', 'help'])
+        except getopt.GetoptError:
+            self.usage()
+
         if len(args) < 1:
            self.usage()
 
@@ -138,7 +143,7 @@ class ExecCall(object):
         for (o, v) in options:
             if o == '-d':
                 debug = 1
-            elif o == '-h':
+            elif o in ('-h', '--help'):
                self.usage()
             elif o == '--homedir':
                 specified_homedir = v
@@ -146,7 +151,6 @@ class ExecCall(object):
                 log = 1
 
         self.output = Output(debug=debug)
-
         homedir = pyzor.get_homedir(specified_homedir)
 
         if log:
@@ -202,10 +206,13 @@ class ExecCall(object):
     def usage(self, s=None):
         if s is not None:
             sys.stderr.write("%s\n" % s)
-        sys.stderr.write("""usage: %s [-d] [--homedir dir] command [cmd_opts]
+        sys.stderr.write("""
+usage: %s [-d] [--homedir dir] command [cmd_opts]
 command is one of: check, report, discover, ping, digest, predigest,
                    genkey
+
 Data is read on standard input (stdin).
+
 """
                          % sys.argv[0])
         sys.exit(2)
@@ -213,9 +220,9 @@ Data is read on standard input (stdin).
 
 
     def ping(self, args):
-        getopt.getopt(args[1:], '')
-
-        if len(args) > 1:
+        try:
+            getopt.getopt(args[1:], '')
+        except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
 
         runner = ClientRunner(self.client.ping)
@@ -227,14 +234,20 @@ Data is read on standard input (stdin).
 
 
     def info(self, args):
-        getopt.getopt(args[1:], '')
-
-        if len(args) > 1:
+        try:
+            (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+        except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
+
+        do_mbox = 'msg'
+
+        for (o, v) in options:
+            if o == '--mbox':
+                do_mbox = 'mbox'
 
         runner = InfoClientRunner(self.client.info)
 
-        for digest in get_input_handler(sys.stdin, self.digest_spec):
+        for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
             if not digest:
                 continue
             for server in self.servers:
@@ -244,14 +257,20 @@ Data is read on standard input (stdin).
 
 
     def check(self, args):
-        getopt.getopt(args[1:], '')
-
-        if len(args) > 1:
+        try:
+            (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+        except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
+
+        do_mbox = 'msg'
+
+        for (o, v) in options:
+            if o == '--mbox':
+                do_mbox = 'mbox'
 
         runner = CheckClientRunner(self.client.check)
 
-        for digest in get_input_handler(sys.stdin, self.digest_spec):
+        for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
             if not digest:
                 continue
             for server in self.servers:
@@ -261,11 +280,12 @@ Data is read on standard input (stdin).
 
 
     def report(self, args):
-        (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
-        do_mbox = "msg"
-
-        if len(args2) > 0:
+        try:
+           (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+        except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
+
+        do_mbox = 'msg'
 
         for (o, v) in options:
             if o == '--mbox':
@@ -298,9 +318,9 @@ Data is read on standard input (stdin).
 
 
     def whitelist(self, args):
-        (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
-
-        if len(args2) > 0:
+        try:
+            (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+        except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
 
         do_mbox = "msg"
@@ -322,11 +342,10 @@ Data is read on standard input (stdin).
 
 
     def digest(self, args):
-        (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
-
-        if len(args2) > 0:
+        try:
+           (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
+        except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
-
 
         do_mbox = "msg"
 
@@ -343,9 +362,9 @@ Data is read on standard input (stdin).
 
 
     def print_digested(self, args):
-        getopt.getopt(args[1:], '')
-
-        if len(args) > 1:
+        try:
+            getopt.getopt(args[1:], '')
+        except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
 
         def loop():
@@ -358,9 +377,9 @@ Data is read on standard input (stdin).
         return True
 
     def genkey(self, args):
-        getopt.getopt(args[1:], '')
-
-        if len(args) > 1:
+        try:
+            getopt.getopt(args[1:], '')
+        except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
 
         import getpass
