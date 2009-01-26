@@ -1,0 +1,128 @@
+.TH PYZOR 1 "10 Oct 2002"
+.SH NAME
+pyzor \- spam\-catcher using a collaborative filtering network
+.SH SYNOPSIS
+\fBpyzor\fP [\fB\-d\fP] [\fB\-\-homedir\fP \fIdir\fP] \fIcommand\fP [\fIcommand\_options\fP]
+.SH OPTIONS
+.TP
+\fB\-d\fP
+turn on debugging
+.TP
+\fB\-\-homedir\fI dir\fP
+use dir as the home directory for Pyzor instead of the default ~/.pyzor.
+See the files section for more information on what files are inside of the
+homedir.
+.SH COMMANDS
+.TP
+\fBcheck\fP[\fB\-\-mbox\fP]
+Reads on standard input an RFC 822 (email) message. Exit code is zero (0)
+if and only if a match is found and the global whitelist count is zero.
+.BR
+If \-\-mbox is provided, then the input is assumed to be a unix mailbox, and
+all messages in it will be checked.
+.BR
+If multiple servers are listed in the configuration file, the exit code will
+be zero (0) if and only if there is a match found on at least one server
+(without it being whitelisted anyplace).
+.TP
+\fBreport \fP[\fB\-\-mbox\fP]
+Reads on standard input an RFC 822 (email) message. Reports to the server a
+digest of each message in the mailbox as spam. Writes to standard output a
+tuple of (error\-code, message) from the server.
+.BR
+If \-\-mbox is provided, then the input is assumed to be a unix mailbox, and
+all messages in it will be sent to the server.
+.TP
+\fBwhitelist \fP[\fB\-\-mbox\fP]
+Reads on standard input an RFC 822 (email) message. Sends to the server a
+digest of each message in the mailbox for whitelisting. Writes to standard
+output a tuple of (error\-code, message) from the server.
+.BR
+If \-\-mbox is provided, then the input is assumed to be a unix mailbox, and
+all messages in it will be sent to the server.
+.TP
+\fBdiscover\fP
+Finds Pyzor servers, and writes them to ~/.pyzor/servers. This may
+accomplished through querying already-known servers or an HTTP call to a
+hard-coded address.
+.TP
+\fBping\fP
+Merely requests a response from the servers.
+.TP
+\fBgenkey\fP
+Based upon a secret passphrase gathered from the user and salt gathered from
+/dev/random, prints to standard output a tuple of "salt,key".
+Used to put account information into the accounts file.
+See the section Using Accounts for more information.
+.TP
+\fBdigest \fP[\fB\-\-mbox\fP]
+Reads on standard input an RFC 822 (email) message. Writes the
+digest of the message to standard output.
+.BR
+If \-\-mbox is provided, then the input is assumed to be a unix
+mailbox, each message's digest is written to standard output, separated
+by newlines.
+.TP
+\fBpredigest\fP
+Reads on standard input an RFC 822 (email) message. Writes to
+standard output the normalized lines of data that are digested, with the
+exception that the lines printed have newlines (all whitespace is
+removed before digesting).
+
+.SH USING PYZOR WITH READYEXEC
+\fBReadyExec\fP is a system to eliminate the high startup-cost of executing
+scripts repeatedly. If you execute pyzor a lot, you might be interested
+in installing ReadyExec and using it with pyzor.
+
+To use pyzor with ReadyExec, the readyexecd.py server needs to be
+started as:
+
+   readyexecd.py socket_file pyzor
+
+socket_file can be any (non\-existing) filename you wish ReadyExec to
+use, such as /tmp/pyzor:
+
+   readyexecd.py /tmp/pyzor pyzor
+
+Individual clients are then executed as:
+
+   readyexec socket_file options command cmd_options
+
+For example:
+
+   readyexec /tmp/pyzor check
+   readyexec /tmp/pyzor report
+   readyexec /tmp/pyzor whitelist \-\-mbox
+   readyexec /tmp/pyzor \-d ping
+
+ReadyExec can be found at: http://readyexec.sourceforge.net/
+.SH INTEGRATION WITH MUTT
+Add the following line to mutt.conf:
+
+   macro index S "|/usr/bin/pyzor report"
+
+Then press S on the spam message in mutt to report it with pyzor.
+.SH FILES
+\fI~/.pyzor/config\fP
+
+The format of this file is INI-style (name=value, divided into [sections]).
+Names are case insensitive. All values which are filenames can have
+shell\-style tildes (~) in them. All values which are relative filenames are
+interpreted to be relative to the Pyzor homedir.
+
+\fBDefaults\fP
+ [client]
+ ServersFile = servers
+ AccountsFile = accounts
+ DiscoverServersURL = http://pyzor.sourceforge.net/cgi-bin/inform\-servers\-0\-3\-x
+ Timeout = 5
+.SH SEE ALSO
+pyzord(1)
+.SH AUTHOR
+This manpage was originally written by Bastian Kleineidam
+<calvin@debian.org> for the Debian distribution of pyzor but may be used
+by others.
+.BR
+The main author of pyzor is Frank J. Tobin <ftobin@neverending.org>.  The
+main project page for pyzor can be found at
+http://sourceforge.net/projects/pyzor
