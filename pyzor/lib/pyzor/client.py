@@ -537,7 +537,7 @@ class DataDigester(object):
             cur_offset = fp.tell()
             newfp = None
         else:
-            # we need a seekable file because to make
+            # we need a seekable file to make
             # line-based skipping around to be more efficient
             # than loading the whole thing into memory
             cur_offset = 0
@@ -601,9 +601,9 @@ class DataDigester(object):
     def normalize(self, s):
         repl = self.unwanted_txt_repl
         s2 = s
+        s2 = self.longstr_ptrn.sub(repl, s2)
         s2 = self.email_ptrn.sub(repl, s2)
         s2 = self.url_ptrn.sub(repl, s2)
-        s2 = self.longstr_ptrn.sub(repl, s2)
         s2 = self.html_tag_ptrn.sub(repl, s2)
         # make sure we do the whitespace last because some of
         # the previous patterns rely on whitespace
