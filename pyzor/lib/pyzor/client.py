@@ -1,5 +1,6 @@
 """networked spam-signature detection client"""
 
+import re
 import os
 import os.path
 import socket
@@ -113,7 +114,8 @@ class ServerList(list):
         for line in serverfile:
             orig_line = line
             line = line.strip()
-            if line and not line.startswith('#'):
+            if line and not line.startswith('#') and \
+                re.match('[a-zA-Z0-9.-]+:[0-9]+', line):
                 self.append(pyzor.Address.from_str(line))
 
 
@@ -185,6 +187,12 @@ class ExecCall(object):
 
 
         self.servers  = self.get_servers(servers_fn)
+        if not len(self.servers):
+            sys.stderr.write("no valid servers found\n")
+            # Remove the servers file as it only contains invalid entries,
+            # probably a HTTP error message.
+            os.remove(servers_fn)
+            sys.exit(1)
         self.client = Client(self.get_accounts(config.get_filename('client',
                                                                    'AccountsFile')))
 
