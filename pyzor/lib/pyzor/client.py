@@ -1024,5 +1024,5 @@ def raise_timeout():
 
 
 def download(url, outfile):
-    import urllib
-    urllib.urlretrieve(url, outfile)
+    import urllib2
+    open(outfile, "wb").write(urllib2.urlopen(url).read())
