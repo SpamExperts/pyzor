@@ -375,6 +375,8 @@ Data is read on standard input (stdin).
         except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
 
+        do_mbox = "msg"
+
         def loop():
             for digest in get_input_handler(sys.stdin, self.digest_spec):
                 pass
@@ -492,7 +494,7 @@ class DataDigester(object):
 
         (fp, offsets) = self.get_line_offsets(fp)
 
-        # did we get an empty file?
+        # did we get an empty (parsed output) file?
         if len(offsets) == 0:
             return
 
@@ -512,9 +514,12 @@ class DataDigester(object):
     def handle_atomic(self, fp):
         """we digest everything"""
         self._atomic = True
-        fp.seek(0)
-        for line in fp:
-            self.handle_line(line)
+        try:
+            fp.seek(0)
+            for line in fp:
+                self.handle_line(line)
+        except:
+            pass
 
 
     def handle_pieced(self, fp, spec, offsets):
@@ -700,11 +705,24 @@ class rfc822BodyCleaner(BasicIterator):
         self.multifile = None
         self.curfile   = None
 
+        # Check if we got a mail or not. Set type to binary if there is no
+        # 'From:' header and type is text/plain with encoding 7bit.
+        # 7bit is passed through anyway so nobody cares.
+        if (not msg.has_key("From") and self.type == 'text' and
+            msg.subtype == 'plain' and msg.getencoding() == '7bit'):
+            self.type = 'binary'
+
+        if self.type is '':
+            self.type = 'text'
+
         if self.type == 'text':
             encoding = msg.getencoding()
-            if encoding == '7bit':
-                self.curfile = msg.fp
-            else:
+            self.curfile = msg.fp
+            if encoding != '7bit':
+                # fix bad encoding name
+                if encoding == '8bits':
+                    encoding = '8bit'
+
                 import binascii
                 self.curfile = tempfile.TemporaryFile()
                 try:
@@ -715,7 +733,11 @@ class rfc822BodyCleaner(BasicIterator):
                 except ValueError, e:
                     #sys.stderr.write("%s: %s\n" % (e.__class__, e))
                     self.curfile = msg.fp
-                self.curfile.seek(0)
+                try:
+                    self.curfile.seek(0)
+                except:
+                    # If we get an error we'll pass the message anyway.
+                    pass
 
         elif self.type == 'multipart':
             try:
@@ -726,10 +748,17 @@ class rfc822BodyCleaner(BasicIterator):
             except (TypeError, AttributeError, multifile.Error):
                 # ignore errors, pass msg as is
                 self.curfile = msg.fp
+                self.type = 'binary'
 
 
         if self.type == 'text' or self.type == 'multipart':
             assert self.curfile is not None
+        elif self.type == 'binary':
+            try:
+                fp.seek(0)
+            except:
+                pass
+            self.curfile = fp
         else:
             assert self.curfile is None
 
@@ -737,7 +766,7 @@ class rfc822BodyCleaner(BasicIterator):
     def readline(self):
         l = ''
         try:
-            if self.type in ('text', 'multipart'):
+            if self.type in ('text', 'multipart', 'binary'):
                 l = self.curfile.readline()
 
             if self.type == 'multipart' and not l and self.multifile.next():
