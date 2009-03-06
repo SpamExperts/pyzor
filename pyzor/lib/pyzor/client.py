@@ -733,6 +733,9 @@ class rfc822BodyCleaner(BasicIterator):
                 except ValueError, e:
                     #sys.stderr.write("%s: %s\n" % (e.__class__, e))
                     self.curfile = msg.fp
+                except multifile.Error, e:
+                    #sys.stderr.write("%s: %s\n" % (e.__class__, e))
+                    self.curfile = msg.fp
                 try:
                     self.curfile.seek(0)
                 except:
