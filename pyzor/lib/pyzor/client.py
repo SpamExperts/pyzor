@@ -378,7 +378,7 @@ Data is read on standard input (stdin).
         do_mbox = "msg"
 
         def loop():
-            for digest in get_input_handler(sys.stdin, self.digest_spec):
+            for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
                 pass
 
         modglobal_apply(globals(), {'DataDigester': PrintingDataDigester},
