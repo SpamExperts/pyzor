@@ -6,6 +6,8 @@ NEWS
 README
 THANKS
 UPGRADING
+docs/pyzor.1
+docs/pyzord.1
 docs/usage.html
 lib/pyzor/__init__.py
 lib/pyzor/client.py
