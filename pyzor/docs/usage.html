@@ -10,7 +10,7 @@
     <h1>Pyzor Usage Documentation</h1>
 
     <p id="cvsid">$Id: usage.html,v 1.11 2002-10-10 21:37:08 ftobin Exp $</p>
-    
+
     <ul>
       <li><a href="#client"><kbd>pyzor</kbd> (client)</a></li>
       <li><a href="#server"><kbd>pyzord</kbd> (server)</a></li>
@@ -21,17 +21,17 @@
      </ul>
 
     <h2 id="client"><kbd>pyzor</kbd> (client)</h2>
-    
+
     <pre>
 pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>command_options</var>]
     </pre>
-    
+
     <h3 id="options">options</h3>
-    
+
     <dl>
       <dt><kbd>-d</kbd></dt>
       <dd>turn on debugging</dd>
-      
+
       <dt id="pyzor-homedir"><kbd>--homedir <var class="filename">dir</var></kbd></dt>
       <dd>
 	use <var>dir</var> as the home directory
@@ -41,13 +41,13 @@ pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>
 	more information on what files are inside of the
 	homedir.
       </dd>
-      
+
     </dl>
-    
+
     <h3 id="commands">commands</h3>
 
     <h4>General Output</h4>
-    
+
     <p>
       In general, the output from <kbd>pyzor <var>command</var></kbd>
       is of the form:
@@ -73,13 +73,13 @@ pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>
 	  is a match found on at least one server (without it
 	  being whitelisted anyplace).
 	</p>
-	
+
 	<p>
 	  The command-specfic output for a <kbd>check</kbd> is
 	  <samp><var>report-count</var> <var>whitelist-count</var></samp>.
 	</p>
       </dd>
-      
+
       <dt id="report"><kbd>report [--mbox]</kbd></dt>
       <dd>
 	<p>
@@ -94,7 +94,7 @@ pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>
 	  will be sent to the server.
 	</p>
       </dd>
-      
+
       <dt id="whitelist"><kbd>whitelist [--mbox]</kbd></dt>
       <dd>
 	<p>
@@ -109,7 +109,7 @@ pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>
 	  will be sent to the server.
 	</p>
       </dd>
-      
+
       <dt id="discover"><kbd>discover</kbd></dt>
       <dd>
 	<p>
@@ -119,12 +119,12 @@ pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>
 	  servers or an HTTP call to a hard-coded address.
 	</p>
       </dd>
-      
+
       <dt id="ping"><kbd>ping</kbd></dt>
       <dd>
 	<p>Merely requests a response from the servers.</p>
       </dd>
-      
+
       <dt id="genkey"><kbd>genkey</kbd></dt>
       <dd>
 	Based upon a secret passphrase gathered from the user
@@ -135,7 +135,7 @@ pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>
 	See the section <a href="#using-accounts">Using Accounts</a>
 	for more information.
       </dd>
-      
+
       <dt id="digest"><kbd>digest [--mbox]</kbd></dt>
       <dd>
 	<p>
@@ -161,10 +161,10 @@ pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>
       </dd>
 
     </dl>
-    
-    
+
+
     <h3>Using the Pyzor client with procmail</h3>
-    
+
     <p>
       To use Pyzor in a procmail system, consider using the following
       simple recipe.
@@ -182,7 +182,7 @@ pyzor-caught
       marked with Pyzor, instead of immediately filtering them
       into a separate folder:
     </p>
-    
+
     <pre>
 :0 Wc
 | pyzor check
@@ -192,7 +192,7 @@ pyzor-caught
 
     <h2>Using the Pyzor client with
       <a href="http://readyexec.sourceforge.net/">ReadyExec</a></h2>
-    
+
     <p>
       <a href="http://readyexec.sourceforge.net/">ReadyExec</a>
       is a system to eliminate the high startup-cost
@@ -200,12 +200,12 @@ pyzor-caught
       <kbd>pyzor</kbd> a lot, you might be interested in installing
       ReadyExec and using it with <kbd>pyzor</kbd>.
     </p>
-    
+
     <p>
       To use pyzor with ReadyExec, the readyexecd.py server
       needs to be started as:
     </p>
-    
+
     <pre>
 readyexecd.py <var>socket_file</var> pyzor.client.run
     </pre>
@@ -219,19 +219,19 @@ readyexecd.py <var>socket_file</var> pyzor.client.run
     <pre>
 readyexecd.py /tmp/pyzor pyzor.client.run
     </pre>
-    
+
     <p>
       Individual clients are then executed as:
     </p>
-    
+
     <pre>
 readyexec <var>socket_file</var> <var>options</var> <var>command</var> <var>cmd_options</var>
     </pre>
-    
+
     <p>
       For example:
     </p>
-    
+
     <pre>
 readyexec /tmp/pyzor check
 readyexec /tmp/pyzor report
@@ -241,11 +241,11 @@ readyexec /tmp/pyzor -d ping
 
 
     <h2 id="server"><kbd>pyzord</kbd> (server)</h2>
-    
+
     <pre>
 pyzord [-d] [--homedir <var>dir</var>]
     </pre>
-    
+
     <p>
       Note: pyzord does not daemonize itself.
     </p>
@@ -255,11 +255,11 @@ pyzord [-d] [--homedir <var>dir</var>]
     </p>
 
     <h3>options</h3>
-    
+
     <dl>
       <dt><kbd>-d</kbd></dt>
       <dd>Turn on debugging (writes information to standard error)</dd>
-      
+
       <dt id="pyzord-homedir"><kbd>--homedir <var class="filename">dir</var></kbd></dt>
       <dd>
 	use <var>dir</var> as the home directory
@@ -269,13 +269,13 @@ pyzord [-d] [--homedir <var>dir</var>]
 	more information on what files are inside of the
 	homedir.
       </dd>
-      
+
     </dl>
 
     <h2 id="files">Files</h2>
-    
+
     <h3 id="config"><kbd>~/pyzor/config</kbd></h3>
-    
+
     <p>
       The format of this file is INI-style
       (<kbd><var>name</var>=<var>value</var></kbd>,
@@ -286,9 +286,9 @@ pyzord [-d] [--homedir <var>dir</var>]
       filenames are interpreted to be relative to the Pyzor
       <a href="#pyzor-homedir">homedir</a>.
     </p>
-    
+
     <h4>Defaults</h4>
-      
+
     <pre>
 <a href="#section-client">[client]</a>
 <a href="#ServersFile">ServersFile</a> = servers
@@ -303,9 +303,9 @@ pyzord [-d] [--homedir <var>dir</var>]
 <a href="#PasswdFile">PasswdFile</a> = pyzord.passwd
 <a href="#AccessFile">AccessFile</a> = pyzord.access
     </pre>
-    
+
     <h4>Definitions</h4>
-    
+
     <h5 id="section-client"><kbd>[client]</kbd> section</h5>
 
     <dl>
@@ -316,24 +316,24 @@ pyzord [-d] [--homedir <var>dir</var>]
 	<kbd>host:port</kbd>.  Can be populated with
 	<kbd>pyzor discover</kbd>.
       </dd>
-      
+
       <dt id="AccountsFile">AccountsFile</dt>
       <dd>
 	<p>
 	  File containing information about accounts on servers.
 	  Format is line-oriented, with each line being:
 	</p>
-	
+
 	<pre>
 <var>host</var> : <var>port</var> : <var>username</var> : <var>salt,key</var>
 	</pre>
-	
+
 	<p>Example:</p>
-	
+
 	<pre>
 127.0.0.1 : 9999 : bob : 227bfb58efaba7c582d9dcb66ab2063d38df2923,8da9f54058c34e383e997f45d6eb74837139f83b
 	</pre>
-	
+
 	<p>
 	  See the section <a href="#using-accounts">Using Accounts</a>
 	  for more information.
@@ -345,44 +345,44 @@ pyzord [-d] [--homedir <var>dir</var>]
 	During <kbd>pyzor discover</kbd>, the URL to use
 	in finding servers.
       </dd>
-      
+
       <dt id="Timeout">Timeout</dt>
       <dd>
 	Number of seconds to wait for response to a query.
       </dd>
 
   </dl>
-    
+
     <h5 id="section-server"><kbd>[server]</kbd> section</h5>
 
     <dl>
       <dt id="Port">Port</dt>
       <dd>port to listen on </dd>
-      
+
       <dt id="ListenAddress">ListenAddress</dt>
       <dd>address to listen on</dd>
-      
+
       <dt id="DigestDB">DigestDB</dt>
       <dd>file containing the database of digests</dd>
-      
+
       <dt id="PasswdFile">PasswdFile</dt>
       <dd>
 	<p>
 	  File containing a list of user account information.
 	  Line format:
 	</p>
-	
+
 	<pre>
 <var>username</var> : <var>key</var>
 	</pre>
-	
+
 	<p>Example:</p>
 	<pre>
 bob : 8da9f54058c34e383e997f45d6eb74837139f83b
 	</pre>
-	
+
       </dd>
-      
+
       <dt id="AccessFile">AccessFile</dt>
       <dd>
 	<p>
@@ -393,7 +393,7 @@ bob : 8da9f54058c34e383e997f45d6eb74837139f83b
 	<pre>
 <var>privilege ...</var> : <var>username ...</var> : allow|deny
 	</pre>
-	
+
 	<dl>
 	  <dt><var>privilege ...</var></dt>
 	  <dd>
@@ -403,62 +403,62 @@ bob : 8da9f54058c34e383e997f45d6eb74837139f83b
 	    The keyword <kbd>all</kbd> can be used to to refer
 	    to all commands.
 	  </dd>
-	  
+
 	  <dt><var>username ...</var></dt>
 	  <dd>
 	    a list of whitespace-separated usernames.
-	    The keyword <kbd>all</kbd> can be used to refer to 
+	    The keyword <kbd>all</kbd> can be used to refer to
 	    all users.  The anonymous user is refereed to as
 	    <kbd>anonymous</kbd>.
 	  </dd>
-	  
+
 	  <dt>allow|deny</dt>
 	  <dd>
 	    Whether or not the specified user(s)
 	    can perform the specified privilege(s) on the line.
 	  </dd>
-	  
+
 	</dl>
-	
+
 	<p>
 	  The file is processed from top to bottom, with the first
 	  match for user/privilege being the value taken.
 	  Every file has the following implicit final rule:
 	</p>
-	
+
 	<pre>
 all : all : deny
 	</pre>
-	
+
 	<p>
 	  If this file is nonexistant, the following default is used:
 	</p>
-	
+
 	<pre>
 check report ping info : anonymous : allow
 	</pre>
-	
+
       </dd>
-      
+
     </dl>
-    
+
     <h2 id="using-accounts">Using Accounts</h2>
-    
+
     <p>
       To get an account on a server requires coordination
       between the client user and server admin.
       Use the following steps:
     </p>
-    
+
     <ol>
       <li>
 	User and admin should agree on a username for the user.
-	Allowed characters for a username are alpha-numerics, 
+	Allowed characters for a username are alpha-numerics,
 	the underscore, and dashes.  The normative regular expression
 	it must match is <kbd>^[-\.\w]+$</kbd>.  Let us assume
 	they have agreed on 'bob'.
       </li>
-      
+
       <li>
 	<p>
 	  User generates a key with <kbd>pyzor genkey</kbd>, and
@@ -474,13 +474,13 @@ check report ping info : anonymous : allow
 127.0.0.1 : 9999 : bob : 227bfb58efaba7c582d9dcb66ab2063d38df2923,8da9f54058c34e383e997f45d6eb74837139f83b
 	</pre>
       </li>
-      
+
       <li>
 	The user then sends the key (<em>the part to the
 	  <strong>right</strong>-hand
 	  side of the comma</em>) to the admin.
       </li>
-      
+
       <li>
 	<p>
 	  The admin adds the following to their
@@ -498,29 +498,29 @@ bob : 8da9f54058c34e383e997f45d6eb74837139f83b
 	  the admin then adds the appropriate permissions to
 	  <span class="filename">~/.pyzor/pyzord.access</span>:
 	</p>
-	
+
 	<pre>
 check report ping info whitelist : bob : allow
 	</pre>
-	
+
       </li>
-      
+
       <li>
 	The server needs to be restarted in order for this to take
 	effect.
       </li>
-      
+
     </ol>
-    
+
 
     <h2 id="razor-diff">User-level Differences from Razor</h2>
-    
+
     <p>
       This is a small list of user-recognizable differences
       between Pyzor and Razor that one might notice if coming
       from Razor to Pyzor.
     </p>
-    
+
     <ul>
       <li>
 	Pyzor does not consult a whitelist system for you
@@ -533,9 +533,9 @@ check report ping info whitelist : bob : allow
     </ul>
 
     <h2 id="copyright">Copyright</h2>
-    
+
     <p>
-      Copyright &#169; 2002 Frank J. Tobin
+      Copyright &#169; 2002-9 Frank J. Tobin
       <a href="mailto:ftobin@neverending.org">ftobin@neverending.org</a>
     </p>
 
@@ -560,6 +560,6 @@ check report ping info whitelist : bob : allow
       along with this program; if not, visit the following URL:
       <a href="http://www.gnu.org/copyleft/gpl.html">http://www.gnu.org/copyleft/gpl.html</a>.
     </p>
-    
+
   </body>
 </html>
