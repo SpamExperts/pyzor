@@ -1,7 +1,7 @@
 """networked spam-signature detection"""
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
-__version__  = "0.4.0"
+__version__  = "0.5.0"
 __revision__ = "$Id: __init__.py,v 1.43 2002-09-17 15:12:58 ftobin Exp $"
 
 import os
