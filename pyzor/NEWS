@@ -1,3 +1,31 @@
+Noteworthy changes in 0.5.0
+-----------------------------------------------------------------
+
+Note that the majority of changes in this release were contributed back
+from the Debian pyzor package.
+
+	*	Man pages for pyzor and pyzord.
+
+	*	Changing back to signals for database locking,
+		rather than threads.  It is likely that signals
+		will be removed again in the future, but the
+		existing threading changes caused problems.
+
+	*	Basic checks on the results of "discover".
+
+	*	Extended mbox support throughout the library.
+
+	*	Better handling on unknown encodings.
+
+	*	Added a --log option to log to a file.
+
+	*	Better handling of command-line options.
+
+	*	Improved error handling.
+
+Noteworthy changes in 0.4.x
+-----------------------------------------------------------------
+
     *	pyzor client now more gracefully handles base64 and
 	multipart decoding errors, so that it can be used
 	over an mbox.
