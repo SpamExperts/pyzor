@@ -4,13 +4,13 @@ import re
 import os
 import os.path
 import socket
+import signal
 import cStringIO
 import getopt
 import tempfile
 import mimetools
 import multifile
 import sha
-import threading
 
 import pyzor
 from pyzor import *
@@ -28,6 +28,7 @@ class Client(object):
     max_packet_size = 8192
 
     def __init__(self, accounts):
+        signal.signal(signal.SIGALRM, handle_timeout)
         self.accounts = accounts
         self.output   = Output()
         self.build_socket()
@@ -76,12 +77,11 @@ class Client(object):
 
     def time_call(self, call, varargs=(), kwargs=None):
         if kwargs is None:  kwargs  = {}
-        timer = threading.Timer(self.timeout, raise_timeout)
-        timer.start()
+        signal.alarm(self.timeout)
         try:
             return apply(call, varargs, kwargs)
         finally:
-            timer.cancel()
+            signal.alarm(0)
 
     def read_response(self, expect_id):
         (packet, address) = self.recv()
@@ -1022,7 +1022,7 @@ def run():
     ExecCall().run()
 
 
-def raise_timeout():
+def handle_timeout(signum, frame):
     raise TimeoutError
 
 
