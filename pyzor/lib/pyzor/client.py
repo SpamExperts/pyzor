@@ -3,6 +3,7 @@
 import re
 import os
 import getopt
+import random
 import socket
 import signal
 import hashlib
@@ -21,8 +22,6 @@ from pyzor import *
 __author__   = pyzor.__author__
 __version__  = pyzor.__version__
 __revision__ = "$Id: client.py,v 1.48 2003-02-01 10:29:42 ftobin Exp $"
-
-randfile = '/dev/random'
 
 sha = pyzor.sha
 
@@ -353,9 +352,8 @@ Data is read on standard input (stdin).
             sys.stderr.write("Passwords do not match.\n")
             return 0
         del p2
-        saltfile = open(randfile)
-        salt = saltfile.read(sha("").digest_size)
-        del saltfile
+        salt = "".join([chr(random.randint(0, 255))
+                        for unused in xrange(sha("").digest_size)])
         salt_digest = sha(salt)
         pass_digest = sha(salt_digest.digest())
         pass_digest.update(p1)
