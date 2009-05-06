@@ -1,4 +1,4 @@
-"""networked spam-signature detection client"""
+"""Networked spam-signature detection client."""
 
 import re
 import os
@@ -7,6 +7,7 @@ import random
 import socket
 import signal
 import hashlib
+import logging
 import tempfile
 import mimetools
 import multifile
@@ -16,6 +17,7 @@ try:
 except ImportError:
     import StringIO
 
+# XXX This is very messy.  Everything is in two namespaces (local and pyzor).
 import pyzor
 from pyzor import *
 
@@ -26,14 +28,14 @@ __revision__ = "$Id: client.py,v 1.48 2003-02-01 10:29:42 ftobin Exp $"
 sha = pyzor.sha
 
 class Client(object):
-    __slots__ = ['socket', 'output', 'accounts']
+    __slots__ = ['socket', 'log', 'accounts']
     timeout = 5
     max_packet_size = 8192
 
     def __init__(self, accounts):
         signal.signal(signal.SIGALRM, handle_timeout)
         self.accounts = accounts
-        self.output   = Output()
+        self.log = logging.getLogger("pyzor")
         self.build_socket()
 
     def ping(self, address):
@@ -68,18 +70,16 @@ class Client(object):
         msg.init_for_sending()
         account = self.accounts[address]
         mac_msg_str = str(MacEnvelope.wrap(account.username,
-                                           account.keystuff.key,
-                                           msg))
-        self.output.debug("sending: %s" % repr(mac_msg_str))
+                                           account.keystuff.key, msg))
+        self.log.debug("sending: %s" % repr(mac_msg_str))
         self.socket.sendto(mac_msg_str, 0, address)
 
     def recv(self):
-        return self.time_call(self.socket.recvfrom,
-                              (self.max_packet_size,))
+        return self.time_call(self.socket.recvfrom, (self.max_packet_size,))
 
     def time_call(self, call, varargs=(), kwargs=None):
         if kwargs is None:
-            kwargs  = {}
+            kwargs = {}
         signal.alarm(self.timeout)
         try:
             return call(*varargs, **kwargs)
@@ -88,7 +88,7 @@ class Client(object):
 
     def read_response(self, expect_id):
         (packet, address) = self.recv()
-        self.output.debug("received: %s" % repr(packet))
+        self.log.debug("received: %s" % repr(packet))
         msg = Response(StringIO.StringIO(packet))
         msg.ensure_complete()
         try:
@@ -98,11 +98,10 @@ class Client(object):
                     raise ProtocolError, \
                           "received unexpected thread id %d (expected %d)" \
                           % (thread_id, expect_id)
-                else:
-                    self.output.warn("received error thread id %d (expected %d)"
-                                     % (thread_id, expect_id))
+                self.log.warn("received error thread id %d (expected %d)" %
+                              (thread_id, expect_id))
         except KeyError:
-            self.output.warn("no thread id received")
+            self.log.warn("no thread id received")
         return msg
 
 
@@ -119,7 +118,7 @@ class ServerList(list):
 
 
 class ExecCall(object):
-    __slots__ = ['client', 'servers', 'output']
+    __slots__ = ['client', 'servers', 'log']
 
     # hard-coded for the moment
     digest_spec = DataDigestSpec([(20, 3), (60, 3)])
@@ -150,7 +149,7 @@ class ExecCall(object):
             elif o == '--log':
                 log = 1
 
-        self.output = Output(debug=debug)
+        self.log = logging.getLogger("pyzor")
         homedir = pyzor.get_homedir(specified_homedir)
 
         if log:
@@ -894,12 +893,12 @@ class AccountsFile(object):
     Layout of file is:
     host : port ; username : keystuff
     """
-    __slots__ = ['fp', 'lineno', 'output']
+    __slots__ = ['fp', 'lineno', 'log']
 
     def __init__(self, fp):
         self.fp     = fp
         self.lineno = 0
-        self.output = pyzor.Output()
+        self.log = logging.getLogger("pyzor")
 
     def __iter__(self):
         return self
@@ -918,8 +917,8 @@ class AccountsFile(object):
             fields = [x.strip() for x in fields]
 
             if len(fields) != 4:
-                self.output.warn("account file: invalid line %d: wrong number of parts"
-                                 % self.lineno)
+                self.log.warn("account file: invalid line %d: "
+                              "wrong number of parts" % self.lineno)
                 continue
 
             try:
@@ -927,8 +926,8 @@ class AccountsFile(object):
                         Account((Username(fields[2]),
                                  Keystuff.from_hexstr(fields[3]))))
             except ValueError, e:
-                self.output.warn("account file: invalid line %d: %s"
-                                 % (self.lineno, e))
+                self.log.warn("account file: invalid line %d: %s" %
+                              (self.lineno, e))
 
 
 def run():
