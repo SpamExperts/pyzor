@@ -2,15 +2,18 @@
 
 import re
 import os
-import os.path
+import getopt
 import socket
 import signal
-import cStringIO
-import getopt
+import hashlib
 import tempfile
 import mimetools
 import multifile
-import sha
+
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
 
 import pyzor
 from pyzor import *
@@ -21,6 +24,7 @@ __revision__ = "$Id: client.py,v 1.48 2003-02-01 10:29:42 ftobin Exp $"
 
 randfile = '/dev/random'
 
+sha = pyzor.sha
 
 class Client(object):
     __slots__ = ['socket', 'output', 'accounts']
@@ -64,7 +68,6 @@ class Client(object):
     def send(self, msg, address):
         msg.init_for_sending()
         account = self.accounts[address]
-
         mac_msg_str = str(MacEnvelope.wrap(account.username,
                                            account.keystuff.key,
                                            msg))
@@ -76,20 +79,19 @@ class Client(object):
                               (self.max_packet_size,))
 
     def time_call(self, call, varargs=(), kwargs=None):
-        if kwargs is None:  kwargs  = {}
+        if kwargs is None:
+            kwargs  = {}
         signal.alarm(self.timeout)
         try:
-            return apply(call, varargs, kwargs)
+            return call(*varargs, **kwargs)
         finally:
             signal.alarm(0)
 
     def read_response(self, expect_id):
         (packet, address) = self.recv()
         self.output.debug("received: %s" % repr(packet))
-        msg = Response(cStringIO.StringIO(packet))
-
+        msg = Response(StringIO.StringIO(packet))
         msg.ensure_complete()
-
         try:
             thread_id = msg.get_thread()
             if thread_id != expect_id:
@@ -102,9 +104,7 @@ class Client(object):
                                      % (thread_id, expect_id))
         except KeyError:
             self.output.warn("no thread id received")
-
         return msg
-
 
 
 class ServerList(list):
@@ -117,7 +117,6 @@ class ServerList(list):
             if line and not line.startswith('#') and \
                 re.match('[a-zA-Z0-9.-]+:[0-9]+', line):
                 self.append(pyzor.Address.from_str(line))
-
 
 
 class ExecCall(object):
@@ -185,7 +184,6 @@ class ExecCall(object):
                              % config.get('client', 'DiscoverServersURL'))
             download(config.get('client', 'DiscoverServersURL'), servers_fn)
 
-
         self.servers  = self.get_servers(servers_fn)
         if not len(self.servers):
             sys.stderr.write("no valid servers found\n")
@@ -202,14 +200,13 @@ class ExecCall(object):
         dispatch = self.dispatches[command]
         if dispatch is not None:
             try:
-                if not apply(dispatch, (self, args)):
+                if not dispatch(self, args):
                     sys.exit(1)
             except TimeoutError:
                 # note that most of the methods will trap
                 # their own timeout error
                 sys.stderr.write("timeout from server\n")
                 sys.exit(1)
-
 
     def usage(self, s=None):
         if s is not None:
@@ -226,164 +223,122 @@ Data is read on standard input (stdin).
         sys.exit(2)
         return  # just to help xemacs
 
-
     def ping(self, args):
         try:
             getopt.getopt(args[1:], '')
         except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
-
         runner = ClientRunner(self.client.ping)
-
         for server in self.servers:
             runner.run(server, (server,))
-
         return runner.all_ok
-
 
     def info(self, args):
         try:
             (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
         except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
-
         do_mbox = 'msg'
-
         for (o, v) in options:
             if o == '--mbox':
                 do_mbox = 'mbox'
-
         runner = InfoClientRunner(self.client.info)
-
         for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
             if not digest:
                 continue
             for server in self.servers:
                 response = runner.run(server, (digest, server))
-
         return True
-
 
     def check(self, args):
         try:
             (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
         except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
-
         do_mbox = 'msg'
-
         for (o, v) in options:
             if o == '--mbox':
                 do_mbox = 'mbox'
-
         runner = CheckClientRunner(self.client.check)
-
         for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
             if not digest:
                 continue
             for server in self.servers:
                 runner.run(server, (digest, server))
-
         return (runner.found_hit and not runner.whitelisted)
-
 
     def report(self, args):
         try:
            (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
         except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
-
         do_mbox = 'msg'
-
         for (o, v) in options:
             if o == '--mbox':
                 do_mbox = "mbox"
-
         all_ok = True
-
         for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
             if not digest:
                 continue
             if not self.send_digest(digest, self.digest_spec,
                                     self.client.report):
                 all_ok = False
-
         return all_ok
-
 
     def send_digest(self, digest, spec, client_method):
         """digest can be none; if so, nothing is sent"""
         if digest is None:
             return
         typecheck(digest, DataDigest)
-
         runner = ClientRunner(client_method)
-
         for server in self.servers:
             runner.run(server, (digest, spec, server))
-
         return runner.all_ok
-
 
     def whitelist(self, args):
         try:
             (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
         except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
-
         do_mbox = "msg"
-
         for (o, v) in options:
             if o == '--mbox':
                 do_mbox = "mbox"
-
         all_ok = True
-
         for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
             if not digest:
                 continue
             if not self.send_digest(digest, self.digest_spec,
                                     self.client.whitelist):
                 all_ok = False
-
         return all_ok
-
 
     def digest(self, args):
         try:
            (options, args2) = getopt.getopt(args[1:], '', ['mbox'])
         except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
-
         do_mbox = "msg"
-
         for (o, v) in options:
             if o == '--mbox':
                 do_mbox = "mbox"
-
         for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
             if not digest:
                 continue
             sys.stdout.write("%s\n" % digest)
-
         return True
-
 
     def print_digested(self, args):
         try:
             getopt.getopt(args[1:], '')
         except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
-
         do_mbox = "msg"
-
         def loop():
             for digest in get_input_handler(sys.stdin, self.digest_spec, do_mbox):
                 pass
-
         modglobal_apply(globals(), {'DataDigester': PrintingDataDigester},
                         loop)
-
         return True
 
     def genkey(self, args):
@@ -391,53 +346,40 @@ Data is read on standard input (stdin).
             getopt.getopt(args[1:], '')
         except getopt.GetoptError:
             self.usage("%s does not take any non-option arguments" % args[0])
-
         import getpass
         p1 = getpass.getpass(prompt='Enter passphrase: ')
         p2 = getpass.getpass(prompt='Enter passphrase again: ')
         if p1 != p2:
             sys.stderr.write("Passwords do not match.\n")
             return 0
-
         del p2
-
         saltfile = open(randfile)
-        salt = saltfile.read(sha.digest_size)
+        salt = saltfile.read(sha("").digest_size)
         del saltfile
-
-        salt_digest = sha.new(salt)
-
-        pass_digest = sha.new()
-        pass_digest.update(salt_digest.digest())
+        salt_digest = sha(salt)
+        pass_digest = sha(salt_digest.digest())
         pass_digest.update(p1)
         sys.stdout.write("salt,key:\n")
         sys.stdout.write("%s,%s\n" % (salt_digest.hexdigest(),
                                       pass_digest.hexdigest()))
-
         return True
 
-
+    @staticmethod
     def get_servers(servers_fn):
         servers = ServerList()
         servers.read(open(servers_fn))
-
         if len(servers) == 0:
             sys.stderr.write("No servers available!  Maybe try the 'discover' command\n")
             sys.exit(1)
         return servers
 
-    get_servers = staticmethod(get_servers)
-
-
+    @staticmethod
     def get_accounts(accounts_fn):
         accounts = AccountsDict()
         if os.path.exists(accounts_fn):
             for address, account in AccountsFile(open(accounts_fn)):
                 accounts[address] = account
         return accounts
-
-    get_accounts = staticmethod(get_accounts)
-
 
     dispatches = {'check':     check,
                   'report':    report,
@@ -451,11 +393,9 @@ Data is read on standard input (stdin).
                   }
 
 
-
 class DataDigester(object):
     """The major workhouse class"""
-    __slots__ = ['_atomic', '_value', '_used_line', '_digest',
-                 'seekable']
+    __slots__ = ['_atomic', '_value', '_used_line', '_digest', 'seekable']
 
     # minimum line length for it to be included as part
     # of the digest.  I forget the purpose, however.
@@ -498,7 +438,7 @@ class DataDigester(object):
         if len(offsets) == 0:
             return
 
-        self._digest = sha.new()
+        self._digest = sha()
 
         if len(offsets) <= self.atomic_num_lines:
             self.handle_atomic(fp)
@@ -510,7 +450,6 @@ class DataDigester(object):
         assert self._atomic is not None
         assert self._value is not None
 
-
     def handle_atomic(self, fp):
         """we digest everything"""
         self._atomic = True
@@ -520,7 +459,6 @@ class DataDigester(object):
                 self.handle_line(line)
         except:
             pass
-
 
     def handle_pieced(self, fp, spec, offsets):
         self._atomic = False
@@ -538,7 +476,6 @@ class DataDigester(object):
                     break
                 self.handle_line(line)
 
-
     def get_line_offsets(self, fp):
         """return tuple of (fp2, line offsets)
         If we are not seekable, fp will be copied into a tempfile,
@@ -555,7 +492,6 @@ class DataDigester(object):
             # than loading the whole thing into memory
             cur_offset = 0
             newfp = tempfile.TemporaryFile()
-
 
         offsets = []
 
@@ -588,7 +524,6 @@ class DataDigester(object):
 
         return (fp, offsets)
 
-
     def handle_line(self, line):
         # seekable indicates that
         # the line was not normalized
@@ -611,23 +546,22 @@ class DataDigester(object):
     def get_digest(self):
         return self._value
 
-    def normalize(self, s):
-        repl = self.unwanted_txt_repl
+    @classmethod
+    def normalize(cls, s):
+        repl = cls.unwanted_txt_repl
         s2 = s
-        s2 = self.longstr_ptrn.sub(repl, s2)
-        s2 = self.email_ptrn.sub(repl, s2)
-        s2 = self.url_ptrn.sub(repl, s2)
-        s2 = self.html_tag_ptrn.sub(repl, s2)
+        s2 = cls.longstr_ptrn.sub(repl, s2)
+        s2 = cls.email_ptrn.sub(repl, s2)
+        s2 = cls.url_ptrn.sub(repl, s2)
+        s2 = cls.html_tag_ptrn.sub(repl, s2)
         # make sure we do the whitespace last because some of
         # the previous patterns rely on whitespace
-        s2 = self.ws_ptrn.sub('', s2)
+        s2 = cls.ws_ptrn.sub('', s2)
         return s2
-    normalize = classmethod(normalize)
 
-    def should_handle_line(self, s):
-        return bool(self.min_line_length <= len(s))
-    should_handle_line = classmethod(should_handle_line)
-
+    @classmethod
+    def should_handle_line(cls, s):
+        return bool(cls.min_line_length <= len(s))
 
 
 class PrintingDataDigester(DataDigester):
@@ -636,7 +570,6 @@ class PrintingDataDigester(DataDigester):
     def _really_handle_buf(self, buf):
         sys.stdout.write("%s\n" % buf)
         super(PrintingDataDigester, self)._really_handle_buf(buf)
-
 
 
 def get_input_handler(fp, spec, style='msg', seekable=False):
@@ -648,13 +581,10 @@ def get_input_handler(fp, spec, style='msg', seekable=False):
                       (DataDigester(rfc822BodyCleaner(fp),
                                     spec, seekable).get_digest(),)
                       )
-
     elif style =='mbox':
         return MailboxDigester(fp, spec)
-
     elif style == 'digests':
         return JustDigestsIterator(fp)
-
     raise ValueError, "unknown input style"
 
 
@@ -694,7 +624,6 @@ class MailboxDigester(BasicIterator):
                             seekable=self.seekable).get_digest()
 
 
-
 class rfc822BodyCleaner(BasicIterator):
     __slots__ = ['fp', 'multifile', 'curfile', 'type']
 
@@ -729,7 +658,7 @@ class rfc822BodyCleaner(BasicIterator):
                     mimetools.decode(msg.fp, self.curfile, encoding)
                 except binascii.Error, e:
                     sys.stderr.write("%s: %s\n" % (e.__class__, e))
-                    self.curfile = cStringIO.StringIO()
+                    self.curfile = StringIO.StringIO()
                 except ValueError, e:
                     #sys.stderr.write("%s: %s\n" % (e.__class__, e))
                     self.curfile = msg.fp
@@ -753,7 +682,6 @@ class rfc822BodyCleaner(BasicIterator):
                 self.curfile = msg.fp
                 self.type = 'binary'
 
-
         if self.type == 'text' or self.type == 'multipart':
             assert self.curfile is not None
         elif self.type == 'binary':
@@ -764,7 +692,6 @@ class rfc822BodyCleaner(BasicIterator):
             self.curfile = fp
         else:
             assert self.curfile is None
-
 
     def readline(self):
         l = ''
@@ -781,7 +708,6 @@ class rfc822BodyCleaner(BasicIterator):
             pass
         return l
 
-
     def next(self):
         try:
             l = self.readline()
@@ -792,7 +718,6 @@ class rfc822BodyCleaner(BasicIterator):
         if not l:
             raise StopIteration
         return l
-
 
 class ClientRunner(object):
     __slots__ = ['routine', 'all_ok']
@@ -810,13 +735,12 @@ class ClientRunner(object):
         message = "%s\t" % str(server)
         response = None
         try:
-            response = apply(self.routine, varargs, kwargs)
+            response = self.routine(*varargs, **kwargs)
             self.handle_response(response, message)
         except (CommError, KeyError, ValueError), e:
             sys.stderr.write(message + ("%s: %s\n"
                                         % (e.__class__.__name__, e)))
             self.all_ok = False
-
 
     def handle_response(self, response, message):
         """mesaage is a string we've built up so far"""
@@ -824,7 +748,6 @@ class ClientRunner(object):
             self.all_ok = False
         sys.stdout.write(message + str(response.head_tuple())
                          + '\n')
-
 
 
 class CheckClientRunner(ClientRunner):
@@ -858,7 +781,6 @@ class CheckClientRunner(ClientRunner):
             sys.stderr.write(message)
 
 
-
 class InfoClientRunner(ClientRunner):
     def handle_response(self, response, message):
         message += "%s\n" % str(response.head_tuple())
@@ -889,9 +811,6 @@ class InfoClientRunner(ClientRunner):
             sys.stderr.write(message)
 
 
-
-
-
 class Account(tuple):
     def __init__(self, v):
         self.validate()
@@ -907,7 +826,6 @@ class Account(tuple):
     def keystuff(self):
         return self[1]
     keystuff = property(keystuff)
-
 
 
 class Keystuff(tuple):
@@ -930,19 +848,19 @@ class Keystuff(tuple):
         if not filter(lambda x: x is not None, self):
             raise ValueError, "keystuff can't be all None's"
 
-    def from_hexstr(self, s):
+    @classmethod
+    def from_hexstr(cls, s):
         parts = s.split(',')
         if len(parts) != 2:
             raise ValueError, "invalid number of parts for keystuff; perhaps you forgot comma at beginning for salt divider?"
-        return self(map(self.hex_to_long, parts))
-    from_hexstr = classmethod(from_hexstr)
+        return cls([cls.hex_to_long(p) for p in parts])
 
+    @staticmethod
     def hex_to_long(h):
         """Allows the argument to be an empty string"""
         if h is '':
             return None
         return long(h, 16)
-    hex_to_long = staticmethod(hex_to_long)
 
     def salt(self):
         return self[0]
@@ -951,7 +869,6 @@ class Keystuff(tuple):
     def key(self):
         return self[1]
     key = property(key)
-
 
 
 class AccountsDict(dict):
@@ -971,7 +888,6 @@ class AccountsDict(dict):
             return super(AccountsDict, self).__getitem__(k)
         except KeyError:
             return self.anonymous_account
-
 
 
 class AccountsFile(object):
@@ -1001,7 +917,7 @@ class AccountsFile(object):
             if not line or line.startswith('#'):
                 continue
             fields = line.split(':')
-            fields = map(lambda x: x.strip(), fields)
+            fields = [x.strip() for x in fields]
 
             if len(fields) != 4:
                 self.output.warn("account file: invalid line %d: wrong number of parts"
@@ -1017,14 +933,11 @@ class AccountsFile(object):
                                  % (self.lineno, e))
 
 
-
 def run():
     ExecCall().run()
 
-
 def handle_timeout(signum, frame):
     raise TimeoutError
-
 
 def download(url, outfile):
     import urllib2

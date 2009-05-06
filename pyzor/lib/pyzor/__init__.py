@@ -1,29 +1,35 @@
 """networked spam-signature detection"""
 
 __author__   = "Frank J. Tobin, ftobin@neverending.org"
-__version__  = "0.5.0"
+__version__  = "0.6.0"
 __revision__ = "$Id: __init__.py,v 1.43 2002-09-17 15:12:58 ftobin Exp $"
 
 import os
-import os.path
 import re
 import sys
-import sha
-import tempfile
-import random
-import ConfigParser
-import rfc822
-import cStringIO
 import time
+import email
+import random
+import hashlib
+import tempfile
+import ConfigParser
+
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
 
 proto_name     = 'pyzor'
 proto_version  =  2.0
 
+# We would like to use sha512, but that would mean that all the digests
+# changed, so for now, we stick with sha1 (which is the same as the old
+# sha module).
+sha = hashlib.sha1
 
 class CommError(Exception):
     """Something in general went wrong with the transaction"""
     pass
-
 
 
 class ProtocolError(CommError):
@@ -31,27 +37,22 @@ class ProtocolError(CommError):
     pass
 
 
-
 class TimeoutError(CommError):
     pass
-
 
 
 class IncompleteMessageError(ProtocolError):
     pass
 
 
-
 class UnsupportedVersionError(ProtocolError):
     pass
-
 
 
 class SignatureError(CommError):
     """unknown user, signature on msg invalid,
     or not within allowed time range"""
     pass
-
 
 
 class Singleton(object):
@@ -63,14 +64,12 @@ class Singleton(object):
         return cls.__it__
 
 
-
 class BasicIterator(object):
     def __iter__(self):
         return self
 
     def next(self):
-        raise NotImplementedError
-
+        raise NotImplementedError()
 
 
 class Username(str):
@@ -81,8 +80,7 @@ class Username(str):
 
     def validate(self):
         if not self.user_pattern.match(self):
-            raise ValueError, "%s is an invalid username" % self
-
+            raise ValueError("%s is an invalid username" % self)
 
 
 class Opname(str):
@@ -93,11 +91,11 @@ class Opname(str):
 
     def validate(self):
         if not self.op_pattern.match(self):
-            raise ValueError, "%s is an invalid username" % self
-
+            raise ValueError("%s is an invalid username" % self)
 
 
 class Output(Singleton):
+    # XXX replace this with improved logging code.
     do_debug = False
     quiet    = False
     def __init__(self, quiet=None, debug=None):
@@ -111,15 +109,13 @@ class Output(Singleton):
         if self.do_debug: sys.stderr.write('%s\n' % msg)
 
 
-
 class DataDigest(str):
     # hex output doubles digest size
-    value_size = sha.digest_size * 2
+    value_size = sha("").digest_size * 2
 
     def __init__(self, value):
         if len(value) != self.value_size:
-            raise ValueError, "invalid digest value size"
-
+            raise ValueError("invalid digest value size")
 
 
 class DataDigestSpec(list):
@@ -129,52 +125,46 @@ class DataDigestSpec(list):
         for t in self:
             self.validate_tuple(t)
 
+    @staticmethod
     def validate_tuple(t):
         (perc_offset, length) = t
         if not (0 <= perc_offset < 100):
-            raise ValueError, "offset percentage out of bounds"
+            raise ValueError("offset percentage out of bounds")
         if not length > 0:
-            raise ValueError, "piece lengths must be positive"
-
-    validate_tuple = staticmethod(validate_tuple)
+            raise ValueError("piece lengths must be positive")
 
     def netstring(self):
         # flattened, commified
-        return ','.join(map(str, reduce(lambda x, y: x + y, self, ())))
+        a = []
+        for b in self:
+            a.extend(b)
+        return ",".join(str(s) for s in a)
 
-    def from_netstring(self, s):
-        new_spec = apply(self)
-
+    @classmethod
+    def from_netstring(cls, s):
+        new_spec = cls()
         expanded_list = s.split(',')
         if len(extended_list) % 2 != 0:
-            raise ValueError, "invalid list parity"
-
-        for i in range(0, len(expanded_list), 2):
+            raise ValueError("invalid list parity")
+        for i in xrange(0, len(expanded_list), 2):
             perc_offset = int(expanded_list[i])
             length      = int(expanded_list[i+1])
-
             self.validate_tuple(perc_offset, length)
             new_spec.append((perc_offset, length))
-
         return new_spec
 
-    from_netstring = classmethod(from_netstring)
 
-
-
-class Message(rfc822.Message, object):
+class Message(email.Message, object):
+    # XXX fix.
     def __init__(self, fp=None):
         if fp is None:
-            fp = cStringIO.StringIO()
-
+            fp = StringIO.StringIO()
         super(Message, self).__init__(fp)
         self.setup()
-
 
     def setup(self):
         """called after __init__, designed to be extended"""
         pass
-
 
     def init_for_sending(self):
         if __debug__:
@@ -184,19 +174,16 @@ class Message(rfc822.Message, object):
         s = ''.join(self.headers)
         s += '\n'
         self.rewindbody()
-
         # okay to slurp since we're dealing with UDP
         s += self.fp.read()
-
         return s
 
     def __nonzero__(self):
         # just to make sure some old code doesn't try to use this
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def ensure_complete(self):
         pass
-
 
 
 class ThreadedMessage(Message):
@@ -204,14 +191,13 @@ class ThreadedMessage(Message):
         if not self.has_key('Thread'):
             self.set_thread(ThreadId.generate())
         assert self.has_key('Thread')
-
         self.setdefault('PV', str(proto_version))
         super(ThreadedMessage, self).init_for_sending()
 
     def ensure_complete(self):
         if not (self.has_key('PV') and self.has_key('Thread')):
-            raise IncompleteMessageError, \
-                  "doesn't have fields for a ThreadedMessage"
+            raise IncompleteMessageError(
+                "doesn't have fields for a ThreadedMessage")
         super(ThreadedMessage, self).ensure_complete()
 
     def get_protocol_version(self):
@@ -225,7 +211,6 @@ class ThreadedMessage(Message):
         self['Thread'] = str(i)
 
 
-
 class MacEnvelope(Message):
     ts_diff_max = 300
 
@@ -233,13 +218,13 @@ class MacEnvelope(Message):
         if not (self.has_key('User')
                 and self.has_key('Time')
                 and self.has_key('Sig')):
-             raise IncompleteMessageError, \
-                   "doesn't have fields for a MacEnvelope"
+             raise IncompleteMessageError(
+                "doesn't have fields for a MacEnvelope")
         super(MacEnvelope, self).ensure_complete()
 
     def get_submsg(self, factory=ThreadedMessage):
         self.rewindbody()
-        return apply(factory, (self.fp,))
+        return factory(self.fp)
 
     def verify_sig(self, user_key):
         typecheck(user_key, long)
@@ -250,57 +235,44 @@ class MacEnvelope(Message):
         hashed_user_key = self.hash_key(user_key, user)
 
         if abs(time.time() - ts) > self.ts_diff_max:
-            raise SignatureError, "timestamp not within allowed range"
+            raise SignatureError("timestamp not within allowed range")
 
         msg = self.get_submsg()
-
         calc_sig = self.sign_msg(hashed_user_key, ts, msg)
-
         if not (calc_sig == said_sig):
-            raise SignatureError, "invalid signature"
+            raise SignatureError("invalid signature")
 
-    def wrap(self, user, key, msg):
+    @classmethod
+    def wrap(cls, user, key, msg):
         """This should be used to create a MacEnvelope"""
 
         typecheck(user, str)
         typecheck(msg, Message)
         typecheck(key, long)
 
-        env = apply(self)
+        env = cls()
         ts = int(time.time())
-
         env['User'] = user
         env['Time'] = str(ts)
-        env['Sig'] = self.sign_msg(self.hash_key(key, user),
-                                   ts, msg)
-
+        env['Sig'] = cls.sign_msg(cls.hash_key(key, user), ts, msg)
         env.fp.write(str(msg))
-
         return env
 
-    wrap = classmethod(wrap)
-
-
+    @staticmethod
     def hash_msg(msg):
         """returns a digest object"""
         typecheck(msg, Message)
+        return sha(str(msg))
 
-        return sha.new(str(msg))
-
-    hash_msg = staticmethod(hash_msg)
-
-
+    @staticmethod
     def hash_key(key, user):
         """returns lower(H(U + ':' + lower(hex(K))))"""
         typecheck(key, long)
         typecheck(user, Username)
+        return sha("%s:%x" % (Username, key)).hexdigest().lower()
 
-        return sha.new("%s:%x" % (Username, key)).hexdigest().lower()
-
-    hash_key = staticmethod(hash_key)
-
-
-    def sign_msg(self, hashed_key, ts, msg):
+    @classmethod
+    def sign_msg(cls, hashed_key, ts, msg):
         """ts is timestamp for message (epoch seconds)
 
         S = H(H(M) + ':' T + ':' + K)
@@ -313,13 +285,9 @@ class MacEnvelope(Message):
         typecheck(ts, int)
         typecheck(msg, Message)
         typecheck(hashed_key, str)
-
-        h_msg = self.hash_msg(msg)
-
-        return sha.new("%s:%d:%s" % (h_msg.digest(), ts, hashed_key)).hexdigest().lower()
-
-    sign_msg = classmethod(sign_msg)
-
+        h_msg = cls.hash_msg(msg)
+        return sha("%s:%d:%s" % (h_msg.digest(), ts,
+                                 hashed_key)).hexdigest().lower()
 
 
 class Response(ThreadedMessage):
@@ -327,8 +295,8 @@ class Response(ThreadedMessage):
 
     def ensure_complete(self):
         if not(self.has_key('Code') and self.has_key('Diag')):
-            raise IncompleteMessageError, \
-                  "doesn't have fields for a Response"
+            raise IncompleteMessageError(
+                "doesn't have fields for a Response")
         super(Response, self).ensure_complete()
 
     def is_ok(self):
@@ -344,28 +312,25 @@ class Response(ThreadedMessage):
         return (self.get_code(), self.get_diag())
 
 
-
 class Request(ThreadedMessage):
-    """this is class that should be used to read in Requests of any type.
-    subclasses are responsible for setting 'Op' if they are generating
-    a message"""
+    """This is the class that should be used to read in Requests of any type.
+    Subclasses are responsible for setting 'Op' if they are generating a
+    message,"""
 
     def get_op(self):
         return self['Op']
 
     def ensure_complete(self):
         if not self.has_key('Op'):
-            raise IncompleteMessageError, \
-                  "doesn't have fields for a Request"
+            raise IncompleteMessageError(
+                "doesn't have fields for a Request")
         super(Request, self).ensure_complete()
-
 
 
 class ClientSideRequest(Request):
     def setup(self):
         super(Request, self).setup()
         self.setdefault('Op', self.op)
-
 
 
 class PingRequest(ClientSideRequest):
@@ -395,7 +360,6 @@ class SimpleDigestSpecBasedRequest(SimpleDigestBasedRequest):
     def __init__(self, digest, spec):
         typecheck(digest, str)
         typecheck(spec, DataDigestSpec)
-
         super(SimpleDigestSpecBasedRequest, self).__init__(digest)
         self.setdefault('Op-Spec',   spec.netstring())
 
@@ -418,7 +382,6 @@ class ErrorResponse(Response):
         self.setdefault('Diag', s)
 
 
-
 class ThreadId(int):
     # (0, 1024) is reserved
     full_range  = (0, 2**16)
@@ -428,15 +391,14 @@ class ThreadId(int):
     def __init__(self, i):
         super(ThreadId, self).__init__(i)
         if not (self.full_range[0] <= self < self.full_range[1]):
-            raise ValueError, "value outside of range"
+            raise ValueError("value outside of range")
 
-    def generate(self):
-        return apply(self, (apply(random.randrange, self.ok_range),))
-    generate = classmethod(generate)
+    @classmethod
+    def generate(cls):
+        return cls(random.randrange(cls.ok_range))
 
     def in_ok_range(self):
         return (self >= self.ok_range[0] and self < self.ok_range[1])
-
 
 
 class Address(tuple):
@@ -447,23 +409,19 @@ class Address(tuple):
         typecheck(self[0], str)
         typecheck(self[1], int)
         if len(self) != 2:
-            raise ValueError, "invalid address: %s" % str(self)
+            raise ValueError("invalid address: %s" % self)
 
     def __str__(self):
         return (self[0] + ':' + str(self[1]))
 
-    def from_str(self, s):
+    @classmethod
+    def from_str(cls, s):
         fields = s.split(':')
-
         fields[1] = int(fields[1])
-        return self(fields)
-
-    from_str = classmethod(from_str)
-
+        return cls(fields)
 
 
 class Config(ConfigParser.ConfigParser, object):
-
     def __init__(self, homedir):
         assert isinstance(homedir, str)
         self.homedir = homedir
@@ -475,24 +433,19 @@ class Config(ConfigParser.ConfigParser, object):
             fn = os.path.join(self.homedir, fn)
         return fn
 
-
 def get_homedir(specified):
     homedir = os.path.join('/etc', 'pyzor')
-
     if specified is not None:
         homedir = specified
     else:
         userhome = os.getenv('HOME')
         if userhome is not None:
             homedir = os.path.join(userhome, '.pyzor')
-
     return homedir
-
 
 def typecheck(inst, type_):
     if not isinstance(inst, type_):
-        raise TypeError
-
+        raise TypeError()
 
 def modglobal_apply(globs, repl, obj, varargs=(), kwargs=None):
     """temporarily modify globals during a call.
@@ -501,18 +454,14 @@ def modglobal_apply(globs, repl, obj, varargs=(), kwargs=None):
     dict."""
     if kwargs is None:
         kwargs = {}
-
     saved = {}
     for (k, v) in repl.items():
         saved[k] = globs[k]
         globs[k] = v
-
     try:
-        r = apply(obj, varargs, kwargs)
+        r = obj(*varargs, **kwargs)
     finally:
         globs.update(saved)
-
     return r
-
 
 anonymous_user = Username('anonymous')
