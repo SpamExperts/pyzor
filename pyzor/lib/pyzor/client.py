@@ -546,15 +546,13 @@ class DataDigester(object):
     @classmethod
     def normalize(cls, s):
         repl = cls.unwanted_txt_repl
-        s2 = s
-        s2 = cls.longstr_ptrn.sub(repl, s2)
-        s2 = cls.email_ptrn.sub(repl, s2)
-        s2 = cls.url_ptrn.sub(repl, s2)
-        s2 = cls.html_tag_ptrn.sub(repl, s2)
-        # make sure we do the whitespace last because some of
-        # the previous patterns rely on whitespace
-        s2 = cls.ws_ptrn.sub('', s2)
-        return s2
+        s = cls.longstr_ptrn.sub(repl, s)
+        s = cls.email_ptrn.sub(repl, s)
+        s = cls.url_ptrn.sub(repl, s)
+        s = cls.html_tag_ptrn.sub(repl, s)
+        # Make sure we do the whitespace last because some of
+        # the previous patterns rely on whitespace.
+        return cls.ws_ptrn.sub('', s)
 
     @classmethod
     def should_handle_line(cls, s):
