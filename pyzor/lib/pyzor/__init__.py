@@ -94,21 +94,6 @@ class Opname(str):
             raise ValueError("%s is an invalid username" % self)
 
 
-class Output(Singleton):
-    # XXX replace this with improved logging code.
-    do_debug = False
-    quiet    = False
-    def __init__(self, quiet=None, debug=None):
-        if quiet is not None: self.quiet = quiet
-        if debug is not None: self.do_debug = debug
-    def data(self, msg):
-        print msg
-    def warn(self, msg):
-        if not self.quiet: sys.stderr.write('%s\n' % msg)
-    def debug(self, msg):
-        if self.do_debug: sys.stderr.write('%s\n' % msg)
-
-
 class DataDigest(str):
     # hex output doubles digest size
     value_size = sha("").digest_size * 2
