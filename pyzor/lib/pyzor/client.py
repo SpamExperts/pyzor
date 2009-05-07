@@ -95,9 +95,9 @@ class Client(object):
             thread_id = msg.get_thread()
             if thread_id != expect_id:
                 if thread_id.in_ok_range():
-                    raise ProtocolError, \
-                          "received unexpected thread id %d (expected %d)" \
-                          % (thread_id, expect_id)
+                    raise ProtocolError(
+                        "received unexpected thread id %d (expected %d)" %
+                        (thread_id, expect_id))
                 self.log.warn("received error thread id %d (expected %d)" %
                               (thread_id, expect_id))
         except KeyError:
@@ -537,7 +537,7 @@ class DataDigester(object):
 
     def is_atomic(self):
         if self._atomic is None:
-            raise RuntimeError, "digest not calculated yet"
+            raise RuntimeError("digest not calculated yet")
         return bool(self._atomic)
 
     def get_digest(self):
@@ -560,7 +560,7 @@ class DataDigester(object):
 
 
 class PrintingDataDigester(DataDigester):
-    """extends DataDigester: prints out what we're digesting"""
+    """Extends DataDigester: prints out what we're digesting."""
 
     def _really_handle_buf(self, buf):
         sys.stdout.write("%s\n" % buf)
@@ -568,9 +568,8 @@ class PrintingDataDigester(DataDigester):
 
 
 def get_input_handler(fp, spec, style='msg', seekable=False):
-    """Return an object that can be iterated over
-    to get all the digests from fp according to spec.
-    mbox is a boolean"""
+    """Return an object that can be iterated over to get all the digests
+    from fp according to spec."""
     if style == 'msg':
         return filter(lambda x: x is not None,
                       (DataDigester(rfc822BodyCleaner(fp),
@@ -580,7 +579,7 @@ def get_input_handler(fp, spec, style='msg', seekable=False):
         return MailboxDigester(fp, spec)
     elif style == 'digests':
         return JustDigestsIterator(fp)
-    raise ValueError, "unknown input style"
+    raise ValueError("unknown input style")
 
 
 class JustDigestsIterator(BasicIterator):
@@ -592,7 +591,7 @@ class JustDigestsIterator(BasicIterator):
     def next(self):
         l = fp.readline()
         if not l:
-            raise StopIteration
+            raise StopIteration()
         return l.rstrip()
 
 
@@ -614,7 +613,7 @@ class MailboxDigester(BasicIterator):
             print "    pyzor digest --mbox < my_mbox_file"
             next_msg = None
         if next_msg is None:
-            raise StopIteration
+            raise StopIteration()
         return DataDigester(next_msg, self.digest_spec,
                             seekable=self.seekable).get_digest()
 
@@ -708,10 +707,10 @@ class rfc822BodyCleaner(BasicIterator):
             l = self.readline()
         except multifile.Error, e:
             sys.stderr.write("%s: %s\n" % (e.__class__, e))
-            raise StopIteration
+            raise StopIteration()
 
         if not l:
-            raise StopIteration
+            raise StopIteration()
         return l
 
 class ClientRunner(object):
@@ -833,21 +832,23 @@ class Keystuff(tuple):
         # When we support just leaving the salt in, this should
         # be removed
         if self[1] is None:
-            raise ValueError, "no key information"
+            raise ValueError("no key information")
 
         for x in self:
             if not (isinstance(x, long) or x is None):
-                raise ValueError, "Keystuff must be long's or None's"
+                raise ValueError("Keystuff must be long's or None's")
 
         # make sure we didn't get all None's
         if not filter(lambda x: x is not None, self):
-            raise ValueError, "keystuff can't be all None's"
+            raise ValueError("keystuff can't be all None's")
 
     @classmethod
     def from_hexstr(cls, s):
         parts = s.split(',')
         if len(parts) != 2:
-            raise ValueError, "invalid number of parts for keystuff; perhaps you forgot comma at beginning for salt divider?"
+            raise ValueError("invalid number of parts for keystuff; "
+                             "perhaps you forgot comma at beginning for "
+                             "salt divider?")
         return cls([cls.hex_to_long(p) for p in parts])
 
     @staticmethod
@@ -907,7 +908,7 @@ class AccountsFile(object):
             self.lineno += 1
 
             if not orig_line:
-                raise StopIteration
+                raise StopIteration()
             line = orig_line.strip()
             if not line or line.startswith('#'):
                 continue
@@ -932,7 +933,7 @@ def run():
     ExecCall().run()
 
 def handle_timeout(signum, frame):
-    raise TimeoutError
+    raise TimeoutError()
 
 def download(url, outfile):
     import urllib2
