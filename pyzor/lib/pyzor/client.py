@@ -556,7 +556,7 @@ class DataDigester(object):
 
     @classmethod
     def should_handle_line(cls, s):
-        return bool(cls.min_line_length <= len(s))
+        return cls.min_line_length <= len(s)
 
 
 class PrintingDataDigester(DataDigester):
