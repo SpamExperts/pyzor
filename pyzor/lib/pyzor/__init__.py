@@ -55,15 +55,6 @@ class SignatureError(CommError):
     pass
 
 
-class Singleton(object):
-    __slots__ = []
-    def __new__(cls, *args, **kwds):
-        it = cls.__dict__.get('__it__')
-        if it is None:
-            cls.__it__ = object.__new__(cls)
-        return cls.__it__
-
-
 class BasicIterator(object):
     def __iter__(self):
         return self
