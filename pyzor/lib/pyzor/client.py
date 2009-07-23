@@ -129,7 +129,7 @@ class ExecCall(object):
         options = None
 
         try:
-            (options, args) = getopt.getopt(sys.argv[1:], 'dh:',
+            (options, args) = getopt.getopt(sys.argv[1:], 'dh',
                                             ['homedir=', 'log', 'help'])
         except getopt.GetoptError:
             self.usage()
@@ -794,7 +794,7 @@ class InfoClientRunner(ClientRunner):
 
                         # we want to insert the wl-count before
                         # our wl printouts
-                        if f is 'WL-Entered':
+                        if f == 'WL-Entered':
                             message += ("\tWhiteList Count: %d\n"
                                         % int(response['WL-Count']))
 
