@@ -56,15 +56,7 @@ class SignatureError(CommError):
     pass
 
 
-class Username(str):
-    user_pattern = re.compile(r'^[-\.\w]+$')
-
-    def __init__(self, s):
-        self.validate()
-
-    def validate(self):
-        if not self.user_pattern.match(self):
-            raise ValueError("%s is an invalid username" % self)
+VALID_USERNAME_RE = r'^[-\.\w]+$'
 
 
 class Opname(str):
@@ -75,7 +67,7 @@ class Opname(str):
 
     def validate(self):
         if not self.op_pattern.match(self):
-            raise ValueError("%s is an invalid username" % self)
+            raise ValueError("%s is an invalid opname" % self)
 
 
 class Message(email.message.Message):
@@ -139,7 +131,7 @@ class MacEnvelope(Message):
     def verify_sig(self, user_key):
         typecheck(user_key, long)
 
-        user     = Username(self['User'])
+        user     = self['User']
         ts       = int(self['Time'])
         said_sig = self['Sig']
         hashed_user_key = self.hash_key(user_key, user)
@@ -178,8 +170,7 @@ class MacEnvelope(Message):
     def hash_key(key, user):
         """returns lower(H(U + ':' + lower(hex(K))))"""
         typecheck(key, long)
-        typecheck(user, Username)
-        return sha("%s:%x" % (Username, key)).hexdigest().lower()
+        return sha("%s:%x" % (user, key)).hexdigest().lower()
 
     @classmethod
     def sign_msg(cls, hashed_key, ts, msg):
