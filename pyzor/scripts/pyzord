@@ -199,7 +199,7 @@ def load_configuration():
 
 def main():
     """Run the pyzor daemon."""
-    # Set umask - this restricts this process from granting any word access
+    # Set umask - this restricts this process from granting any world access
     # to files/directories created by this process.
     os.umask(0077)
 
