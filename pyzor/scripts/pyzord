@@ -173,7 +173,7 @@ def load_configuration():
     opt.add_option("--log-file", action="store", default=None,
                    dest="LogFile", help="name of log file")
     options, args = opt.parse_args()
-    if not len(args):
+    if len(args):
         opt.print_help()
         sys.exit()
     os.nice(options.nice)
