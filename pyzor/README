@@ -1,7 +1,7 @@
 Pyzor is a Python implementation of a spam-blocking
 networked system that use spam signatures to identify them.
 
-http://pyzor.sourceforge.net/
+http://pyzor.org/
 
 See INSTALL for install documentation.
 See docs/usage.html for usage documentation.
