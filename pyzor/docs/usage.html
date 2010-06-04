@@ -110,16 +110,6 @@ pyzor [-d] [--homedir <var class="filename">dir</var>] <var>command</var> [<var>
 	</p>
       </dd>
 
-      <dt id="discover"><kbd>discover</kbd></dt>
-      <dd>
-	<p>
-	  Finds Pyzor servers, and writes them to
-	  <span class="filename">~/.pyzor/servers</span>.
-	  This may accomplished through querying already-known
-	  servers or an HTTP call to a hard-coded address.
-	</p>
-      </dd>
-
       <dt id="ping"><kbd>ping</kbd></dt>
       <dd>
 	<p>Merely requests a response from the servers.</p>
@@ -293,7 +283,6 @@ pyzord [-d] [--homedir <var>dir</var>]
 <a href="#section-client">[client]</a>
 <a href="#ServersFile">ServersFile</a> = servers
 <a href="#AccountsFile">AccountsFile</a> = accounts
-<a href="#DiscoverServersURL">DiscoverServersURL</a> = http://pyzor.sourceforge.net/cgi-bin/inform-servers-0-3-x
 <a href="#Timeout">Timeout</a> = 5
 
 <a href="#section-server">[server]</a>
@@ -313,8 +302,7 @@ pyzord [-d] [--homedir <var>dir</var>]
       <dd>
 	A newline-separated list of server addresses to
 	report/whitelist/check with.  Addresses are in the format
-	<kbd>host:port</kbd>.  Can be populated with
-	<kbd>pyzor discover</kbd>.
+	<kbd>host:port</kbd>.  If none are specified, then public.pyzor.org is used.
       </dd>
 
       <dt id="AccountsFile">AccountsFile</dt>
@@ -338,12 +326,6 @@ pyzord [-d] [--homedir <var>dir</var>]
 	  See the section <a href="#using-accounts">Using Accounts</a>
 	  for more information.
 	</p>
-      </dd>
-
-      <dt id="DiscoverServersURL">DiscoverServersURL</dt>
-      <dd>
-	During <kbd>pyzor discover</kbd>, the URL to use
-	in finding servers.
       </dd>
 
       <dt id="Timeout">Timeout</dt>

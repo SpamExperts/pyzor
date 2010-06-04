@@ -41,11 +41,6 @@ output a tuple of (error\-code, message) from the server.
 If \-\-mbox is provided, then the input is assumed to be a unix mailbox, and
 all messages in it will be sent to the server.
 .TP
-\fBdiscover\fP
-Finds Pyzor servers, and writes them to ~/.pyzor/servers. This may
-accomplished through querying already-known servers or an HTTP call to a
-hard-coded address.
-.TP
 \fBping\fP
 Merely requests a response from the servers.
 .TP
@@ -114,7 +109,6 @@ interpreted to be relative to the Pyzor homedir.
  [client]
  ServersFile = servers
  AccountsFile = accounts
- DiscoverServersURL = http://pyzor.sourceforge.net/cgi-bin/inform\-servers\-0\-3\-x
  Timeout = 5
 .SH SEE ALSO
 pyzord(1)
