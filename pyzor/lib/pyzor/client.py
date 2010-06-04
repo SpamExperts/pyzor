@@ -61,11 +61,13 @@ class Client(object):
     timeout = 5
     max_packet_size = 8192
 
-    def __init__(self, accounts=None):
+    def __init__(self, accounts=None, timeout=None):
         if accounts:
             self.accounts = accounts
         else:
             self.accounts = {}
+        if timeout is not None:
+            self.timeout = timeout
         self.log = logging.getLogger("pyzor")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
