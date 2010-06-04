@@ -1,105 +1,267 @@
-#!/usr/bin/python
+#! /usr/bin/env python
+
+"""A front-end interface to the pyzor daemon."""
 
 import os
-import os.path
 import sys
-import getopt
-import pyzor
-import pyzor.server
+import logging
+import optparse
+import collections
 import ConfigParser
 
-_author__   = pyzor.__author__
-__version__  = pyzor.__version__
-__revision__ = "$Id: pyzord,v 1.23 2002-10-09 00:33:44 ftobin Exp $"
-progname = 'pyzord'
+import pyzor
+import pyzor.server
+import pyzor.server_engines
 
-default_anonymous_allows = map(pyzor.Opname, ['check', 'report', 'ping',
-                                              'info'])
+def load_access_file(access_fn, accounts):
+    """Load the ACL from the specified file, if it exists, and return an
+    ACL dictionary, where each key is a username and each value is a set
+    of allowed permissions (if the permission is not in the set, then it
+    is not allowed).
 
+    'accounts' is a dictionary of accounts that exist on the server - only
+    the keys are used, which must be the usernames (these are the users
+    that are granted permission when the 'all' keyword is used, as
+    described below).
 
-def usage():
-    sys.stderr.write("usage: %s [-d] [--homedir dir]\n" % progname)
-    sys.exit(1)
+    Each line of the file should be in the following format:
+        operation : user : allow|deny
+    where 'operation' is a space-separated list of pyzor commands or the
+    keyword 'all' (meaning all commands), 'username' is a space-separated
+    list of usernames or the keyword 'all' (meaning all users) - the
+    anonymous user is called "anonymous", and "allow|deny" indicates whether
+    or not the specified user(s) may execute the specified operations.
 
+    The file is processed from top to bottom, with the final match for
+    user/operation being the value taken.  Every file has the following
+    implicit final rule:
+        all : all : deny
 
-def load_access_file(access_fn, server):
-    server.acl = pyzor.server.ACL()
+    If the file does not exist, then the following default is used:
+        check report ping info : anonymous : allow
+    """
+    log = logging.getLogger("pyzord")
+    # A defaultdict is safe, because if we get a non-existant user, we get
+    # the empty set, which is the same as a deny, which is the final
+    # implicit rule.
+    acl = collections.defaultdict(set)
     if os.path.exists(access_fn):
-        pyzor.server.AccessFile(open(access_fn)).feed_into(server.acl)
+        log.info("Using default ACL: the anonymous user may use the check, "
+                 "report, ping and info commands.")
+        acl[pyzor.anonymous_user] = set(("check", "report", "ping", "info"))
+        return acl
+    for line in open(access_fn):
+        if not line.strip() or line[0] == "#":
+            continue
+        try:
+            operations, users, allowed = line.split()
+        except ValueError:
+            log.warn("Invalid ACL line: %r" % line)
+            continue
+        try:
+            allowed = {"allow": True, "deny" : False}[allowed]
+        except KeyError:
+            log.warn("Invalid ACL line: %r" % line)
+            continue
+        if operations == "all":
+            operations = [operation.strip()
+                          for operation in operations.split()]
+        else:
+            operations = ("check", "report", "ping", "info", "whitelist")
+        if users == "all":
+            users = accounts
+        else:
+            users = [user.strip() for user in users.split()]
+        for user in users:
+            if allowed:
+                log.debug("Granting %s to %s." %
+                          (",".join(operations), user))
+                # If these operations are already allowed, this will have
+                # no effect.
+                acl[user].update(operations)
+            else:
+                log.debug("Revoking %s from %s." %
+                          (",".join(operations), user))
+                # If these operations are not allowed yet, this will have
+                # no effect.
+                acl[user].difference_update(operations)
+    log.info("ACL: %r" % acl)
+    return acl
+
+def load_passwd_file(passwd_fn):
+    """Load the accounts from the specified file.
+
+    Each line of the file should be in the format:
+        username : key
+
+    If the file does not exist, then an empty dictionary is returned;
+    otherwise, a dictionary of (username, key) items is returned.
+    """
+    log = logging.getLogger("pyzord")
+    accounts = {}
+    if not os.path.exists(passwd_fn):
+        log.info("Accounts file does not exist - only the anonymous user "
+                 "will be available.")
+        return accounts
+    for line in open(passwd_fn):
+        if not line.strip() or line[0] == "#":
+            continue
+        try:
+            user, key = line.split(":")
+        except ValueError:
+            log.warn("Invalid accounts line: %r" % line)
+            continue
+        user = user.strip()
+        key = key.strip()
+        log.debug("Creating an account for %s with key %s." % (user, key))
+        accounts[user] = key
+    # Don't log the keys at 'info' level, just ther usernames.
+    log.info("Accounts: %s" % ",".join(accounts))
+    return accounts
+
+def load_configuration():
+    """Load the configuration for the server.
+
+    The configuration comes from three sources: the default values, the
+    configuration file, and command-line options."""
+    # Work out the default directory for configuration files.
+    # If $HOME is defined, then use $HOME/.pyzor, otherwise use /etc/pyzor.
+    userhome = os.getenv("HOME")
+    if userhome:
+        homedir = os.path.join(userhome, '.pyzor')
     else:
-        output.warn("%s does not exist; using default ACL: allowing anonymous to do %s"
-                    % (access_fn, default_anonymous_allows))
-        for op in default_anonymous_allows:
-            server.acl.add_entry(pyzor.server.ACLEntry((pyzor.anonymous_user,
-                                                        op,
-                                                        True)))
+        homedir = os.path.join("/etc", "pyzor")
 
+    # Configuration defaults.  The configuration file overrides these, and
+    # then the command-line options override those.
+    defaults = {
+        "Port" : 24441,
+        "ListenAddress" : "0.0.0.0",
+        "Engine" : "gdbm",
+        "DigestDB" : "pyzord.db",
+        "PasswdFile" : "pyzord.passwd",
+        "AccessFile" : "pyzord.access",
+        "CleanupAge" : 60*60*24*30*4, # approximately 4 months
+        "LogFile" : "pyzord.log",
+    }
 
-def load_passwd_file(access_fn, server):
-    server.passwd = pyzor.server.Passwd()
-    if os.path.exists(passwd_fn):
-        for user, key in pyzor.server.PasswdFile(open(passwd_fn)):
-            server.passwd[user] = key
+    # Process any command line options.
+    description = "Listen for and process incoming Pyzor connections."
+    opt = optparse.OptionParser(description=description)
+    opt.add_option("-n", "--nice", dest="nice", type="int",
+                   help="'nice' level", default=0)
+    opt.add_option("-d", "--debug", action="store_true", default=False,
+                   dest="debug", help="enable debugging output")
+    opt.add_option("-h", "--homedir", action="store", default=homedir,
+                   dest="homedir", help="configuration directory")
+    opt.add_option("-a", "--address", action="store", default=None,
+                   dest="listenaddress", help="listen on this IP")
+    opt.add_option("-p", "--port", action="store_int", default=None,
+                   dest="Port", help="listen on this port")
+    opt.add_option("-e", "--database-engine", action="store", default=None,
+                   dest="Engine", help="select database backend")
+    opt.add_option("--dsn", action="store", default=None, dest="DigestDB",
+                   help="data source name (filename for gdbm, host,user,"
+                   "password,database,table for MySQL)")
+    opt.add_option("--password-file", action="store", default=None,
+                   dest="PasswdFile", help="name of password file")
+    opt.add_option("--access-file", action="store", default=None,
+                   dest="AccessFile", help="name of ACL file")
+    opt.add_option("--cleanup-age", action="store", default=None,
+                   dest="CleanupAge",
+                   help="time before digests expire (in seconds)")
+    opt.add_option("--log-file", action="store", default=None,
+                   dest="LogFile", help="name of log file")
+    options, args = opt.parse_args()
+    if not len(args):
+        opt.print_help()
+        sys.exit()
+    os.nice(options.nice)
 
+    # Create the configuration directory if it doesn't already exist.
+    if not os.path.exists(homedir):
+        os.mkdir(homedir)
 
-########################################################################
-# functions above, run below
+    # Load the configuration.
+    config = ConfigParser.ConfigParser()
+    # Set the defaults.
+    config.add_section("server")
+    for key, value in defaults.iteritems():
+        config.set("server", key, value)
+    # Override with the configuration.
+    config.read(os.path.join(options.homedir, "config"))
+    # Override with the command-line options.
+    for key in defaults:
+        value = getattr(options, key)
+        if value is not None:
+            config.set("server", key, value)
+    return config, options
 
-# set umask
-os.umask(0077)
+def main():
+    """Run the pyzor daemon."""
+    # Set umask - this restricts this process from granting any word access
+    # to files/directories created by this process.
+    os.umask(0077)
 
-debug = 0
-(options, args) = getopt.getopt(sys.argv[1:], 'dh:', ['homedir='])
-if len(args) != 0:
-    usage()
+    config, options = load_configuration()
 
-specified_homedir = None
+    # Setup logging.
+    log_fn = config.get("server", "LogFile")
+    if not log_fn:
+        # If no log file is specified, then output to stdout.
+        handler = logging.StreamHandler()
+    else:
+        log_fn = os.path.expanduser(log_fn)
+        if not os.path.isabs(log_fn):
+            log_fn = os.path.join(options.homedir, log_fn)
+        handler = logging.FileHandler(log_fn)
+    if options.debug:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+    # There are two logs - one only contains usage data - but we combine
+    # them into a single output.
+    handler.setLevel(log_level)
+    logger = logging.getLogger("pyzord")
+    logger.setLevel(log_level)
+    logger.addHandler(handler)
+    logger = logging.getLogger("pyzord-usage")
+    logger.setLevel(log_level)
+    logger.addHandler(handler)
 
-for (o, v) in options:
-    if o == '-d':
-        debug = 1
-    elif o == '-h':
-        usage()
-    elif o == '--homedir':
-        specified_homedir = v
+    # Open the database connection.
+    database_class = pyzor.server_engines.database_classes[
+        config.get("server", "engine")]
+    # If the DSN is a filename, then we make it absolute.
+    db_file = config.get("server", "DigestDB")
+    if database_class.absolute_source:
+        db_file = os.path.expanduser(db_file)
+        if not os.path.isabs(db_file):
+            db_file = os.path.join(options.homedir, db_file)
+    # We prefer to use the threaded server, but some database engines
+    # cannot handle it.
+    if database_class.handles_threaded:
+        server_class = pyzor.server.ThreadingServer
+    else:
+        server_class = pyzor.server.Server
+    database = database_class(db_file, "c",
+                              int(config.get("server", "CleanupAge")))
 
-homedir = pyzor.get_homedir(specified_homedir)
+    # Load accounts and ACL.
+    passwd_fn = os.path.expanduser(config.get("server", "passwdfile"))
+    if not os.path.isabs(passwd_fn):
+        passwd_fn = os.path.join(options.homedir, passwd_fn)
+    accounts = load_passwd_file(passwd_fn)
+    access_fn = os.path.expanduser(config.get("server", "accessfile"))
+    if not os.path.isabs(access_fn):
+        access_fn = os.path.join(options.homedir, access_fn)
+    acl = load_access_file(access_fn, accounts)
 
-if not os.path.exists(homedir):
-    os.mkdir(homedir)
+    # Create the server and start listening.
+    server = server_class(
+        (config.get("server", "listenaddress"),
+         int(config.get("server", "port"))), database, accounts, acl)
+    server.serve_forever()
 
-defaults = {'port':          '24441',
-            'listenaddress': '0.0.0.0',
-            'digestdb':      'pyzord.db',
-            'passwdfile':    'pyzord.passwd',
-            'accessfile':    'pyzord.access',
-            'CleanupAge':    "%d" % pyzor.server.DBHandle.max_age,
-            }
-
-config = pyzor.Config(homedir)
-config.add_section('server')
-
-for k, v in defaults.items():
-    config.set('server', k, v)
-
-config.read(os.path.join(homedir, 'config'))
-
-port       = config.getint('server', 'port')
-listen_adr = config.get('server', 'ListenAddress')
-
-dbfile    = config.get_filename('server', 'DigestDB')
-passwd_fn = config.get_filename('server', 'passwdfile')
-access_fn = config.get_filename('server', 'accessfile')
-pyzor.server.DBHandle.max_age = config.getint('server', 'CleanupAge')
-
-output = pyzor.Output(debug=debug)
-
-pyzor.server.DBHandle.initialize(dbfile, 'c')
-server = pyzor.server.Server((listen_adr, port),
-                             pyzor.server.Log(sys.stdout))
-
-
-load_passwd_file(passwd_fn, server)
-load_access_file(access_fn, server)
-
-server.serve_forever()
+if __name__ == "__main__":
+    main()
