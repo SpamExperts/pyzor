@@ -11,17 +11,13 @@ import time
 import email
 import random
 import hashlib
+import StringIO
 import tempfile
 import ConfigParser
 import email.message
 
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
-
 proto_name     = 'pyzor'
-proto_version  =  2.0
+proto_version  =  2.1
 
 # We would like to use sha512, but that would mean that all the digests
 # changed, so for now, we stick with sha1 (which is the same as the old
@@ -29,45 +25,40 @@ proto_version  =  2.0
 sha = hashlib.sha1
 
 class CommError(Exception):
-    """Something in general went wrong with the transaction"""
+    """Something in general went wrong with the transaction."""
     pass
 
 
 class ProtocolError(CommError):
-    """Something is wrong with talking the protocol"""
+    """Something is wrong with talking the protocol."""
     pass
 
 
 class TimeoutError(CommError):
+    """The connection timed out."""
     pass
 
 
 class IncompleteMessageError(ProtocolError):
+    """A complete requested was not received."""
     pass
 
 
 class UnsupportedVersionError(ProtocolError):
+    """Client is using an unsupported protocol version."""
     pass
 
 
 class SignatureError(CommError):
-    """unknown user, signature on msg invalid,
-    or not within allowed time range"""
+    """Unknown user, signature on msg invalid, or not within allowed time
+    range."""
     pass
 
 
-VALID_USERNAME_RE = r'^[-\.\w]+$'
-
-
-class Opname(str):
-    op_pattern = re.compile(r'^[-\.\w]+$')
-
-    def __init__(self, s):
-        self.validate()
-
-    def validate(self):
-        if not self.op_pattern.match(self):
-            raise ValueError("%s is an invalid opname" % self)
+class AuthorizationError(CommError):
+    """The signature was valid, but the user is not permitted to do the
+    requested action."""
+    pass
 
 
 class Message(email.message.Message):
@@ -119,8 +110,8 @@ class MacEnvelope(Message):
     def ensure_complete(self):
         if not (self.has_key('User') and self.has_key('Time')
                 and self.has_key('Sig')):
-             raise IncompleteMessageError("Doesn't have fields for a "
-                                          "MacEnvelope.")
+            raise IncompleteMessageError("Doesn't have fields for a "
+                                         "MacEnvelope.")
         Message.ensure_complete(self)
 
     def get_submsg(self, factory=ThreadedMessage):
@@ -129,7 +120,6 @@ class MacEnvelope(Message):
         return factory(self.fp)
 
     def verify_sig(self, user_key):
-        typecheck(user_key, long)
 
         user     = self['User']
         ts       = int(self['Time'])
@@ -148,10 +138,6 @@ class MacEnvelope(Message):
     def wrap(cls, user, key, msg):
         """This should be used to create a MacEnvelope"""
 
-        typecheck(user, str)
-        typecheck(msg, Message)
-        typecheck(key, long)
-
         env = cls()
         ts = int(time.time())
         env['User'] = user
@@ -163,13 +149,11 @@ class MacEnvelope(Message):
     @staticmethod
     def hash_msg(msg):
         """returns a digest object"""
-        typecheck(msg, Message)
         return sha(str(msg))
 
     @staticmethod
     def hash_key(key, user):
         """returns lower(H(U + ':' + lower(hex(K))))"""
-        typecheck(key, long)
         return sha("%s:%x" % (user, key)).hexdigest().lower()
 
     @classmethod
@@ -183,9 +167,6 @@ class MacEnvelope(Message):
 
         returns a digest object"""
 
-        typecheck(ts, int)
-        typecheck(msg, Message)
-        typecheck(hashed_key, str)
         h_msg = cls.hash_msg(msg)
         return sha("%s:%d:%s" % (h_msg.digest(), ts,
                                  hashed_key)).hexdigest().lower()
@@ -235,11 +216,11 @@ class ClientSideRequest(Request):
 
 
 class PingRequest(ClientSideRequest):
-    op = Opname('ping')
+    op = "ping"
 
 
 class ShutdownRequest(ClientSideRequest):
-    op = Opname('shutdown')
+    op = "shutdown"
 
 
 class SimpleDigestBasedRequest(ClientSideRequest):
@@ -249,11 +230,11 @@ class SimpleDigestBasedRequest(ClientSideRequest):
 
 
 class CheckRequest(SimpleDigestBasedRequest):
-    op = Opname('check')
+    op = "check"
 
 
 class InfoRequest(SimpleDigestBasedRequest):
-    op = Opname('info')
+    op = "info"
 
 
 class SimpleDigestSpecBasedRequest(SimpleDigestBasedRequest):
@@ -263,18 +244,15 @@ class SimpleDigestSpecBasedRequest(SimpleDigestBasedRequest):
 
 
 class ReportRequest(SimpleDigestSpecBasedRequest):
-    op = Opname('report')
+    op = "report"
 
 
 class WhitelistRequest(SimpleDigestSpecBasedRequest):
-    op = Opname('whitelist')
+    op = "whitelist"
 
 
 class ErrorResponse(Response):
     def __init__(self, code, s):
-        typecheck(code, int)
-        typecheck(s, str)
-
         Response.__init__(self)
         self.setdefault('Code', str(code))
         self.setdefault('Diag', s)
@@ -320,9 +298,5 @@ def get_homedir(specified):
         if userhome is not None:
             homedir = os.path.join(userhome, '.pyzor')
     return homedir
-
-def typecheck(inst, type_):
-    if not isinstance(inst, type_):
-        raise TypeError()
 
 anonymous_user = 'anonymous'
