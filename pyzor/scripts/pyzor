@@ -1,285 +1,296 @@
 #! /usr/bin/env python
 
+"""Pyzor client."""
+
 import os
+import re
 import sys
-import getopt
+import email
 import random
+import mailbox
 import hashlib
 import getpass
 import logging
+import optparse
 import tempfile
+import ConfigParser
 
 import pyzor
 import pyzor.client
 
-def usage(s=None):
-    if s is not None:
-        print >> sys.stderr, s
-    # XXX Missing log, help, explanation of debug/homedir
-    print sys.stderr, """
-usage: %s [-d] [--homedir dir] command [cmd_opts]
-command is one of: check, report, discover, ping, digest, predigest,
-               genkey
+def load_configuration():
+    """Load the configuration for the server.
 
-Data is read on standard input (stdin).
-
-""" % sys.argv[0]
-    sys.exit(2)
-
-def main():
-    debug = False
-    log_to_file = False
-
-    try:
-        options, args = getopt.getopt(sys.argv[1:], 'dh',
-                                      ['homedir=', 'log', 'help'])
-    except getopt.GetoptError:
-        usage()
-
-    if len(args) < 1:
-       usage()
-
-    specified_homedir = None
-
-    for o, v in options:
-        if o == '-d':
-            debug = True
-        elif o in ('-h', '--help'):
-           usage()
-        elif o == '--homedir':
-            specified_homedir = v
-        elif o == '--log':
-            log_to_file = True
-
-    homedir = pyzor.get_homedir(specified_homedir)
-
-    log = logging.getLogger("pyzor")
-    if log_to_file:
-        handler = logging.FileHandler(os.path.join(homedir, "pyzor.log"))
+    The configuration comes from three sources: the default values, the
+    configuration file, and command-line options."""
+    # Work out the default directory for configuration files.
+    # If $HOME is defined, then use $HOME/.pyzor, otherwise use /etc/pyzor.
+    userhome = os.getenv("HOME")
+    if userhome:
+        homedir = os.path.join(userhome, '.pyzor')
     else:
-        handler = logging.StreamHandler()
-    if debug:
-        handler.setLevel(logging.DEBUG)
-    else:
-        handler.setLevel(logging.INFO)
-    log.addHandler(handler)
-    log.info("pyzor[%r]" % os.getpid())
+        homedir = os.path.join("/etc", "pyzor")
 
-    config = pyzor.Config(homedir)
-    config.add_section('client')
-
-    inform_url = 'http://pyzor.sourceforge.net/cgi-bin/inform-servers-0-3-x'
+    # Configuration defaults.  The configuration file overrides these, and
+    # then the command-line options override those.
     defaults = {
-        'ServersFile':        'servers',
-        'DiscoverServersURL': inform_url,
-        'AccountsFile':       'accounts',
-        'Timeout':            str(Client.timeout),
-        }
+        "ServersFile" : "servers",
+        "AccountsFile" : "accounts",
+        "LogFile" : "pyzor.log",
+        "Timeout" : 5, # seconds
+    }
 
-    for k, v in defaults.items():
-        config.set('client', k, v)
+    # Process any command line options.
+    description = ("Read data from stdin and execute the requested command "
+                   "(one of 'check', 'report', 'ping', 'digest', "
+                   "'predigest', 'genkey').")
+    opt = optparse.OptionParser(description=description)
+    opt.add_option("-n", "--nice", dest="nice", type="int",
+                   help="'nice' level", default=0)
+    opt.add_option("-d", "--debug", action="store_true", default=False,
+                   dest="debug", help="enable debugging output")
+    opt.add_option("-h", "--homedir", action="store", default=homedir,
+                   dest="homedir", help="configuration directory")
+    opt.add_option("-s", "--style", action="store", default="msg",
+                   dest="style",
+                   help="input style: 'msg' (individual RFC5321 message), "
+                   "'mbox' (mbox file of messages), 'digests' (Pyzor "
+                   "digests, one per line).")
+    opt.add_option("--log-file", action="store", default=None,
+                   dest="LogFile", help="name of log file")
+    opt.add_option("--servers-file", action="store", default=None,
+                   dest="ServersFile", help="name of servers file")
+    opt.add_option("--accounts-file", action="store", default=None,
+                   dest="AccountsFile", help="name of accounts file")
+    opt.add_option("-t", "--timeout", dest="Timeout", type="int",
+                   help="timeout (in seconds)", default=None)
+    options, args = opt.parse_args()
+    if not len(args):
+        opt.print_help()
+        sys.exit()
+    os.nice(options.nice)
 
-    config.read(os.path.join(homedir, 'config'))
-
-    servers_fn = config.get_filename('client', 'ServersFile')
-    Client.timeout = config.getint('client', 'Timeout')
-
+    # Create the configuration directory if it doesn't already exist.
     if not os.path.exists(homedir):
         os.mkdir(homedir)
 
-    command = args[0]
-    if not os.path.exists(servers_fn) or command == 'discover':
-        url = config.get('client', 'DiscoverServersURL')
-        log.info("Downloading servers from %s" % url)
-        open(servers_fn, "wb").write(urllib2.urlopen(url).read())
+    # Load the configuration.
+    config = ConfigParser.ConfigParser()
+    # Set the defaults.
+    config.add_section("client")
+    for key, value in defaults.iteritems():
+        config.set("client", key, value)
+    # Override with the configuration.
+    config.read(os.path.join(options.homedir, "config"))
+    # Override with the command-line options.
+    for key in defaults:
+        value = getattr(options, key)
+        if value is not None:
+            config.set("client", key, value)
+    return config, options, args
 
+def main():
+    """Execute any requested actions."""
+    # Set umask - this restricts this process from granting any world access
+    # to files/directories created by this process.
+    os.umask(0077)
+
+    config, options, args = load_configuration()
+
+    # Setup logging.
+    log_fn = config.get("client", "LogFile")
+    if not log_fn:
+        # If no log file is specified, then output to stdout.
+        handler = logging.StreamHandler()
+    else:
+        log_fn = os.path.expanduser(log_fn)
+        if not os.path.isabs(log_fn):
+            log_fn = os.path.join(options.homedir, log_fn)
+        handler = logging.FileHandler(log_fn)
+    log_level = {True : logging.DEBUG, False : logging.INFO}[options.debug]
+    handler.setLevel(log_level)
+    logger = logging.getLogger("pyzor")
+    logger.setLevel(log_level)
+    logger.addHandler(handler)
+
+    # Load the list of servers that will be checked.
+    servers_fn = os.path.expanduser(config.get("client", "ServersFile"))
+    if not os.path.isabs(servers_fn):
+        servers_fn = os.path.join(options.homedir, servers_fn)
     servers = [line.strip().split(":") for line in open(servers_fn)
                if line.strip() and not line.startswith("#") and
                re.match("[a-zA-Z0-9.-]+:[0-9]+", line.strip())]
     if not servers:
-        log.warn("No servers available!  Maybe try the 'discover' command.")
-        sys.exit(1)
+        logger.info("No servers specified, defaulting to public.pyzor.org.")
+        servers = ["public.pyzor.org"]
 
-    accounts_fn = config.get_filename('client', 'AccountsFile')
+    # Load account data (this is used for authentication to the servers).
+    accounts_fn = os.path.expanduser(config.get("client", "AccountsFile"))
+    if not os.path.isabs(accounts_fn):
+        accounts_fn = os.path.join(options.homedir, accounts_fn)
     accounts = pyzor.account.load_accounts(accounts_fn)
-    client = pyzor.client.Client(accounts)
 
-    try:
-        dispatch = self.dispatches[command]
-    except KeyError:
-        usage()
-    else:
+    # Run the specified commands.
+    client = pyzor.client.Client(accounts,
+                                 int(config.get("client", "Timeout")))
+    for command in args:
         try:
-            if not dispatch(client, servers, args):
-                sys.exit(1)
-        except TimeoutError:
-            # Note that most of the methods will trap their own timeout
-            # error.
-            log.error("Timeout from server.")
-            sys.exit(1)
+            dispatch = DISPATCHES[command]
+        except KeyError:
+            logger.error("Unknown command: %s" % command)
+        else:
+            try:
+                if not dispatch(client, servers, options.style):
+                    sys.exit(1)
+            except pyzor.TimeoutError:
+                # Note that most of the methods will trap their own timeout
+                # error.
+                logger.error("Timeout from server in %s" % command)
 
-def get_input_handler(style='msg', digester=DataDigester):
+def get_input_handler(style="msg", digester=pyzor.digest.DataDigester):
     """Return an object that can be iterated over to get all the digests."""
+    if style not in ("msg", "mbox", "digests"):
+        raise ValueError("Unknown input style.")
     if style == "digests":
         for line in sys.stdin:
             yield line.strip()
         return
-    elif style not in ("msg", "mbox"):
-        raise ValueError("Unknown input style.")
-    if style == 'msg':
-        tf = None
+    elif style == "msg":
+        tfile = None
         msg = email.message_from_file(sys.stdin)
         mbox = [msg]
-    elif style =='mbox':
+    elif style == 'mbox':
         # We have to write the mbox to disk in order to use mailbox to work
         # with it.
-        tf = tempfile.NamedTemporaryFile()
-        tf.write(sys.stdin.read())
-        tf.seek(0)
-        mbox = mailbox.mbox(tf.name)
+        tfile = tempfile.NamedTemporaryFile()
+        tfile.write(sys.stdin.read())
+        tfile.seek(0)
+        mbox = mailbox.mbox(tfile.name)
     for msg in mbox:
-        digest = digester(pyzor.digest.BodyCleaner(msg)).value
-        if digest:
-            yield digest
-    if tf:
-        tf.close()
+        digested = digester(pyzor.digest.BodyCleaner(msg)).value
+        if digested:
+            yield digested
+    if tfile:
+        tfile.close()
 
-def ping(client, servers, args):
-    try:
-        getopt.getopt(args[1:], '')
-    except getopt.GetoptError:
-        usage("%s does not take any non-option arguments" % args[0])
+def ping(client, servers, style):
+    """Check that the server is reachable."""
+    # pylint: disable-msg=W0613
     runner = pyzor.client.ClientRunner(client.ping)
     for server in servers:
         runner.run(server, (server,))
     return runner.all_ok
 
-def info(client, servers, args):
-    try:
-        options = getopt.getopt(args[1:], '', ['mbox'])[0]
-    except getopt.GetoptError:
-        usage("%s does not take any non-option arguments" % args[0])
-    do_mbox = 'msg'
-    for o, v in options:
-        if o == '--mbox':
-            do_mbox = 'mbox'
+def info(client, servers, style):
+    """Get information about each message."""
     runner = pyzor.client.InfoClientRunner(client.info)
-    for digest in get_input_handler(do_mbox):
-        if digest:
+    for digested in get_input_handler(style):
+        if digested:
             for server in servers:
-                response = runner.run(server, (digest, server))
+                runner.run(server, (digested, server))
     return True
 
-def check(client, servers, args):
-    try:
-        options = getopt.getopt(args[1:], '', ['mbox'])[0]
-    except getopt.GetoptError:
-        usage("%s does not take any non-option arguments" % args[0])
-    do_mbox = 'msg'
-    for o, v in options:
-        if o == '--mbox':
-            do_mbox = 'mbox'
+def check(client, servers, style):
+    """Check each message against each server.
+
+    The return value is 'failure' if there is a positive spam count and
+    *zero* whitelisted count; otherwise 'success'.
+    """
     runner = pyzor.client.CheckClientRunner(client.check)
-    for digest in get_input_handler(do_mbox):
-        if digest:
+    for digested in get_input_handler(style):
+        if digested:
             for server in servers:
-                runner.run(server, (digest, server))
+                runner.run(server, (digested, server))
     return runner.found_hit and not runner.whitelisted
 
-def send_digest(digest, spec, client_method, servers):
-    # Digest can be none; if so, nothing is sent.
-    if not digest:
+def send_digest(digested, spec, client_method, servers):
+    """Send these digests to each server."""
+    # Digest can be None; if so, nothing is sent.
+    if not digested:
         return
     runner = pyzor.client.ClientRunner(client_method)
     for server in servers:
-        runner.run(server, (digest, spec, server))
+        runner.run(server, (digested, spec, server))
     return runner.all_ok
 
-def report(client, servers, args):
-    try:
-       options = getopt.getopt(args[1:], '', ['mbox'])[0]
-    except getopt.GetoptError:
-        usage("%s does not take any non-option arguments" % args[0])
-    do_mbox = 'msg'
-    for o, v in options:
-        if o == '--mbox':
-            do_mbox = "mbox"
+def report(client, servers, style):
+    """Report each message as spam."""
     all_ok = True
-    for digest in get_input_handler(do_mbox):
-        if digest and not send_digest(digest, pyzor.digest.digest_spec, client.report, servers):
+    for digested in get_input_handler(style):
+        if digested and not send_digest(digested, pyzor.digest.digest_spec,
+                                        client.report, servers):
             all_ok = False
     return all_ok
 
-def whitelist(client, servers, args):
-    try:
-        options = getopt.getopt(args[1:], '', ['mbox'])[0]
-    except getopt.GetoptError:
-        usage("%s does not take any non-option arguments" % args[0])
-    do_mbox = "msg"
-    for o, v in options:
-        if o == '--mbox':
-            do_mbox = "mbox"
+def whitelist(client, servers, style):
+    """Report each message as ham."""
     all_ok = True
-    for digest in get_input_handler(do_mbox):
-        if digest and not send_digest(digest, pyzor.digest.digest_spec, client.whitelist, servers):
+    for digested in get_input_handler(style):
+        if digested and not send_digest(digested, pyzor.digest.digest_spec,
+                                        client.whitelist, servers):
             all_ok = False
     return all_ok
 
-def digest(client, servers, args):
-    try:
-        options = getopt.getopt(args[1:], '', ['mbox'])[0]
-    except getopt.GetoptError:
-        usage("%s does not take any non-option arguments" % args[0])
-    do_mbox = "msg"
-    for o, v in options:
-        if o == '--mbox':
-            do_mbox = "mbox"
-    for digest in get_input_handler(do_mbox):
-        if digest:
-            print digest
+def digest(client, servers, style):
+    """Generate a digest for each message.
+
+    This method can be used to look up digests in the database when
+    diagnosing, or to report digests in a two-stage operation (digest,
+    then report with --digests)."""
+    # pylint: disable-msg=W0613
+    for digested in get_input_handler(style):
+        if digested:
+            print digested
     return True
 
-def print_digested(client, servers, args):
-    try:
-        getopt.getopt(args[1:], '')
-    except getopt.GetoptError:
-        usage("%s does not take any non-option arguments" % args[0])
-    for digest in get_input_handler("msg", digester=pyzor.digest.PrintingDataDigester):
+def predigest(client, servers, style):
+    """Output the normalised version of each message, which is used to
+    create the digest.
+
+    This method can be used to diagnose which parts of the message are
+    used to determine uniqueness."""
+    # pylint: disable-msg=W0613
+    # pylint: disable-msg=W0612
+    for unused in get_input_handler(
+        "msg", digester=pyzor.digest.PrintingDataDigester):
         pass
     return True
 
-def genkey(client, servers, args):
-    try:
-        getopt.getopt(args[1:], '')
-    except getopt.GetoptError:
-        usage("%s does not take any non-option arguments" % args[0])
-    password = getpass.getpass(prompt='Enter passphrase: ')
-    if getpass.getpass(prompt='Enter passphrase again: ') != password:
+def genkey(client, servers, hash_func=hashlib.sha1):
+    """Generate a key to use to authenticate pyzor requests.  This method
+    will prompt for a password (and confirmation).
+
+    A random salt is generated (which makes it extremely difficult to
+    reverse the generated key to get the original password) and combined
+    with the entered password to provide a key.  This key (but not the salt)
+    should be provided to the pyzord administrator, along with a username.
+    """
+    # pylint: disable-msg=W0613
+    password = getpass.getpass(prompt="Enter passphrase: ")
+    if getpass.getpass(prompt="Enter passphrase again: ") != password:
         log = logging.getLogger("pyzor")
         log.error("Passwords do not match.")
         return False
+    # pylint: disable-msg=W0612
     salt = "".join([chr(random.randint(0, 255))
-                    for unused in xrange(sha("").digest_size)])
-    salt_digest = hashlib.sha1(salt)
-    pass_digest = hashlib.sha1(salt_digest.digest())
+                    for unused in xrange(hash_func("").digest_size)])
+    salt_digest = hash_func(salt)
+    pass_digest = hash_func(salt_digest.digest())
     pass_digest.update(password)
     print "salt,key:"
     print "%s,%s" % (salt_digest.hexdigest(), pass_digest.hexdigest())
     return True
 
-dispatches = {
-    'ping' :     ping,
-    'info':      info,
-    'check':     check,
-    'report':    report,
-    'whitelist': whitelist,
-    'digest':    digest,
-    'predigest': print_digested,
-    'genkey':    genkey,
-    'discover':  None,  # handled earlier
+DISPATCHES = {
+    "ping" : ping,
+    "info" : info,
+    "check" : check,
+    "report" : report,
+    "whitelist" : whitelist,
+    "digest" : digest,
+    "predigest" : predigest,
+    "genkey" : genkey,
     }
 
 if __name__ == "__main__":
-    # set umask
-    os.umask(0077)
     main()
