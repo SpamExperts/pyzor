@@ -1,5 +1,4 @@
 COPYING
-ChangeLog
 INSTALL
 MANIFEST
 NEWS
@@ -10,8 +9,11 @@ docs/pyzor.1
 docs/pyzord.1
 docs/usage.html
 lib/pyzor/__init__.py
+lib/pyzor/account.py
 lib/pyzor/client.py
+lib/pyzor/digest.py
 lib/pyzor/server.py
+lib/pyzor/server_engines.py
 scripts/access
 scripts/bob/accounts
 scripts/bob/servers
