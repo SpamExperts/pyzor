@@ -117,9 +117,12 @@ def main():
     servers_fn = os.path.expanduser(config.get("client", "ServersFile"))
     if not os.path.isabs(servers_fn):
         servers_fn = os.path.join(options.homedir, servers_fn)
-    servers = [line.strip().split(":") for line in open(servers_fn)
-               if line.strip() and not line.startswith("#") and
-               re.match("[a-zA-Z0-9.-]+:[0-9]+", line.strip())]
+    if os.path.exists(servers_fn):
+        servers = [line.strip().split(":") for line in open(servers_fn)
+                   if line.strip() and not line.startswith("#") and
+                   re.match("[a-zA-Z0-9.-]+:[0-9]+", line.strip())]
+    else:
+        servers = []
     if not servers:
         logger.info("No servers specified, defaulting to public.pyzor.org.")
         servers = ["public.pyzor.org"]
