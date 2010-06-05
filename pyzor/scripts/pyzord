@@ -45,7 +45,7 @@ def load_access_file(access_fn, accounts):
     # the empty set, which is the same as a deny, which is the final
     # implicit rule.
     acl = collections.defaultdict(set)
-    if os.path.exists(access_fn):
+    if not os.path.exists(access_fn):
         log.info("Using default ACL: the anonymous user may use the check, "
                  "report, ping and info commands.")
         acl[pyzor.anonymous_user] = set(("check", "report", "ping", "info"))
