@@ -156,7 +156,7 @@ def load_configuration():
                    dest="homedir", help="configuration directory")
     opt.add_option("-a", "--address", action="store", default=None,
                    dest="listenaddress", help="listen on this IP")
-    opt.add_option("-p", "--port", action="store_int", default=None,
+    opt.add_option("-p", "--port", action="store", type="int", default=None,
                    dest="Port", help="listen on this port")
     opt.add_option("-e", "--database-engine", action="store", default=None,
                    dest="Engine", help="select database backend")
