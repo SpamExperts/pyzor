@@ -44,7 +44,7 @@ class Server(SocketServer.UDPServer):
         self.database = database
         self.accounts = accounts
         self.acl = acl
-        self.log.debug("Listening on %r" % address)
+        self.log.debug("Listening on %s" % (address,))
         SocketServer.UDPServer.__init__(self, address, RequestHandler)
 
     def serve_forever(self):
