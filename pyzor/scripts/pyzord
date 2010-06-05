@@ -152,7 +152,7 @@ def load_configuration():
                    help="'nice' level", default=0)
     opt.add_option("-d", "--debug", action="store_true", default=False,
                    dest="debug", help="enable debugging output")
-    opt.add_option("-h", "--homedir", action="store", default=homedir,
+    opt.add_option("--homedir", action="store", default=homedir,
                    dest="homedir", help="configuration directory")
     opt.add_option("-a", "--address", action="store", default=None,
                    dest="listenaddress", help="listen on this IP")

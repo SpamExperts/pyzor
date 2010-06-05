@@ -49,7 +49,7 @@ def load_configuration():
                    help="'nice' level", default=0)
     opt.add_option("-d", "--debug", action="store_true", default=False,
                    dest="debug", help="enable debugging output")
-    opt.add_option("-h", "--homedir", action="store", default=homedir,
+    opt.add_option("--homedir", action="store", default=homedir,
                    dest="homedir", help="configuration directory")
     opt.add_option("-s", "--style", action="store", default="msg",
                    dest="style",
