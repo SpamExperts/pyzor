@@ -173,8 +173,6 @@ class ClientRunner(object):
 
 
 class CheckClientRunner(ClientRunner):
-    __slots__ = ['found_hit', 'whitelisted']
-
     # the number of wl-count it takes for the normal
     # count to be overriden
     wl_count_clears = 1
