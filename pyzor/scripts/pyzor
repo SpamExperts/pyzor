@@ -17,6 +17,7 @@ import ConfigParser
 
 import pyzor
 import pyzor.client
+import pyzor.account
 
 def load_configuration():
     """Load the configuration for the server.
