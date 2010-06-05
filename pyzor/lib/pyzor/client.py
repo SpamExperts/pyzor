@@ -53,6 +53,7 @@ except ImportError:
 
 # XXX This is very messy.  Everything is in two namespaces (local and pyzor).
 import pyzor
+import pyzor.digest
 from pyzor import *
 
 sha = pyzor.sha
