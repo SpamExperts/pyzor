@@ -37,7 +37,7 @@ def load_configuration():
         "ServersFile" : "servers",
         "AccountsFile" : "accounts",
         "LogFile" : "pyzor.log",
-        "Timeout" : 5, # seconds
+        "Timeout" : "5", # seconds
     }
 
     # Process any command line options.

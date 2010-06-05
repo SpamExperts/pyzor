@@ -135,13 +135,13 @@ def load_configuration():
     # Configuration defaults.  The configuration file overrides these, and
     # then the command-line options override those.
     defaults = {
-        "Port" : 24441,
+        "Port" : "24441",
         "ListenAddress" : "0.0.0.0",
         "Engine" : "gdbm",
         "DigestDB" : "pyzord.db",
         "PasswdFile" : "pyzord.passwd",
         "AccessFile" : "pyzord.access",
-        "CleanupAge" : 60*60*24*30*4, # approximately 4 months
+        "CleanupAge" : str(60*60*24*30*4), # approximately 4 months
         "LogFile" : "pyzord.log",
     }
 
@@ -248,18 +248,18 @@ def main():
                               int(config.get("server", "CleanupAge")))
 
     # Load accounts and ACL.
-    passwd_fn = os.path.expanduser(config.get("server", "passwdfile"))
+    passwd_fn = os.path.expanduser(config.get("server", "PasswdFile"))
     if not os.path.isabs(passwd_fn):
         passwd_fn = os.path.join(options.homedir, passwd_fn)
     accounts = load_passwd_file(passwd_fn)
-    access_fn = os.path.expanduser(config.get("server", "accessfile"))
+    access_fn = os.path.expanduser(config.get("server", "AccessFile"))
     if not os.path.isabs(access_fn):
         access_fn = os.path.join(options.homedir, access_fn)
     acl = load_access_file(access_fn, accounts)
 
     # Create the server and start listening.
     server = server_class(
-        (config.get("server", "listenaddress"),
+        (config.get("server", "ListenAddress"),
          int(config.get("server", "port"))), database, accounts, acl)
     server.serve_forever()
 
