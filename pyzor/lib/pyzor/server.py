@@ -145,8 +145,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         if dispatch:
             dispatch(self, digest, record)
         self.server.usage_log.info("%s,%s,%s,%r,%s" %
-                                   (user, self.client_address.split(":")[0],
-                                    opcode, digest, self.response["Code"]))
+                                   (user, self.client_address[0], opcode,
+                                    digest, self.response["Code"]))
 
     def handle_error(self, code, message):
         """Create an appropriate response for an error."""
