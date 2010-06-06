@@ -222,6 +222,8 @@ def main():
     # There are two logs - one only contains usage data - but we combine
     # them into a single output.
     handler.setLevel(log_level)
+    handler.setFormatter(
+        logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logger = logging.getLogger("pyzord")
     logger.setLevel(log_level)
     logger.addHandler(handler)
