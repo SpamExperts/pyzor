@@ -67,7 +67,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
 
     def handle(self):
         """Handle a pyzord operation, cleanly handling any errors."""
-        self.response["Code"] = 200
+        self.response["Code"] = "200"
         self.response["Diag"] = "OK"
         self.response["PV"] = "%s" % pyzor.proto_version
         try:
