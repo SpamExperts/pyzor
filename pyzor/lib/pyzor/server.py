@@ -61,9 +61,9 @@ class ThreadingServer(Server, SocketServer.ThreadingUDPServer):
 
 class RequestHandler(SocketServer.DatagramRequestHandler):
     """Handle a single pyzord request."""
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.response = email.message.Message()
-        SocketServer.DatagramRequestHandler.__init__(self)
+        SocketServer.DatagramRequestHandler.__init__(self, *args, **kwargs)
 
     def handle(self):
         """Handle a pyzord operation, cleanly handling any errors."""
