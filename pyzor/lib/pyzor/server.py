@@ -96,7 +96,11 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         self.server.log.debug("Received: %r" % self.packet)
 
         # Read the request.
-        request = email.message_from_file(self.rfile)
+        # Old versions of the client sent a double \n after the signature,
+        # which screws up the RFC5321 format.  Specifically handle that
+        # here - this could be removed in time.
+        request = email.message_from_string(
+            self.rfile.read().replace("\n\n", "\n") + "\n")
 
         # If this is an authenticated request, then check the authentication
         # details.
@@ -110,7 +114,6 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
 
         # The protocol version is compatible if the major number is
         # identical (changes in the minor number are unimportant).
-        self.server.log.debug("Message: %r" % request.as_string())
         if int(request["PV"]) != int(pyzor.proto_version):
             raise pyzor.UnsupportedVersionError()
 
