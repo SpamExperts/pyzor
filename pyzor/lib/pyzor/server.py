@@ -127,7 +127,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # Ensure that the response can be paired with the request.
         self.response["Thread"] = request["Thread"]
         self.server.log.debug("Got a %s command from %s" %
-                              (opcode, self.client_address.split(":")))
+                              (opcode, self.client_address))
         # Get a handle to the appropriate method to execute this operation.
         try:
             dispatch = self.dispatches[opcode]
