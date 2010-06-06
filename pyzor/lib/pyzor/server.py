@@ -114,7 +114,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
 
         # The protocol version is compatible if the major number is
         # identical (changes in the minor number are unimportant).
-        if int(request["PV"]) != int(pyzor.proto_version):
+        if int(float(request["PV"])) != int(pyzor.proto_version):
             raise pyzor.UnsupportedVersionError()
 
         # Check that the user has permission to execute the requested
