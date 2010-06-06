@@ -88,7 +88,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
             traceback.print_exc(file=trace)
             trace.seek(0)
             self.server.log.error(trace.read())
-        self.server.log.debug("Sending: %s" % self.response.as_string())
+        self.server.log.debug("Sending: %r" % self.response.as_string())
         self.wfile.write(self.response.as_string())
 
     def _really_handle(self):
@@ -110,6 +110,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
 
         # The protocol version is compatible if the major number is
         # identical (changes in the minor number are unimportant).
+        self.server.log.debug("Message: %r" % request.as_string())
         if int(request["PV"]) != int(pyzor.proto_version):
             raise pyzor.UnsupportedVersionError()
 
