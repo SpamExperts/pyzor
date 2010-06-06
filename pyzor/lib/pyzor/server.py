@@ -102,6 +102,9 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         request = email.message_from_string(
             self.rfile.read().replace("\n\n", "\n") + "\n")
 
+        # Ensure that the response can be paired with the request.
+        self.response["Thread"] = request["Thread"]
+
         # If this is an authenticated request, then check the authentication
         # details.
         user = request["User"] or pyzor.anonymous_user
@@ -123,11 +126,9 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         if opcode not in self.server.acl[user]:
             raise pyzor.AuthorizationError(
                 "User is not authorized to request the operation.")
-
-        # Ensure that the response can be paired with the request.
-        self.response["Thread"] = request["Thread"]
         self.server.log.debug("Got a %s command from %s" %
-                              (opcode, self.client_address))
+                              (opcode, self.client_address[0]))
+
         # Get a handle to the appropriate method to execute this operation.
         try:
             dispatch = self.dispatches[opcode]
