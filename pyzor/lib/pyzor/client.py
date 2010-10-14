@@ -38,7 +38,6 @@ import os
 import getopt
 import random
 import socket
-import signal
 import urllib2
 import hashlib
 import logging
@@ -110,19 +109,12 @@ class Client(object):
         self.log.debug("sending: %r" % mac_msg_str)
         self.socket.sendto(mac_msg_str, 0, address)
 
-    def time_call(self, call, args=(), kwargs=None):
-        if kwargs is None:
-            kwargs = {}
-        signal.signal(signal.SIGALRM, handle_timeout)
-        signal.alarm(self.timeout)
-        try:
-            return call(*args, **kwargs)
-        finally:
-            signal.alarm(0)
-
     def read_response(self, expected_id):
-        packet, address = self.time_call(self.socket.recvfrom,
-                                         (self.max_packet_size,))
+        self.socket.settimeout(self.timeout)
+        try:
+            packet, address = self.socket.recvfrom(self.max_packet_size)
+        except socket.timeout:
+            raise TimeoutError()
         self.log.debug("received: %r" % packet)
         msg = Response(StringIO.StringIO(packet))
         msg.ensure_complete()
@@ -231,7 +223,3 @@ class InfoClientRunner(ClientRunner):
         else:
             # XXX This should write to the log.
             sys.stderr.write(message)
-
-
-def handle_timeout(signum, frame):
-    raise TimeoutError()
