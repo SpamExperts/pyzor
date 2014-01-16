@@ -1,9 +1,21 @@
 import re
 import hashlib
-import tempfile
+import HTMLParser
 
 # Hard-coded for the moment.
 digest_spec = ([(20, 3), (60, 3)])
+
+class HTMLStripper(HTMLParser.HTMLParser):
+    """Strip all tags from the HTML."""
+    def __init__(self, collector):
+        HTMLParser.HTMLParser.__init__(self)
+        self.reset()
+        self.collector = collector
+    def handle_data(self, data):
+        """Keep track of the data."""
+        data = data.strip()
+        if data:
+            self.collector.append(data)
 
 class DataDigester(object):
     """The major workhouse class."""
@@ -21,14 +33,13 @@ class DataDigester(object):
     # for them. (BNF is better at balanced parens and such).
     email_ptrn = re.compile(r'\S+@\S+')
 
-    # Same goes for URL's.
+    # Same goes for URLs.
     url_ptrn = re.compile(r'[a-z]+:\S+', re.IGNORECASE)
 
     # We also want to remove anything that is so long it looks like possibly
     # a unique identifier.
     longstr_ptrn = re.compile(r'\S{10,}')
 
-    html_tag_ptrn = re.compile(r'<.*?>')
     ws_ptrn = re.compile(r'\s')
 
     # String that the above patterns will be replaced with.
@@ -40,41 +51,42 @@ class DataDigester(object):
         self.digest = hashlib.sha1()
 
         # Need to know the total number of lines in the content.
-        total_lines = sum(payload.count("\n")
-                          for payload in self.digest_payloads(msg))
+        lines = []
+        for payload in self.digest_payloads(msg):
+            payload = payload.decode("utf8") 
+            for line in payload.splitlines():
+                norm = self.normalize(line)
+                if self.should_handle_line(norm):
+                    lines.append(norm)
 
-        if total_lines <= self.atomic_num_lines:
-            self.handle_atomic(msg)
+        if len(lines) <= self.atomic_num_lines:
+            self.handle_atomic(lines)
         else:
-            self.handle_pieced(msg, spec, total_lines)
+            self.handle_pieced(lines, spec)
 
         self.value = self.digest.hexdigest()
 
-        assert len(self.value) == len(hashlib.sha1("").hexdigest())
+        assert len(self.value) == len(hashlib.sha1(b"").hexdigest())
         assert self.value is not None
 
-    def handle_atomic(self, msg):
+    def handle_atomic(self, lines):
         """We digest everything."""
-        for payload in self.digest_payloads(msg):
-            for line in payload.xsplitlines():
-                norm = self.normalize(line)
-                self.handle_line(norm)
+        for line in lines:
+            self.handle_line(line)
 
-    def handle_pieced(self, msg, spec, total_lines):
+    def handle_pieced(self, lines, spec):
         """Digest stuff according to the spec."""
-        i = 0
-        for payload in self.digest_payloads(msg):
-            for line in payload.xsplitlines():
-                position = i // total_lines
-                for offset, length in spec:
-                    if offset < position <= offset + length:
-                        norm = self.normalize(line)
-                        if self.should_handle_line(norm):
-                            self.handle_line(norm)
-                i += 1
+        for offset, length in spec:
+            for i in xrange(length):
+                try:
+                    line = lines[int(offset * len(lines) // 100) + i]
+                except IndexError:
+                    pass
+                else:
+                    self.handle_line(line)
 
     def handle_line(self, line):
-        self.digest.update(line.rstrip())
+        self.digest.update(line.rstrip().encode("utf8"))
 
     @classmethod
     def normalize(cls, s):
@@ -82,20 +94,35 @@ class DataDigester(object):
         s = cls.longstr_ptrn.sub(repl, s)
         s = cls.email_ptrn.sub(repl, s)
         s = cls.url_ptrn.sub(repl, s)
-        s = cls.html_tag_ptrn.sub(repl, s)
         # Make sure we do the whitespace last because some of the previous
         # patterns rely on whitespace.
-        return cls.ws_ptrn.sub('', s)
+        return cls.ws_ptrn.sub('', s).strip()
+
+    @staticmethod
+    def normalize_html_part(s):
+        data = []
+        stripper = HTMLStripper(data)
+        try:
+            stripper.feed(s)
+        except (UnicodeDecodeError, HTMLParser.HTMLParseError):
+            # We can't parse the HTML, so just strip it.  This is still
+            # better than including generic HTML/CSS text.
+            pass
+        return " ".join(data)
 
     @classmethod
     def should_handle_line(cls, s):
-        return cls.min_line_length <= len(s)
+        return len(s) and cls.min_line_length <= len(s)
 
-    @staticmethod
-    def digest_payloads(msg):
+    @classmethod
+    def digest_payloads(cls, msg):
         for part in msg.walk():
             if part.get_content_maintype() == "text":
-                yield part.get_payload(decode=True)
+                if part.get_content_subtype() == "html":
+                    yield cls.normalize_html_part(
+                        part.get_payload(decode=True))
+                else:
+                    yield part.get_payload(decode=True)
             elif part.is_multipart():
                 # Skip, because walk() will give us the payload next.
                 pass

@@ -19,11 +19,12 @@ Authenticated requests must also have "User", "Time" (timestamp), and "Sig"
 (signature) headers.
 """
 
-from __future__ import division
-
+import sys
 import time
+import socket
 import logging
 import StringIO
+import threading
 import traceback
 import SocketServer
 import email.message
@@ -39,25 +40,53 @@ class Server(SocketServer.UDPServer):
     time_diff_allowance = 180
 
     def __init__(self, address, database, accounts, acl):
+        if ":" in address[0]:
+            Server.address_family = socket.AF_INET6
+        else:
+            Server.address_family = socket.AF_INET
         self.log = logging.getLogger("pyzord")
         self.usage_log = logging.getLogger("pyzord-usage")
         self.database = database
         self.accounts = accounts
         self.acl = acl
         self.log.debug("Listening on %s" % (address,))
-        SocketServer.UDPServer.__init__(self, address, RequestHandler)
+        SocketServer.UDPServer.__init__(self, address, RequestHandler, 
+                                        bind_and_activate=False)
+        try:
+            self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        except (AttributeError, socket.error) as e:
+            self.log.debug("Unable to set IPV6_V6ONLY to false %s", e)
+        self.server_bind()
+        self.server_activate()
 
-    def serve_forever(self):
-        """Process new connections until the program exits."""
-        SocketServer.UDPServer.serve_forever(self)
-
-
-# pylint: disable-msg=R0901
-class ThreadingServer(Server, SocketServer.ThreadingUDPServer):
+class ThreadingServer(SocketServer.ThreadingMixIn, Server):
     """A threaded version of the pyzord server.  Each connection is served
     in a new thread.  This may not be suitable for all database types."""
     pass
 
+class BoundedThreadingServer(ThreadingServer):
+    """Same as ThreadingServer but this also accepts a limited number of 
+    concurrent threads.
+    """
+    def __init__(self, address, database, accounts, acl, max_threads):
+        ThreadingServer.__init__(self, address, database, accounts, acl)
+        self.semaphore = threading.Semaphore(max_threads)
+    
+    def process_request(self, request, client_address):
+        self.semaphore.acquire()
+        ThreadingServer.process_request(self, request, client_address)
+    
+    def process_request_thread(self, request, client_address):
+        ThreadingServer.process_request_thread(self, request, client_address)
+        self.semaphore.release()
+
+class ProcessServer(SocketServer.ForkingMixIn, Server):
+    """A multi-processing version of the pyzord server.  Each connection is 
+    served in a new process. This may not be suitable for all database types.
+    """
+    def __init__(self, address, database, accounts, acl, max_children=40):
+        ProcessServer.max_children = max_children
+        Server.__init__(self, address, database, accounts, acl)
 
 class RequestHandler(SocketServer.DatagramRequestHandler):
     """Handle a single pyzord request."""
@@ -72,16 +101,16 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         self.response["PV"] = "%s" % pyzor.proto_version
         try:
             self._really_handle()
-        except pyzor.UnsupportedVersionError, e:
-            self.handle_error(505, "Version Not Supported: %s" % e)
         except NotImplementedError, e:
             self.handle_error(501, "Not implemented: %s" % e)
+        except pyzor.UnsupportedVersionError, e:
+            self.handle_error(505, "Version Not Supported: %s" % e)
         except pyzor.ProtocolError, e:
             self.handle_error(400, "Bad request: %s" % e)
-        except pyzor.AuthorizationError, e:
-            self.handle_error(401, "Unauthorized: %s" % e)
         except pyzor.SignatureError, e:
-            self.handle_error(401, "Unauthorized, Signature Error: %s" % e)
+            self.handle_error(401, "Unauthorized: Signature Error: %s" % e)
+        except pyzor.AuthorizationError, e:
+            self.handle_error(403, "Forbidden: %s" % e)        
         except Exception, e:
             self.handle_error(500, "Internal Server Error: %s" % e)
             trace = StringIO.StringIO()
@@ -89,7 +118,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
             trace.seek(0)
             self.server.log.error(trace.read())
         self.server.log.debug("Sending: %r" % self.response.as_string())
-        self.wfile.write(self.response.as_string())
+        self.wfile.write(self.response.as_string().encode("utf8"))
 
     def _really_handle(self):
         """handle() without the exception handling."""
@@ -100,7 +129,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # which screws up the RFC5321 format.  Specifically handle that
         # here - this could be removed in time.
         request = email.message_from_string(
-            self.rfile.read().replace("\n\n", "\n") + "\n")
+            self.rfile.read().decode("utf8").replace("\n\n", "\n") + "\n")
 
         # Ensure that the response can be paired with the request.
         self.response["Thread"] = request["Thread"]
@@ -115,6 +144,9 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
             except KeyError:
                 raise pyzor.SignatureError("Unknown user.")
 
+        if "PV" not in request:
+            raise pyzor.ProtocolError("Protocol Version not specified in request")
+
         # The protocol version is compatible if the major number is
         # identical (changes in the minor number are unimportant).
         if int(float(request["PV"])) != int(pyzor.proto_version):
@@ -126,7 +158,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         if opcode not in self.server.acl[user]:
             raise pyzor.AuthorizationError(
                 "User is not authorized to request the operation.")
-        self.server.log.debug("Got a %s command from %s" %
+        self.server.log.debug("Got a %s command from %s" % 
                               (opcode, self.client_address[0]))
 
         # Get a handle to the appropriate method to execute this operation.
@@ -138,14 +170,14 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # Get the existing record from the database (or a blank one if
         # there is no matching record).
         digest = request["Op-Digest"]
-        try:
-            record = self.server.database[digest]
-        except KeyError:
-            record = pyzor.server_engines.Record()
         # Do the requested operation, log what we have done, and return.
         if dispatch:
+            try:
+                record = self.server.database[digest]
+            except KeyError:
+                record = pyzor.server_engines.Record()
             dispatch(self, digest, record)
-        self.server.usage_log.info("%s,%s,%s,%r,%s" %
+        self.server.usage_log.info("%s,%s,%s,%r,%s" % 
                                    (user, self.client_address[0], opcode,
                                     digest, self.response["Code"]))
 
@@ -154,6 +186,15 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         self.server.log.error("%s: %s" % (code, message))
         self.response.replace_header("Code", "%d" % code)
         self.response.replace_header("Diag", message)
+
+    def handle_pong(self, digest, record):
+        """Handle the 'pong' command.
+
+        This command returns maxint for report counts and 0 whitelist.
+        """
+        self.server.log.debug("Request pong for %s" % digest)
+        self.response["Count"] = "%d" % sys.maxint
+        self.response["WL-Count"] = "%d" % 0
 
     def handle_check(self, digest, record):
         """Handle the 'check' command.
@@ -191,7 +232,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         when the digest was first/last seen as spam/ham, and spam/ham
         counts).
         """
-        self.server.log.debug("Request for information about digest %s" %
+        self.server.log.debug("Request for information about digest %s" % 
                               digest)
         def time_output(time_obj):
             """Convert a datetime object to a POSIX timestamp.
@@ -212,6 +253,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         'check' : handle_check,
         'report' : handle_report,
         'ping' : None,
+        'pong' : handle_pong,
         'info' : handle_info,
         'whitelist' : handle_whitelist,
         }

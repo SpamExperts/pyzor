@@ -1,8 +1,0 @@
-[server]
-Port = 9999
-ListenAddress = 127.0.0.1
-AccessFile = access
-PasswdFile = passwd
-
-[client]
-ServersFile = servers

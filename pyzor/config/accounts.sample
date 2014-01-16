@@ -1,0 +1,4 @@
+## This file should contain a list of `host : port : username : salt,key`
+## each on a new line. The salt and key can be generated with genkey command
+## in the pyzor client. Example:
+# 127.0.0.1 : 24441 : alice : d28f86151e80a9accba4a4eba81c460532384cd6,fc7f1cad729b5f3862b2ef192e2d9e0d0d4bd515

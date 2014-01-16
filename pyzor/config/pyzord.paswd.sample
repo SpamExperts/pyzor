@@ -1,0 +1,4 @@
+## This file must contain the username and their keys, so that the recieving 
+## server can verify the user's signature. Example
+# alice : fc7f1cad729b5f3862b2ef192e2d9e0d0d4bd515
+# bob : cf88277c5d4abdc0a3f56f416011966d04a3f462

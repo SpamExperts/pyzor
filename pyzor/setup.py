@@ -1,4 +1,5 @@
 import sys
+import setuptools
 import distutils.core
 
 sys.path.insert(0, 'lib')
@@ -22,5 +23,6 @@ distutils.core.setup( name = 'pyzor',
                       scripts=['scripts/pyzor', 'scripts/pyzord'],
                       package_dir = {'': 'lib'},
                       packages = ['pyzor'],
+                      test_suite="tests.suite",
                       data_files=[('share/doc/pyzor', ['docs/usage.html'])],
                       )

@@ -1,0 +1,5 @@
+## This defines the ACL for each user, by default if a user is not specified 
+## here he is denied all access ( this includes anonymous users). Examples:
+# check report ping pong info whitelist : alice : allow
+# ALL : anonymous : allow
+# whitelist : anonymous : deny

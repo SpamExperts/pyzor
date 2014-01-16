@@ -1,0 +1,3 @@
+## This file should contain a list of pyzor servers to which to direct the 
+## requests. Each address:port on a new line. 
+public.pyzor.org:24441

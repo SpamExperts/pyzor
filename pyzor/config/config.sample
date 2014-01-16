@@ -1,0 +1,79 @@
+## Note that the options that require a file name, must not contain absolute
+## paths. They are relative to the specified --homedir, which defaults to 
+## ~/.pyzor
+
+## All of these options are overridable from the respective command-line 
+## arguments.
+
+## The client section only affects the pyzor client.
+
+[client]
+## The `ServersFile` must contain a newline-separated list of server 
+## addresses to report/whitelist/check with.
+# ServersFile = servers
+
+## The `AccountsFile` file containing information about accounts on servers. 
+# AccountsFile = accounts
+
+## This option specifies the name of the log file.
+# LogFile = pyzor.log
+
+## This options specifies the number of seconds that the pyzor client should
+## wait for a response from the server before timing out.
+# Timeout = 5
+
+## This options specifies the input style of the pyzor client. Current options
+## are:
+##  - msg (individual RFC5321 message) 
+##  - mbox (mbox file of messages)  
+##  - digests (Pyzor digests, one per line)
+# Style = msg
+
+## Thes options specify the threshold for number of reports/whitelists. 
+## According to these thresholds the pyzor client exit code will differ.
+# ReportThreshold = 0
+# WhitelistThreshold = 0
+
+## The server section only affects the pyzord server.
+
+[server]
+## Specifes the port and interface to listen on.
+# Port = 24441
+# ListenAddress = 0.0.0.0
+
+## This option specifies the name of the log file.
+# LogFile    = pyzord.log
+
+## This file must contain the username and their keys 
+# PasswdFile = pyzord.passwd
+
+## This file defines the ACL for the users
+# AccessFile = pyzord.access
+
+## These settings define the storage engine that the pyzord server should use.
+## Example for gdbm (default):
+# Engine = gdbm
+# DigestDB   = pyzord.db
+## Example for mysql:
+# Engine = mysql
+# DigestDB   = localhost,user,passwd,pyzor_db,pyzor_table
+
+## The maximum age of an record, after which it will be removed.
+# CleanupAge = 10368000 # aprox 4 months
+
+## These setting define how and if the pyzord server should use concurrency
+## For multi-threading:
+# Threads = False
+# MaxThreads = 0 # unlimited
+# DBConnections = 0 # new connection for each request
+## For multi-processing:
+# Processes = False
+# MaxProcesses = 40
+
+
+
+
+
+
+
+

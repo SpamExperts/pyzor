@@ -13,21 +13,24 @@ import pyzor
 
 # This is the maximum time between a client signing a Pyzor request and the
 # server checking the signature.
-MAX_TIMESTAMP_DIFFERENCE = 300 # seconds
+MAX_TIMESTAMP_DIFFERENCE = 300  # seconds
 
-def sign_msg(hashed_key, timestamp, msg, hash=hashlib.sha1):
+def sign_msg(hashed_key, timestamp, msg, hash_=hashlib.sha1):
     """Converts the key, timestamp (epoch seconds), and msg into a digest.
 
     lower(H(H(M) + ':' T + ':' + K))
     M is message
-    T is decimal epoch timestamp
+    T is integer epoch timestamp
     K is hashed_key
     H is the hash function (currently SHA1)
     """
-    return hash("%s:%d:%s" % (hash(str(msg)).digest(), timestamp,
-                              hashed_key)).hexdigest().lower()
+    M = msg.as_string().strip().encode("utf8")
+    digest = hash_()
+    digest.update(hash_(M).digest())
+    digest.update((":%d:%s" % (timestamp, hashed_key)).encode("utf8"))
+    return digest.hexdigest().lower()
 
-def hash_key(key, user, hash=hashlib.sha1):
+def hash_key(key, user, hash_=hashlib.sha1):
     """Returns the hash key for this username and password.
 
     lower(H(U + ':' + lower(K)))
@@ -35,7 +38,8 @@ def hash_key(key, user, hash=hashlib.sha1):
     U is username
     H is the hash function (currently SHA1)
     """
-    return hash("%s:%s" % (user, key.lower())).hexdigest().lower()
+    S = ("%s:%s" % (user, key.lower())).encode("utf8")
+    return hash_(S).hexdigest().lower()
 
 def verify_signature(msg, user_key):
     """Verify that the provided message is correctly signed.
@@ -45,16 +49,16 @@ def verify_signature(msg, user_key):
     If the signature is valid, then the function returns normally.
     If the signature is not valid, then a pyzor.SignatureError() exception
     is raised."""
-    timestamp = int(request["Time"])
-    user = request["User"]
-    provided_signature = request["Sig"]
+    timestamp = int(msg["Time"])
+    user = msg["User"]
+    provided_signature = msg["Sig"]
     # Check that this signature is not too old.
     if abs(time.time() - timestamp) > MAX_TIMESTAMP_DIFFERENCE:
-        raise SignatureError("Timestamp not within allowed range.")
+        raise pyzor.SignatureError("Timestamp not within allowed range.")
     # Calculate what the correct signature is.
     hashed_user_key = hash_key(user_key, user)
     # The signature is not part of the message that is signed.
-    del request["Sig"]
+    del msg["Sig"]
     correct_signature = sign_msg(hashed_user_key, timestamp, msg)
     if correct_signature != provided_signature:
         raise pyzor.SignatureError("Invalid signature.")
@@ -72,14 +76,6 @@ def key_from_hexstr(s):
         raise ValueError("Invalid number of parts for key; perhaps you "
                          "forgot the comma at the beginning for the "
                          "salt divider?")
-    if salt:
-        salt = long(salt, 16)
-    else:
-        salt = None
-    if key:
-        key = long(key, 16)
-    else:
-        key = None
     return salt, key
 
 def load_accounts(filename):
@@ -117,4 +113,4 @@ def load_accounts(filename):
                  "the anonymous user.")
     return accounts
 
-AnonymousAccount = Account(pyzor.anonymous_user, None, 0)
+AnonymousAccount = Account(pyzor.anonymous_user, None, "")

@@ -5,24 +5,21 @@ __credits__ = "Tony Meyer, Dreas von Donselaar, all the Pyzor contributors."
 __version__ = "0.7.0"
 
 import os
-import re
-import sys
 import time
 import email
 import random
 import hashlib
-import StringIO
-import tempfile
 import ConfigParser
 import email.message
 
-proto_name     = 'pyzor'
-proto_version  =  2.1
+proto_name = 'pyzor'
+proto_version = 2.1
 
 # We would like to use sha512, but that would mean that all the digests
 # changed, so for now, we stick with sha1 (which is the same as the old
 # sha module).
 sha = hashlib.sha1
+
 
 class CommError(Exception):
     """Something in general went wrong with the transaction."""
@@ -85,7 +82,7 @@ class ThreadedMessage(Message):
         if not self.has_key('Thread'):
             self.set_thread(ThreadId.generate())
         assert self.has_key('Thread')
-        self.setdefault('PV', str(proto_version))
+        self["PV"] = str(proto_version)
         Message.init_for_sending(self)
 
     def ensure_complete(self):
@@ -121,8 +118,8 @@ class MacEnvelope(Message):
 
     def verify_sig(self, user_key):
 
-        user     = self['User']
-        ts       = int(self['Time'])
+        user = self['User']
+        ts = int(self['Time'])
         said_sig = self['Sig']
         hashed_user_key = self.hash_key(user_key, user)
 
@@ -143,18 +140,19 @@ class MacEnvelope(Message):
         env['User'] = user
         env['Time'] = str(ts)
         env['Sig'] = cls.sign_msg(cls.hash_key(key, user), ts, msg)
-        env.fp.write(str(msg))
+        env.set_payload(str(msg))
         return env
 
     @staticmethod
     def hash_msg(msg):
         """returns a digest object"""
-        return sha(str(msg))
+        return sha(str(msg).encode("utf8"))
 
     @staticmethod
     def hash_key(key, user):
         """returns lower(H(U + ':' + lower(hex(K))))"""
-        return sha("%s:%x" % (user, key)).hexdigest().lower()
+        key = ("%s:%x" % (user, key)).encode("utf8")
+        return sha(key).hexdigest().lower()
 
     @classmethod
     def sign_msg(cls, hashed_key, ts, msg):
@@ -167,16 +165,17 @@ class MacEnvelope(Message):
 
         returns a digest object"""
 
-        h_msg = cls.hash_msg(msg)
-        return sha("%s:%d:%s" % (h_msg.digest(), ts,
-                                 hashed_key)).hexdigest().lower()
+        digest = sha()
+        digest.update(cls.hash_msg(msg).digest())
+        digest.update((":%d:%s" % (ts, hashed_key)).encode("utf8"))
+        return digest.hexdigest().lower()
 
 
 class Response(ThreadedMessage):
     ok_code = 200
 
     def ensure_complete(self):
-        if not(self.has_key('Code') and self.has_key('Diag')):
+        if not (self.has_key('Code') and self.has_key('Diag')):
             raise IncompleteMessageError(
                 "doesn't have fields for a Response")
         ThreadedMessage.ensure_complete(self)
@@ -191,7 +190,7 @@ class Response(ThreadedMessage):
         return self['Diag']
 
     def head_tuple(self):
-        return (self.get_code(), self.get_diag())
+        return self.get_code(), self.get_diag()
 
 
 class Request(ThreadedMessage):
@@ -212,7 +211,7 @@ class Request(ThreadedMessage):
 class ClientSideRequest(Request):
     def setup(self):
         Request.setup(self)
-        self.setdefault('Op', self.op)
+        self["Op"] = self.op
 
 
 class PingRequest(ClientSideRequest):
@@ -226,7 +225,11 @@ class ShutdownRequest(ClientSideRequest):
 class SimpleDigestBasedRequest(ClientSideRequest):
     def __init__(self, digest):
         ClientSideRequest.__init__(self)
-        self.setdefault('Op-Digest', digest)
+        self["Op-Digest"] = digest
+
+
+class PongRequest(SimpleDigestBasedRequest):
+    op = "pong"
 
 
 class CheckRequest(SimpleDigestBasedRequest):
@@ -240,7 +243,9 @@ class InfoRequest(SimpleDigestBasedRequest):
 class SimpleDigestSpecBasedRequest(SimpleDigestBasedRequest):
     def __init__(self, digest, spec):
         SimpleDigestBasedRequest.__init__(self, digest)
-        self.setdefault('Op-Spec',   netstring(spec))
+        flat_spec = []
+        [flat_spec.extend(part) for part in spec]
+        self["Op-Spec"] = ",".join(str(part) for part in flat_spec)
 
 
 class ReportRequest(SimpleDigestSpecBasedRequest):
@@ -254,27 +259,28 @@ class WhitelistRequest(SimpleDigestSpecBasedRequest):
 class ErrorResponse(Response):
     def __init__(self, code, s):
         Response.__init__(self)
-        self.setdefault('Code', str(code))
-        self.setdefault('Diag', s)
+        self["Code"] = str(code)
+        self["Diag"] = s
 
 
 class ThreadId(int):
     # (0, 1024) is reserved
-    full_range  = (0, 2**16)
-    ok_range    = (1024, full_range[1])
+    full_range = (0, 2 ** 16)
+    ok_range = (1024, full_range[1])
     error_value = 0
 
-    def __init__(self, i):
-        int.__init__(self, i)
-        if not (self.full_range[0] <= self < self.full_range[1]):
+    def __new__(cls, i):
+        self = int.__new__(cls, i)
+        if not (cls.full_range[0] <= self < cls.full_range[1]):
             raise ValueError("value outside of range")
+        return self
 
     @classmethod
     def generate(cls):
-        return cls(random.randrange(cls.ok_range))
+        return cls(random.randrange(*cls.ok_range))
 
     def in_ok_range(self):
-        return (self >= self.ok_range[0] and self < self.ok_range[1])
+        return self.ok_range[0] <= self < self.ok_range[1]
 
 
 class Config(ConfigParser.ConfigParser):
@@ -289,6 +295,7 @@ class Config(ConfigParser.ConfigParser):
             fn = os.path.join(self.homedir, fn)
         return fn
 
+
 def get_homedir(specified):
     homedir = os.path.join('/etc', 'pyzor')
     if specified is not None:
@@ -298,5 +305,6 @@ def get_homedir(specified):
         if userhome is not None:
             homedir = os.path.join(userhome, '.pyzor')
     return homedir
+
 
 anonymous_user = 'anonymous'
