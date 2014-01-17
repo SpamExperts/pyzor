@@ -7,9 +7,11 @@ import test_server
 import test_server_engines
 
 import test_account_functional
+import test_digest_functional
 import test_mysql_functional
 import test_gdbm_functional
 import test_pyzor_functional
+
 
 def suite():
     """Gather all the tests from this module in a test suite."""    
@@ -20,6 +22,7 @@ def suite():
     test_suite.addTest(test_server.suite())
     test_suite.addTest(test_server_engines.suite())
     test_suite.addTest(test_account_functional.suite())
+    test_suite.addTest(test_digest_functional.suite())
     test_suite.addTest(test_mysql_functional.suite())
     test_suite.addTest(test_gdbm_functional.suite())
     test_suite.addTest(test_pyzor_functional.suite())
