@@ -80,7 +80,7 @@ class PyzorPreDigestTest(PyzorTestBase):
                   "t.@abc.ro",
                   ]
         message = "Test %s Test2"
-        expected = "TestTest2\n"
+        expected = b"TestTest2\n"
         for email in emails:
             msg = message % email
             res = self.check_pyzor("predigest", None, input=TEXT % msg)
@@ -92,7 +92,7 @@ class PyzorPreDigestTest(PyzorTestBase):
                    "3sddkf9jdkd9",
                    "@@#@@@@@@@@@"]
         message = "Test %s Test2"
-        expected = "TestTest2\n"
+        expected = b"TestTest2\n"
         for s in strings:
             msg = message % s
             res = self.check_pyzor("predigest", None, input=TEXT % msg)
@@ -103,14 +103,14 @@ class PyzorPreDigestTest(PyzorTestBase):
         msg = "This line is included\n"\
               "not this\n"\
               "This also"
-        expected = "Thislineisincluded\nThisalso\n"
+        expected = b"Thislineisincluded\nThisalso\n"
         res = self.check_pyzor("predigest", None, input=TEXT % msg)
         self.assertEqual(res, expected)
         
     def test_predigest_atomic(self):
         """Test atomic messages (lines <= 4) in the predigest process"""
         msg = "All this message\nShould be included\nIn the predigest"
-        expected = "Allthismessage\nShouldbeincluded\nInthepredigest\n"
+        expected = b"Allthismessage\nShouldbeincluded\nInthepredigest\n"
         res = self.check_pyzor("predigest", None, input=TEXT % msg)
         self.assertEqual(res, expected)
     
@@ -119,9 +119,9 @@ class PyzorPreDigestTest(PyzorTestBase):
         msg = ""
         for i in range(100):
             msg += "Line%d test test test\n" % i
-        expected = ""
+        expected = b""
         for i in [20, 21, 22, 60, 61, 62]:
-            expected += "Line%dtesttesttest\n" % i
+            expected += ("Line%dtesttesttest\n" % i).encode("utf8")
         res = self.check_pyzor("predigest", None, input=TEXT % msg)
         self.assertEqual(res, expected)
 
@@ -132,7 +132,7 @@ byemail.Clickingonlinksinspamemailmaysendusersto
 byemail.Clickingonlinksinspamemailmaysendusersto
 phishingwebsitesorsitesthatarehostingmalware.
 Emailspam.Emailspam,alsoknownasjunkemailorbulkemail,isasubsetofspaminvolvingnearlyidenticalmessagessenttonumerousbyemail.Clickingonlinksinspamemailmaysenduserstophishingwebsitesorsitesthatarehostingmalware.
-"""
+""".encode("utf8")
         res = self.check_pyzor("predigest", None, input=HTML_TEXT)
         self.assertEqual(res, expected)
         
@@ -156,11 +156,12 @@ class PyzorDigestTest(PyzorTestBase):
                   "t.@abc.ro",
                   ]
         message = "Test %s Test2"
-        expected = "TestTest2"
+        expected = b"TestTest2"
         for email in emails:
             msg = message % email
             res = self.check_pyzor("digest", None, input=TEXT % msg)
-            self.assertEqual(res, hashlib.sha1(expected).hexdigest().lower() + "\n")
+            self.assertEqual(res.decode("utf8"), 
+                             hashlib.sha1(expected).hexdigest().lower() + "\n")
     
     def test_digest_long(self):
         """Test long "words" removal in the digest process"""
@@ -168,38 +169,42 @@ class PyzorDigestTest(PyzorTestBase):
                    "3sddkf9jdkd9",
                    "@@#@@@@@@@@@"]
         message = "Test %s Test2"
-        expected = "TestTest2"
+        expected = b"TestTest2"
         for s in strings:
             msg = message % s
             res = self.check_pyzor("digest", None, input=TEXT % msg)
-            self.assertEqual(res, hashlib.sha1(expected).hexdigest().lower() + "\n")
+            self.assertEqual(res.decode("utf8"), 
+                             hashlib.sha1(expected).hexdigest().lower() + "\n")
     
     def test_digest_line_length(self):
         """Test small lines removal in the digest process"""
         msg = "This line is included\n"\
               "not this\n"\
               "This also"
-        expected = "ThislineisincludedThisalso"
+        expected = b"ThislineisincludedThisalso"
         res = self.check_pyzor("digest", None, input=TEXT % msg)
-        self.assertEqual(res, hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(res.decode("utf8"), 
+                         hashlib.sha1(expected).hexdigest().lower() + "\n")
         
     def test_digest_atomic(self):
         """Test atomic messages (lines <= 4) in the digest process"""
         msg = "All this message\nShould be included\nIn the digest"
-        expected = "AllthismessageShouldbeincludedInthedigest"
+        expected = b"AllthismessageShouldbeincludedInthedigest"
         res = self.check_pyzor("digest", None, input=TEXT % msg)
-        self.assertEqual(res, hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(res.decode("utf8"), 
+                         hashlib.sha1(expected).hexdigest().lower() + "\n")
     
     def test_digest_pieced(self):
         """Test pieced messages (lines > 4) in the digest process"""
         msg = ""
         for i in range(100):
             msg += "Line%d test test test\n" % i
-        expected = ""
+        expected = b""
         for i in [20, 21, 22, 60, 61, 62]:
-            expected += "Line%dtesttesttest" % i
+            expected += ("Line%dtesttesttest" % i).encode("utf8")
         res = self.check_pyzor("digest", None, input=TEXT % msg)
-        self.assertEqual(res, hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(res.decode("utf8"), 
+                         hashlib.sha1(expected).hexdigest().lower() + "\n")
 
     def test_digest_html(self):
         expected = """Emailspam,alsoknownasjunkemailorbulkemail,isasubset
@@ -208,9 +213,10 @@ byemail.Clickingonlinksinspamemailmaysendusersto
 byemail.Clickingonlinksinspamemailmaysendusersto
 phishingwebsitesorsitesthatarehostingmalware.
 Emailspam.Emailspam,alsoknownasjunkemailorbulkemail,isasubsetofspaminvolvingnearlyidenticalmessagessenttonumerousbyemail.Clickingonlinksinspamemailmaysenduserstophishingwebsitesorsitesthatarehostingmalware.
-""".replace("\n", "")
+""".replace("\n", "").encode("utf8")
         res = self.check_pyzor("digest", None, input=HTML_TEXT)
-        self.assertEqual(res, hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(res.decode("utf8"), 
+                         hashlib.sha1(expected).hexdigest().lower() + "\n")
 
 def suite():
     """Gather all the tests from this module in a test suite."""

@@ -103,7 +103,7 @@ class DataDigester(object):
         data = []
         stripper = HTMLStripper(data)
         try:
-            stripper.feed(s)
+            stripper.feed(s.decode("utf8"))
         except (UnicodeDecodeError, HTMLParser.HTMLParseError):
             # We can't parse the HTML, so just strip it.  This is still
             # better than including generic HTML/CSS text.
@@ -120,7 +120,7 @@ class DataDigester(object):
             if part.get_content_maintype() == "text":
                 if part.get_content_subtype() == "html":
                     yield cls.normalize_html_part(
-                        part.get_payload(decode=True))
+                        part.get_payload(decode=True)).encode("utf8")
                 else:
                     yield part.get_payload(decode=True)
             elif part.is_multipart():
