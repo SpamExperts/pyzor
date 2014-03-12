@@ -315,6 +315,8 @@ def genkey(client, servers, config, hash_func=hashlib.sha1):
     # pylint: disable-msg=W0612
     salt = "".join([chr(random.randint(0, 255))
                     for unused in xrange(hash_func(b"").digest_size)])
+    if sys.version_info >= (3, 0):
+        salt = salt.encode("utf8")
     salt_digest = hash_func(salt)
     pass_digest = hash_func(salt_digest.digest())
     pass_digest.update(password.encode("utf8"))

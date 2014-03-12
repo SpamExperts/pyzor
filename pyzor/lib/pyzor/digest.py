@@ -53,7 +53,7 @@ class DataDigester(object):
         # Need to know the total number of lines in the content.
         lines = []
         for payload in self.digest_payloads(msg):
-            payload = payload.decode("utf8") 
+            payload = payload.decode("utf8")
             for line in payload.splitlines():
                 norm = self.normalize(line)
                 if self.should_handle_line(norm):
@@ -128,7 +128,7 @@ class DataDigester(object):
                 pass
             else:
                 # Non-text parts are passed through as-is.
-                yield part.get_payload()
+                yield part.get_payload().encode("utf8")
 
 
 class PrintingDataDigester(DataDigester):
