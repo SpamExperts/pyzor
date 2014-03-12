@@ -1,3 +1,22 @@
+Noteworthy changes in 0.6.0
+-----------------------------------------------------------------
+	*	pyzor and pyzord will now work with Python3.3 (if 
+		the the 2to3-3.3 is previously ran)
+
+	*	pyzord and pyzor now supports IPv6 
+
+	*	Improved handling of multi-threading (signals where 
+		again removed) for the mysql engine
+	
+	* 	Introduced multi-processing capabilities
+
+	* 	Improved HTML parsing
+	
+	*	Introduced self document sample configurations
+	
+	* 	Greatly improved tests coverage
+
+
 Noteworthy changes in 0.5.0
 -----------------------------------------------------------------
 

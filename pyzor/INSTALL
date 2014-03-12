@@ -1,4 +1,4 @@
-Pyzor requires at least Python 2.5
+Pyzor requires at least Python 2.6
 
 To install this distribution, simply run the following:
 	python setup.py build
@@ -34,6 +34,14 @@ The gdbm module is available at:
 		(not sure of the precise procedure for simply installing
 		the gdbm module; try stealing the FreeBSD setup.py patchfile
 		in their ports).
+
+Pyzor also works with Python3.3, but the 2to3 tool must first be ran. To install
+pyzor with Python3.3 simply run the following:
+	2to3-3.3 -w . ./scripts/pyzor ./scripts/pyzord
+	python3.3 setup.py build
+	python3.3 setup.py install
+
+Note that the MySQLdb library does not currently support Python3.
 
 See docs/usage.html for usage documentation, and if you are upgrading
 from another version of Pyzor, please read the UPGRADING file.
