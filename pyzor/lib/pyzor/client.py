@@ -66,6 +66,10 @@ import pyzor.account
 
 sha = pyzor.sha
 
+if not hasattr(email, "message_from_bytes"):
+    # for python2.6
+    email.message_from_bytes = email.message_from_string
+
 class Client(object):
     timeout = 5
     max_packet_size = 8192
@@ -162,8 +166,7 @@ class Client(object):
                                   % e)
 
         self.log.debug("received: %r" % packet)
-        msg = email.message_from_string(packet.decode("utf8"),
-                                        _class=pyzor.Response)
+        msg = email.message_from_bytes(packet, _class=pyzor.Response)
         msg.ensure_complete()
         try:
             thread_id = msg.get_thread()

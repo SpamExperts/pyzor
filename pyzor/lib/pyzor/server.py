@@ -33,6 +33,10 @@ import pyzor
 import pyzor.account
 import pyzor.server_engines
 
+if not hasattr(email, "message_from_bytes"):
+    # for python2.6
+    email.message_from_bytes = email.message_from_string
+
 class Server(SocketServer.UDPServer):
     """The pyzord server.  Handles incoming UDP connections in a single
     thread and single process."""
@@ -128,8 +132,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # Old versions of the client sent a double \n after the signature,
         # which screws up the RFC5321 format.  Specifically handle that
         # here - this could be removed in time.
-        request = email.message_from_string(
-            self.rfile.read().decode("utf8").replace("\n\n", "\n") + "\n")
+        request = email.message_from_bytes(
+            self.rfile.read().replace(b"\n\n", b"\n") + b"\n")
 
         # Ensure that the response can be paired with the request.
         self.response["Thread"] = request["Thread"]
