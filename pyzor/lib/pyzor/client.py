@@ -162,7 +162,7 @@ class Client(object):
             raise pyzor.TimeoutError("Reading response timed-out.")
         except socket.error as e:
             sock.close()
-            raise pyzor.CommError("Socket error while reading response: %s" 
+            raise pyzor.CommError("Socket error while reading response: %s"
                                   % e)
 
         self.log.debug("received: %r" % packet)
@@ -173,9 +173,9 @@ class Client(object):
             if thread_id != expected_id:
                 if thread_id.in_ok_range():
                     raise pyzor.ProtocolError(
-                        "received unexpected thread id %d (expected %d)" % 
+                        "received unexpected thread id %d (expected %d)" %
                         (thread_id, expected_id))
-                self.log.warn("received error thread id %d (expected %d)" % 
+                self.log.warn("received error thread id %d (expected %d)" %
                               (thread_id, expected_id))
         except KeyError:
             self.log.warn("no thread id received")
@@ -215,7 +215,7 @@ class ClientRunner(object):
 class CheckClientRunner(ClientRunner):
     # the number of wl-count it takes for the normal
     # count to be overriden
-    
+
     def __init__(self, routine, r_count=0, wl_count=0):
         ClientRunner.__init__(self, routine)
         self.r_count_found = r_count

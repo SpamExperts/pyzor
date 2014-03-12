@@ -30,7 +30,7 @@ except ImportError:
     MySQLdb = None
 
 database_classes = {}
-DBHandle = namedtuple("DBHandle", ["single_threaded", 
+DBHandle = namedtuple("DBHandle", ["single_threaded",
                                    "multi_threaded",
                                    "multi_processing"])
 
@@ -145,7 +145,7 @@ class GdbmDBHandle(object):
         key = self.db.firstkey()
         breakpoint = time.time() - self.max_age
         while key is not None:
-            rec = self._really_getitem(key)            
+            rec = self._really_getitem(key)
             delkey = None
             if int(time.mktime(rec.r_updated.timetuple())) < breakpoint:
                 self.log.debug("deleting key %s" % key)
@@ -166,7 +166,7 @@ class GdbmDBHandle(object):
         try:
             s = s.decode("utf8")
         except UnicodeError:
-            raise StandardError("don't know how to handle db value %s" % 
+            raise StandardError("don't know how to handle db value %s" %
                                 repr(s))
         parts = s.split(',')
         dispatch = None
@@ -176,7 +176,7 @@ class GdbmDBHandle(object):
         elif version == '1':
             dispatch = cls.decode_record_1
         else:
-            raise StandardError("don't know how to handle db value %s" % 
+            raise StandardError("don't know how to handle db value %s" %
                                 repr(s))
         return dispatch(s)
 
@@ -194,10 +194,10 @@ class GdbmDBHandle(object):
     def decode_record_1(cls, s):
         r = Record()
         parts = s.split(',')[1:]
-        assert len(parts) == len(cls.fields)               
+        assert len(parts) == len(cls.fields)
         for part, field in zip(parts, cls._fields):
             f, decode = field
-            setattr(r, f, decode(part))        
+            setattr(r, f, decode(part))
         return r
 
 class ThreadedGdbmDBHandle(GdbmDBHandle):
@@ -206,21 +206,21 @@ class ThreadedGdbmDBHandle(GdbmDBHandle):
     def __init__(self, fn, mode, max_age=None, bound=None):
         self.db_lock = threading.Lock()
         GdbmDBHandle.__init__(self, fn, mode, max_age=max_age)
-    
+
     def apply_method(self, method, varargs=(), kwargs=None):
         if kwargs is None:
             kwargs = {}
         with self.db_lock:
             return GdbmDBHandle.apply_method(self, method, varargs=varargs,
                                              kwargs=kwargs)
-# This won't work because the gdbm object needs to be in shared memory of the 
+# This won't work because the gdbm object needs to be in shared memory of the
 # spawned processes.
 # class ProcessGdbmDBHandle(ThreadedGdbmDBHandle):
 #     def __init__(self, fn, mode, max_age=None, bound=None):
-#         ThreadedGdbmDBHandle.__init__(self, fn, mode, max_age=max_age, 
+#         ThreadedGdbmDBHandle.__init__(self, fn, mode, max_age=max_age,
 #                                       bound=bound)
 #         self.db_lock = multiprocessing.Lock()
-        
+
 database_classes["gdbm"] = DBHandle(single_threaded=GdbmDBHandle,
                                     multi_threaded=ThreadedGdbmDBHandle,
                                     multi_processing=None)
@@ -269,15 +269,15 @@ class MySQLDBHandle(object):
     def _check_reconnect_time(self):
         if time.time() - self.last_connect_attempt < self.reconnect_period:
             # Too soon to reconnect.
-            self.log.debug("Can't reconnect until %s" % 
-                           (time.ctime(self.last_connect_attempt + 
+            self.log.debug("Can't reconnect until %s" %
+                           (time.ctime(self.last_connect_attempt +
                                        self.reconnect_period),))
             return False
         return True
 
     def reconnect(self):
         if not self._check_reconnect_time():
-            return        
+            return
         if self.db:
             try:
                 self.db.close()
@@ -327,7 +327,7 @@ class MySQLDBHandle(object):
         # The order here must match the order of the arguments to the
         # Record constructor.
         c.execute("SELECT r_count, wl_count, r_entered, r_updated, "
-                  "wl_entered, wl_updated FROM %s WHERE digest=%%s" % 
+                  "wl_entered, wl_updated FROM %s WHERE digest=%%s" %
                   self.table_name, (key,))
         try:
             try:
@@ -366,12 +366,12 @@ class MySQLDBHandle(object):
 
     def start_reorganizing(self):
         self.log.debug("reorganizing the database")
-        breakpoint = (datetime.datetime.now() - 
+        breakpoint = (datetime.datetime.now() -
                       datetime.timedelta(seconds=self.max_age))
-        db = self._get_new_connection()        
+        db = self._get_new_connection()
         c = db.cursor()
         try:
-            c.execute("DELETE FROM %s WHERE r_updated<%%s" % 
+            c.execute("DELETE FROM %s WHERE r_updated<%%s" %
                       self.table_name, (breakpoint,))
         except (MySQLdb.Error, AttributeError), e:
             self.log.warn("Unable to reorganise: %s" % (e,))
@@ -383,7 +383,7 @@ class MySQLDBHandle(object):
         self.reorganize_timer.start()
 
 class ThreadedMySQLDBHandle(MySQLDBHandle):
-    
+
     def __init__(self, fn, mode, max_age=None, bound=None):
         self.bound = bound
         if self.bound:
@@ -401,7 +401,7 @@ class ThreadedMySQLDBHandle(MySQLDBHandle):
             self.db_queue.put(db)
         else:
             db.close()
-    
+
     def _safe_call(self, name, method, args):
         db = self._get_connection()
         try:
@@ -416,17 +416,17 @@ class ThreadedMySQLDBHandle(MySQLDBHandle):
                 return method(*args, db=db)
             except (MySQLdb.Error, AttributeError) as e:
                 # attempt a new connection, if we can retry
-                db = self._reconnect(db) 
-                raise DatabaseError("Database temporarily unavailable.")            
+                db = self._reconnect(db)
+                raise DatabaseError("Database temporarily unavailable.")
         finally:
             self._release_connection(db)
-    
+
     def reconnect(self):
         if not self.bound:
             return
         for _ in xrange(self.bound):
             self.db_queue.put(self._get_new_connection())
-    
+
     def _reconnect(self, db):
         if not self._check_reconnect_time():
             return db
@@ -436,7 +436,7 @@ class ThreadedMySQLDBHandle(MySQLDBHandle):
 
     def __del__(self):
         if not self.bound:
-            return        
+            return
         for db in iter(self.db_queue.get_nowait):
             try:
                 db.close()
@@ -448,14 +448,14 @@ class ThreadedMySQLDBHandle(MySQLDBHandle):
 class ProcessMySQLDBHandle(MySQLDBHandle):
     def __init__(self, fn, mode, max_age=None):
         MySQLDBHandle.__init__(self, fn, mode, max_age=max_age)
-    
+
     def reconnect(self):
         pass
-    
+
     def __del__(self):
         pass
-    
-    def _safe_call(self, name, method, args):        
+
+    def _safe_call(self, name, method, args):
         db = None
         try:
             db = self._get_new_connection()
@@ -466,7 +466,7 @@ class ProcessMySQLDBHandle(MySQLDBHandle):
         finally:
             if db is not None:
                 db.close()
-            
+
 database_classes["mysql"] = DBHandle(single_threaded=MySQLDBHandle,
                                      multi_threaded=ThreadedMySQLDBHandle,
                                      multi_processing=ProcessMySQLDBHandle)

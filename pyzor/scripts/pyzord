@@ -76,13 +76,13 @@ def load_access_file(access_fn, accounts):
             users = [user.strip() for user in users.split()]
         for user in users:
             if allowed:
-                log.debug("Granting %s to %s." % 
+                log.debug("Granting %s to %s." %
                           (",".join(operations), user))
                 # If these operations are already allowed, this will have
                 # no effect.
                 acl[user].update(operations)
             else:
-                log.debug("Revoking %s from %s." % 
+                log.debug("Revoking %s from %s." %
                           (",".join(operations), user))
                 # If these operations are not allowed yet, this will have
                 # no effect.
@@ -274,7 +274,7 @@ def main():
     acl = load_access_file(access_fn, accounts)
     address = (config.get("server", "ListenAddress"),
                int(config.get("server", "port")))
-    
+
     engine = config.get("server", "Engine")
     # Open the database connection.
     database_classes = pyzor.server_engines.database_classes[engine]
@@ -286,7 +286,7 @@ def main():
         sys.exit(1)
 
     # We prefer to use the threaded server, but some database engines
-    # cannot handle it.    
+    # cannot handle it.
     if use_threads and database_classes.multi_threaded:
         database_class = database_classes.multi_threaded
     elif use_processes and database_classes.multi_processing:
@@ -295,20 +295,20 @@ def main():
         use_threads = False
         use_processes = False
         database_class = database_classes.single_threaded
-    
+
     # If the DSN is a filename, then we make it absolute.
     db_file = config.get("server", "DigestDB")
     if database_class.absolute_source:
         db_file = os.path.expanduser(db_file)
         if not os.path.isabs(db_file):
             db_file = os.path.join(options.homedir, db_file)
-    
+
     cleanup_age = int(config.get("server", "CleanupAge"))
-    
+
     if use_threads:
         max_threads = int(config.get("server", "MaxThreads"))
-        bound = int(config.get("server", "DBConnections"))      
-        
+        bound = int(config.get("server", "DBConnections"))
+
         database = database_class(db_file, "c", cleanup_age, bound)
         if max_threads == 0:
             logger.info("Starting multi-threaded pyzord server.")
@@ -328,10 +328,10 @@ def main():
         server = pyzor.server.ProcessServer(address, database, accounts, acl,
                                             max_children)
     else:
-        database = database_class(db_file, "c", cleanup_age)  
+        database = database_class(db_file, "c", cleanup_age)
         logger.info("Starting pyzord server.")
         server = pyzor.server.Server(address, database, accounts, acl)
-    # Start listening.    
+    # Start listening.
     server.serve_forever()
 
 if __name__ == "__main__":
