@@ -24,5 +24,4 @@ distutils.core.setup(name='pyzor',
                      package_dir={'': 'lib'},
                      packages=['pyzor'],
                      test_suite="tests.suite",
-                     data_files=[('share/doc/pyzor', ['docs/usage.html'])],
                      )
