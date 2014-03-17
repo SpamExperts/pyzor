@@ -14,6 +14,9 @@ Noteworthy changes in 0.6.0
 	
 	*	Introduced self document sample configurations
 	
+	*   Introduced ability to set custom report/whitelist thresholds for the 
+	    pyzor client
+	
 	* 	Greatly improved tests coverage
 
 
