@@ -48,7 +48,8 @@ def load_access_file(access_fn, accounts):
     if not os.path.exists(access_fn):
         log.info("Using default ACL: the anonymous user may use the check, "
                  "report, ping and info commands.")
-        acl[pyzor.anonymous_user] = {"check", "report", "ping", "pong", "info"}
+        acl[pyzor.anonymous_user] = set(("check", "report", "ping", "pong", 
+                                         "info"))
         return acl
     for line in open(access_fn):
         if not line.strip() or line[0] == "#":
