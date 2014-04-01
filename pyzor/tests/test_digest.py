@@ -44,10 +44,10 @@ class PreDigestTests(unittest.TestCase):
         self.lines = []
         
         def mock_digest_paylods(c, message):
-            yield message
+            yield message.decode("utf8")
     
         def mock_handle_line(s, line):
-            self.lines.append(line)
+            self.lines.append(line.decode("utf8"))
             
         self.real_digest_payloads = DataDigester.digest_payloads
         self.real_handle_line = DataDigester.handle_line
@@ -167,7 +167,7 @@ class DigestTests(unittest.TestCase):
         self.lines = []
         
         def mock_digest_paylods(c, message):
-            yield message
+            yield message.decode("utf8")
             
         self.real_digest_payloads = DataDigester.digest_payloads
         DataDigester.digest_payloads = mock_digest_paylods
