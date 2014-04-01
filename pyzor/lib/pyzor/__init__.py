@@ -2,7 +2,7 @@
 
 __author__ = "Frank J. Tobin, ftobin@neverending.org"
 __credits__ = "Tony Meyer, Dreas von Donselaar, all the Pyzor contributors."
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 import os
 import time
