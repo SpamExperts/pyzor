@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import sys
 import hashlib
 import unittest
@@ -585,7 +586,7 @@ QmCC
 --f46d040a62c49bb1c804f027e8cc--"""
 
 class PyzorPreDigestTest(PyzorTestBase):
-    # we don't need the pyzord server to test this 
+    # we don't need the pyzord server to test this
     @classmethod
     def setUpClass(cls):
         pass
@@ -609,7 +610,7 @@ class PyzorPreDigestTest(PyzorTestBase):
             msg = message % email
             res = self.check_pyzor("predigest", None, input=TEXT % msg)
             self.assertEqual(res, expected)
-    
+
     def test_predigest_long(self):
         """Test long "words" removal in the predigest process"""
         strings = ["0A2D3f%a#S",
@@ -621,7 +622,7 @@ class PyzorPreDigestTest(PyzorTestBase):
             msg = message % s
             res = self.check_pyzor("predigest", None, input=TEXT % msg)
             self.assertEqual(res, expected)
-    
+
     def test_predigest_line_length(self):
         """Test small lines removal in the predigest process"""
         msg = "This line is included\n"\
@@ -630,14 +631,14 @@ class PyzorPreDigestTest(PyzorTestBase):
         expected = b"Thislineisincluded\nThisalso\n"
         res = self.check_pyzor("predigest", None, input=TEXT % msg)
         self.assertEqual(res, expected)
-        
+
     def test_predigest_atomic(self):
         """Test atomic messages (lines <= 4) in the predigest process"""
         msg = "All this message\nShould be included\nIn the predigest"
         expected = b"Allthismessage\nShouldbeincluded\nInthepredigest\n"
         res = self.check_pyzor("predigest", None, input=TEXT % msg)
         self.assertEqual(res, expected)
-    
+
     def test_predigest_pieced(self):
         """Test pieced messages (lines > 4) in the predigest process"""
         msg = ""
@@ -659,14 +660,14 @@ Emailspam.Emailspam,alsoknownasjunkemailorbulkemail,isasubsetofspaminvolvingnear
 """.encode("utf8")
         res = self.check_pyzor("predigest", None, input=HTML_TEXT)
         self.assertEqual(res, expected)
-        
+
     def test_predigest_attachemnt(self):
         expected = b"Thisisatestmailing\n"
         res = self.check_pyzor("predigest", None, input=TEXT_ATTACHMENT)
         self.assertEqual(res, expected)
-        
+
 class PyzorDigestTest(PyzorTestBase):
-    # we don't need the pyzord server to test this 
+    # we don't need the pyzord server to test this
     @classmethod
     def setUpClass(cls):
         pass
@@ -689,9 +690,9 @@ class PyzorDigestTest(PyzorTestBase):
         for email in emails:
             msg = message % email
             res = self.check_pyzor("digest", None, input=TEXT % msg)
-            self.assertEqual(res.decode("utf8"), 
+            self.assertEqual(res.decode("utf8"),
                              hashlib.sha1(expected).hexdigest().lower() + "\n")
-    
+
     def test_digest_long(self):
         """Test long "words" removal in the digest process"""
         strings = ["0A2D3f%a#S",
@@ -702,9 +703,9 @@ class PyzorDigestTest(PyzorTestBase):
         for s in strings:
             msg = message % s
             res = self.check_pyzor("digest", None, input=TEXT % msg)
-            self.assertEqual(res.decode("utf8"), 
+            self.assertEqual(res.decode("utf8"),
                              hashlib.sha1(expected).hexdigest().lower() + "\n")
-    
+
     def test_digest_line_length(self):
         """Test small lines removal in the digest process"""
         msg = "This line is included\n"\
@@ -712,17 +713,17 @@ class PyzorDigestTest(PyzorTestBase):
               "This also"
         expected = b"ThislineisincludedThisalso"
         res = self.check_pyzor("digest", None, input=TEXT % msg)
-        self.assertEqual(res.decode("utf8"), 
+        self.assertEqual(res.decode("utf8"),
                          hashlib.sha1(expected).hexdigest().lower() + "\n")
-        
+
     def test_digest_atomic(self):
         """Test atomic messages (lines <= 4) in the digest process"""
         msg = "All this message\nShould be included\nIn the digest"
         expected = b"AllthismessageShouldbeincludedInthedigest"
         res = self.check_pyzor("digest", None, input=TEXT % msg)
-        self.assertEqual(res.decode("utf8"), 
+        self.assertEqual(res.decode("utf8"),
                          hashlib.sha1(expected).hexdigest().lower() + "\n")
-    
+
     def test_digest_pieced(self):
         """Test pieced messages (lines > 4) in the digest process"""
         msg = ""
@@ -732,7 +733,7 @@ class PyzorDigestTest(PyzorTestBase):
         for i in [20, 21, 22, 60, 61, 62]:
             expected += ("Line%dtesttesttest" % i).encode("utf8")
         res = self.check_pyzor("digest", None, input=TEXT % msg)
-        self.assertEqual(res.decode("utf8"), 
+        self.assertEqual(res.decode("utf8"),
                          hashlib.sha1(expected).hexdigest().lower() + "\n")
 
     def test_digest_html(self):
@@ -744,35 +745,72 @@ phishingwebsitesorsitesthatarehostingmalware.
 Emailspam.Emailspam,alsoknownasjunkemailorbulkemail,isasubsetofspaminvolvingnearlyidenticalmessagessenttonumerousbyemail.Clickingonlinksinspamemailmaysenduserstophishingwebsitesorsitesthatarehostingmalware.
 """.replace("\n", "").encode("utf8")
         res = self.check_pyzor("digest", None, input=HTML_TEXT)
-        self.assertEqual(res.decode("utf8"), 
+        self.assertEqual(res.decode("utf8"),
                          hashlib.sha1(expected).hexdigest().lower() + "\n")
 
     def test_digest_attachemnt(self):
         expected = b"Thisisatestmailing"
         res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT)
-        self.assertEqual(res.decode("utf8"), 
+        self.assertEqual(res.decode("utf8"),
                          hashlib.sha1(expected).hexdigest().lower() + "\n")
+
+
+ENCODING_TEST_EMAIL = """From nobody Tue Apr  1 13:18:54 2014
+Content-Type: multipart/related;
+ boundary="===============0632694142025794937=="
+MIME-Version: 1.0
+
+This is a multi-part message in MIME format.
+--===============0632694142025794937==
+Content-Type: text/plain; charset="iso-8859-1"
+MIME-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
+
+Thist is a t=E9st
+--===============0632694142025794937==
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+
+VGhpcyBpcyBhIHRlc3Qg5r+A5YWJ6YCZ
+
+--===============0632694142025794937==
+MIME-Version: 1.0
+Content-Type: text/plain; charset="cp1258"
+Content-Transfer-Encoding: base64
+
+VGhpcyBpcyBhIHTpc3Qg4qXG
+
+--===============0632694142025794937==--
+
+"""
+
+class PyzorEncodingTest(PyzorTestBase):
+    # we don't need the pyzord server to test this
+    @classmethod
+    def setUpClass(cls):
+        pass
+    @classmethod
+    def tearDownClass(cls):
+        pass
+    def setUp(self):
+        # no argument necessary
+        self.client_args = {}
+
+    def test_encodings(self):
+        expected = "47a83cd0e5cc9bd2c64c06c00e3853f79e63014f\n"
+        res = self.check_pyzor("digest", None, input=ENCODING_TEST_EMAIL)
+        self.assertEqual(res.decode("utf8"), expected)
+
 
 def suite():
     """Gather all the tests from this module in a test suite."""
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(PyzorDigestTest))
-    test_suite.addTest(unittest.makeSuite(PyzorPreDigestTest))    
+    test_suite.addTest(unittest.makeSuite(PyzorPreDigestTest))
+    test_suite.addTest(unittest.makeSuite(PyzorEncodingTest))
     return test_suite
-        
+
 if __name__ == '__main__':
     unittest.main()
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
