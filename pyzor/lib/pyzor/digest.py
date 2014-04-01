@@ -53,11 +53,10 @@ class DataDigester(object):
         # Need to know the total number of lines in the content.
         lines = []
         for payload in self.digest_payloads(msg):
-            payload = payload.decode("utf8")
             for line in payload.splitlines():
                 norm = self.normalize(line)
                 if self.should_handle_line(norm):
-                    lines.append(norm)
+                    lines.append(norm.encode("utf8"))
 
         if len(lines) <= self.atomic_num_lines:
             self.handle_atomic(lines)
@@ -86,7 +85,7 @@ class DataDigester(object):
                     self.handle_line(line)
 
     def handle_line(self, line):
-        self.digest.update(line.rstrip().encode("utf8"))
+        self.digest.update(line.rstrip())
 
     @classmethod
     def normalize(cls, s):
@@ -103,7 +102,7 @@ class DataDigester(object):
         data = []
         stripper = HTMLStripper(data)
         try:
-            stripper.feed(s.decode("utf8"))
+            stripper.feed(s)
         except (UnicodeDecodeError, HTMLParser.HTMLParseError):
             # We can't parse the HTML, so just strip it.  This is still
             # better than including generic HTML/CSS text.
@@ -118,23 +117,25 @@ class DataDigester(object):
     def digest_payloads(cls, msg):
         for part in msg.walk():
             if part.get_content_maintype() == "text":
+                payload = part.get_payload(decode=True)
+                charset = part.get_content_charset() or "utf8"
+                payload = payload.decode(charset, "ignore")
                 if part.get_content_subtype() == "html":
-                    yield cls.normalize_html_part(
-                        part.get_payload(decode=True)).encode("utf8")
+                    yield cls.normalize_html_part(payload)
                 else:
-                    yield part.get_payload(decode=True)
+                    yield payload
             elif part.is_multipart():
                 # Skip, because walk() will give us the payload next.
                 pass
             else:
                 # Non-text parts are passed through as-is.
-                yield part.get_payload().encode("utf8")
+                yield part.get_payload()
 
 
 class PrintingDataDigester(DataDigester):
     """Extends DataDigester: prints out what we're digesting."""
     def handle_line(self, line):
-        print line
+        print line.decode("utf8")
         super(PrintingDataDigester, self).handle_line(line)
 
 
