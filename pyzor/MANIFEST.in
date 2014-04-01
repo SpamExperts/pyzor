@@ -1,6 +1,5 @@
 include COPYING
 include INSTALL
-include MANIFEST
 include NEWS
 include README.txt
 include THANKS
