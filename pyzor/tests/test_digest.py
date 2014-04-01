@@ -4,7 +4,6 @@
 import sys
 import hashlib
 import unittest
-sys.path.insert(0, './lib')
 
 from pyzor.digest import *
 

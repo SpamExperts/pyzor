@@ -10,8 +10,6 @@ import SocketServer
 
 from datetime import datetime, timedelta
 
-sys.path.insert(0, './lib')
-
 import pyzor
 import pyzor.server
 import pyzor.server_engines

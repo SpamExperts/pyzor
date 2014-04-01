@@ -8,8 +8,6 @@ import threading
 
 from datetime import datetime, timedelta
 
-sys.path.insert(0, './lib')
-
 import pyzor.server_engines
 
 class MockTimer():

@@ -8,8 +8,6 @@ import hashlib
 import unittest
 import StringIO
 
-sys.path.insert(0, './lib')
-
 import pyzor
 import pyzor.account
 

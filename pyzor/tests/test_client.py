@@ -3,8 +3,6 @@ import time
 import socket
 import unittest
 
-sys.path.insert(0, './lib')
-
 import pyzor
 import pyzor.client
 import pyzor.account
