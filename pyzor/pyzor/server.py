@@ -53,7 +53,7 @@ class Server(SocketServer.UDPServer):
         self.database = database
         self.accounts = accounts
         self.acl = acl
-        self.log.debug("Listening on %s" % (address,))
+        self.log.debug("Listening on %s", address)
         SocketServer.UDPServer.__init__(self, address, RequestHandler,
                                         bind_and_activate=False)
         try:
@@ -121,12 +121,12 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
             traceback.print_exc(file=trace)
             trace.seek(0)
             self.server.log.error(trace.read())
-        self.server.log.debug("Sending: %r" % self.response.as_string())
+        self.server.log.debug("Sending: %r", self.response.as_string())
         self.wfile.write(self.response.as_string().encode("utf8"))
 
     def _really_handle(self):
         """handle() without the exception handling."""
-        self.server.log.debug("Received: %r" % self.packet)
+        self.server.log.debug("Received: %r", self.packet)
 
         # Read the request.
         # Old versions of the client sent a double \n after the signature,
@@ -162,8 +162,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         if opcode not in self.server.acl[user]:
             raise pyzor.AuthorizationError(
                 "User is not authorized to request the operation.")
-        self.server.log.debug("Got a %s command from %s" %
-                              (opcode, self.client_address[0]))
+        self.server.log.debug("Got a %s command from %s", opcode,
+                              self.client_address[0])
 
         # Get a handle to the appropriate method to execute this operation.
         try:
@@ -181,22 +181,22 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
             except KeyError:
                 record = pyzor.engines.common.Record()
             dispatch(self, digest, record)
-        self.server.usage_log.info("%s,%s,%s,%r,%s" %
-                                   (user, self.client_address[0], opcode,
-                                    digest, self.response["Code"]))
+        self.server.usage_log.info("%s,%s,%s,%r,%s", user,
+                                   self.client_address[0], opcode, digest,
+                                   self.response["Code"])
 
     def handle_error(self, code, message):
         """Create an appropriate response for an error."""
-        self.server.log.error("%s: %s" % (code, message))
+        self.server.log.error("%s: %s", code, message)
         self.response.replace_header("Code", "%d" % code)
         self.response.replace_header("Diag", message)
 
-    def handle_pong(self, digest, record):
+    def handle_pong(self, digest, _):
         """Handle the 'pong' command.
 
         This command returns maxint for report counts and 0 whitelist.
         """
-        self.server.log.debug("Request pong for %s" % digest)
+        self.server.log.debug("Request pong for %s", digest)
         self.response["Count"] = "%d" % sys.maxint
         self.response["WL-Count"] = "%d" % 0
 
@@ -205,7 +205,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
 
         This command returns the spam/ham counts for the specified digest.
         """
-        self.server.log.debug("Request to check digest %s" % digest)
+        self.server.log.debug("Request to check digest %s", digest)
         self.response["Count"] = "%d" % record.r_count
         self.response["WL-Count"] = "%d" % record.wl_count
 
@@ -213,7 +213,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         """Handle the 'report' command.
 
         This command increases the spam count for the specified digest."""
-        self.server.log.debug("Request to report digest %s" % digest)
+        self.server.log.debug("Request to report digest %s", digest)
         # Increase the count, and store the altered record back in the
         # database.
         record.r_increment()
@@ -223,7 +223,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         """Handle the 'whitelist' command.
 
         This command increases the ham count for the specified digest."""
-        self.server.log.debug("Request to whitelist digest %s" % digest)
+        self.server.log.debug("Request to whitelist digest %s", digest)
         # Increase the count, and store the altered record back in the
         # database.
         record.wl_increment()
@@ -236,7 +236,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         when the digest was first/last seen as spam/ham, and spam/ham
         counts).
         """
-        self.server.log.debug("Request for information about digest %s" %
+        self.server.log.debug("Request for information about digest %s",
                               digest)
         def time_output(time_obj):
             """Convert a datetime object to a POSIX timestamp.

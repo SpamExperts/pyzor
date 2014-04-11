@@ -82,7 +82,7 @@ class GdbmDBHandle(object):
             rec = self._really_getitem(key)
             delkey = None
             if int(time.mktime(rec.r_updated.timetuple())) < breakpoint:
-                self.log.debug("deleting key %s" % key)
+                self.log.debug("deleting key %s", key)
                 delkey = key
             key = self.db.nextkey(key)
             if delkey:

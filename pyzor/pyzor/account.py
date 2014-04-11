@@ -7,7 +7,6 @@ import os
 import time
 import hashlib
 import logging
-import collections
 
 import pyzor
 
@@ -91,23 +90,23 @@ def load_accounts(filename):
                 host, port, username, key = [x.strip()
                                              for x in line.split(":")]
             except ValueError:
-                log.warn("account file: invalid line %d: "
-                         "wrong number of parts" % lineno)
+                log.warn("account file: invalid line %d: wrong number of "
+                         "parts", lineno)
                 continue
             try:
                 port = int(port)
             except ValueError, e:
-                log.warn("account file: invalid line %d: %s" % (lineno, e))
+                log.warn("account file: invalid line %d: %s", lineno, e)
             address = (host, port)
             salt, key = key_from_hexstr(key)
             if not salt and not key:
-                log.warn("account file: invalid line %d: "
-                         "keystuff can't be all None's" % lineno)
+                log.warn("account file: invalid line %d: keystuff can't be "
+                         "all None's", lineno)
                 continue
             try:
                 accounts[address] = Account(username, salt, key)
             except ValueError, e:
-                log.warn("account file: invalid line %d: %s" % (lineno, e))
+                log.warn("account file: invalid line %d: %s", lineno, e)
     else:
         log.warn("No accounts are setup.  All commands will be executed by "
                  "the anonymous user.")

@@ -126,14 +126,14 @@ class Client(object):
         msg["Time"] = str(timestamp)
         msg["Sig"] = pyzor.account.sign_msg(pyzor.account.hash_key(
             account.key, account.username), timestamp, msg)
-        self.log.debug("sending: %r" % msg.as_string())
+        self.log.debug("sending: %r", msg.as_string())
         return self._send(msg, address)
 
     def _send(self, msg, addr):
         sock = None
         for res in socket.getaddrinfo(addr[0], addr[1], 0, socket.SOCK_DGRAM,
                                       socket.IPPROTO_UDP):
-            af, socktype, proto, canonname, sa = res
+            af, socktype, proto, _, sa = res
             try:
                 sock = socket.socket(af, socktype, proto)
             except socket.error:
@@ -165,7 +165,7 @@ class Client(object):
             raise pyzor.CommError("Socket error while reading response: %s"
                                   % e)
 
-        self.log.debug("received: %r" % packet)
+        self.log.debug("received: %r/%r", packet, address)
         msg = email.message_from_bytes(packet, _class=pyzor.Response)
         msg.ensure_complete()
         try:
@@ -175,8 +175,8 @@ class Client(object):
                     raise pyzor.ProtocolError(
                         "received unexpected thread id %d (expected %d)" %
                         (thread_id, expected_id))
-                self.log.warn("received error thread id %d (expected %d)" %
-                              (thread_id, expected_id))
+                self.log.warn("received error thread id %d (expected %d)",
+                              thread_id, expected_id)
         except KeyError:
             self.log.warn("no thread id received")
         return msg
@@ -186,11 +186,8 @@ class ClientRunner(object):
     __slots__ = ['routine', 'all_ok', 'log']
 
     def __init__(self, routine):
-        self.routine = routine
-        self.setup()
         self.log = logging.getLogger("pyzor")
-
-    def setup(self):
+        self.routine = routine
         self.all_ok = True
 
     def run(self, server, args, kwargs=None):
@@ -202,7 +199,7 @@ class ClientRunner(object):
             response = self.routine(*args, **kwargs)
             self.handle_response(response, message)
         except (pyzor.CommError, KeyError, ValueError), e:
-            self.log.error("%s\t%s: %s" % (server, e.__class__.__name__, e))
+            self.log.error("%s\t%s: %s", server, e.__class__.__name__, e)
             self.all_ok = False
 
     def handle_response(self, response, message):
@@ -213,20 +210,15 @@ class ClientRunner(object):
 
 
 class CheckClientRunner(ClientRunner):
-    # the number of wl-count it takes for the normal
-    # count to be overriden
 
     def __init__(self, routine, r_count=0, wl_count=0):
         ClientRunner.__init__(self, routine)
-        self.r_count_found = r_count
-        self.wl_count_clears = wl_count
-
-    def setup(self):
         self.found_hit = False
         self.whitelisted = False
         self.hit_count = 0
         self.whitelist_count = 0
-        super(CheckClientRunner, self).setup()
+        self.r_count_found = r_count
+        self.wl_count_clears = wl_count
 
     def handle_response(self, response, message):
         message += "%s\t" % str(response.head_tuple())
@@ -236,7 +228,7 @@ class CheckClientRunner(ClientRunner):
             if self.whitelist_count > self.wl_count_clears:
                 self.whitelisted = True
             elif self.hit_count > self.r_count_found:
-                    self.found_hit = True
+                self.found_hit = True
             message += "%d\t%d" % (self.hit_count, self.whitelist_count)
             sys.stdout.write(message + '\n')
         else:

@@ -160,7 +160,7 @@ def main():
         try:
             dispatch = DISPATCHES[command]
         except KeyError:
-            logger.error("Unknown command: %s" % command)
+            logger.error("Unknown command: %s", command)
         else:
             try:
                 if not dispatch(client, servers, config):
@@ -168,7 +168,7 @@ def main():
             except pyzor.TimeoutError:
                 # Note that most of the methods will trap their own timeout
                 # error.
-                logger.error("Timeout from server in %s" % command)
+                logger.error("Timeout from server in %s", command)
 
 def get_input_handler(style="msg", digester=pyzor.digest.DataDigester):
     """Return an object that can be iterated over to get all the digests."""

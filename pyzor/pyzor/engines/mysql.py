@@ -1,13 +1,10 @@
 """MySQLdb database engine."""
 
-import sys
-import gdbm
 import time
 import Queue
 import logging
 import datetime
 import threading
-import multiprocessing
 
 try:
     import MySQLdb
@@ -16,6 +13,7 @@ except ImportError:
     MySQLdb = None
 
 from pyzor.engines.common import *
+
 
 class MySQLDBHandle(object):
     absolute_source = False
@@ -61,9 +59,9 @@ class MySQLDBHandle(object):
     def _check_reconnect_time(self):
         if time.time() - self.last_connect_attempt < self.reconnect_period:
             # Too soon to reconnect.
-            self.log.debug("Can't reconnect until %s" %
+            self.log.debug("Can't reconnect until %s",
                            (time.ctime(self.last_connect_attempt +
-                                       self.reconnect_period),))
+                                       self.reconnect_period)))
             return False
         return True
 
@@ -78,7 +76,7 @@ class MySQLDBHandle(object):
         try:
             self.db = self._get_new_connection()
         except MySQLdb.Error, e:
-            self.log.error("Unable to connect to database: %s" % (e,))
+            self.log.error("Unable to connect to database: %s", e)
             self.db = None
         # Keep track of when we connected, so that we don't retry too often.
         self.last_connect_attempt = time.time()
@@ -95,7 +93,7 @@ class MySQLDBHandle(object):
         try:
             return method(*args, db=self.db)
         except (MySQLdb.Error, AttributeError), e:
-            self.log.error("%s failed: %s" % (name, e))
+            self.log.error("%s failed: %s", name, e)
             self.reconnect()
             # Retrying just complicates the logic - we don't really care if
             # a single query fails (and it's possible that it would fail)
@@ -166,7 +164,7 @@ class MySQLDBHandle(object):
             c.execute("DELETE FROM %s WHERE r_updated<%%s" %
                       self.table_name, (breakpoint,))
         except (MySQLdb.Error, AttributeError), e:
-            self.log.warn("Unable to reorganise: %s" % (e,))
+            self.log.warn("Unable to reorganise: %s", e)
         finally:
             c.close()
             db.close()
@@ -199,7 +197,7 @@ class ThreadedMySQLDBHandle(MySQLDBHandle):
         try:
             return method(*args, db=db)
         except (MySQLdb.Error, AttributeError) as e:
-            self.log.error("%s failed: %s" % (name, e))
+            self.log.error("%s failed: %s", name, e)
             if not self.bound:
                 raise DatabaseError("Database temporarily unavailable.")
             try:
@@ -253,7 +251,7 @@ class ProcessMySQLDBHandle(MySQLDBHandle):
             db = self._get_new_connection()
             return method(*args, db=db)
         except (MySQLdb.Error, AttributeError) as e:
-            self.log.error("%s failed: %s" % (name, e))
+            self.log.error("%s failed: %s", name, e)
             raise DatabaseError("Database temporarily unavailable.")
         finally:
             if db is not None:
