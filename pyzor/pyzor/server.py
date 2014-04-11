@@ -31,7 +31,7 @@ import email.message
 
 import pyzor
 import pyzor.account
-import pyzor.server_engines
+import pyzor.engines.common
 
 if not hasattr(email, "message_from_bytes"):
     # for python2.6
@@ -179,7 +179,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
             try:
                 record = self.server.database[digest]
             except KeyError:
-                record = pyzor.server_engines.Record()
+                record = pyzor.engines.common.Record()
             dispatch(self, digest, record)
         self.server.usage_log.info("%s,%s,%s,%r,%s" %
                                    (user, self.client_address[0], opcode,

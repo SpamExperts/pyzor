@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 
 import pyzor
 import pyzor.server
-import pyzor.server_engines
+import pyzor.engines.common
 
 class MockServer():
     """Mocks the pyzor.server.Server class"""
@@ -112,7 +112,7 @@ class RequestHandlerTest(unittest.TestCase):
     def test_pong(self):
         """Tests the pong command handler"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        database = {digest: pyzor.server_engines.Record(24, 42)}
+        database = {digest: pyzor.engines.common.Record(24, 42)}
         
         self.request["Op"] = "pong"
         self.request["Op-Digest"] = digest
@@ -123,7 +123,7 @@ class RequestHandlerTest(unittest.TestCase):
     def test_check(self):
         """Tests the check command handler"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        database = {digest: pyzor.server_engines.Record(24, 42)}
+        database = {digest: pyzor.engines.common.Record(24, 42)}
         
         self.request["Op"] = "check"
         self.request["Op-Digest"] = digest
@@ -154,7 +154,7 @@ class RequestHandlerTest(unittest.TestCase):
         wl_updated = datetime.now() - timedelta(days=2)
                 
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        database = {digest: pyzor.server_engines.Record(24, 42, entered, updated,
+        database = {digest: pyzor.engines.common.Record(24, 42, entered, updated,
                                                         wl_entered, wl_updated)}        
         self.request["Op"] = "info"
         self.request["Op-Digest"] = digest
@@ -187,7 +187,7 @@ class RequestHandlerTest(unittest.TestCase):
     def test_report(self):
         """Tests the report command handler"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        database = {digest: pyzor.server_engines.Record(24, 42)}
+        database = {digest: pyzor.engines.common.Record(24, 42)}
          
         self.request["Op"] = "report"
         self.request["Op-Digest"] = digest
@@ -211,7 +211,7 @@ class RequestHandlerTest(unittest.TestCase):
     def test_whitelist(self):
         """Tests the whitelist command handler"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        database = {digest: pyzor.server_engines.Record(24, 42)}
+        database = {digest: pyzor.engines.common.Record(24, 42)}
          
         self.request["Op"] = "whitelist"
         self.request["Op-Digest"] = digest

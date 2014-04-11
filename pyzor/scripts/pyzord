@@ -11,7 +11,7 @@ import ConfigParser
 
 import pyzor
 import pyzor.server
-import pyzor.server_engines
+import pyzor.engines
 
 def load_access_file(access_fn, accounts):
     """Load the ACL from the specified file, if it exists, and return an
@@ -278,7 +278,7 @@ def main():
 
     engine = config.get("server", "Engine")
     # Open the database connection.
-    database_classes = pyzor.server_engines.database_classes[engine]
+    database_classes = pyzor.engines.database_classes[engine]
     use_threads = config.get("server", "Threads").lower() == "true"
     use_processes = config.get("server", "Processes").lower() == "true"
 

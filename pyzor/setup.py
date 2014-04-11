@@ -10,14 +10,14 @@ to identify them.
 """
 
 classifiers = ["Operating System :: POSIX",
-               
+
                "Environment :: Console",
                "Environment :: No Input/Output (Daemon)",
-               
-               "Programming Language :: Python",
+
+               "Programming Language :: Python"
                "Programming Language :: Python :: 2.6",
                "Programming Language :: Python :: 3",
-               
+
                "Intended Audience :: System Administrators",
 
                "Topic :: Communications :: Email",
@@ -39,7 +39,8 @@ distutils.core.setup(name='pyzor',
                      keywords='spam',
                      url='http://pyzor.sourceforge.net/',
                      scripts=['scripts/pyzor', 'scripts/pyzord'],
-                     packages=['pyzor'],
+                     packages=['pyzor',
+                               'pyzor.engines'],
                      classifiers=classifiers,
                      test_suite="tests.suite",
                      )

@@ -7,5 +7,6 @@ include UPGRADING
 include requirements.txt
 include config/*
 include pyzor/*
+include pyzor/engine/*
 include scripts/*
 
