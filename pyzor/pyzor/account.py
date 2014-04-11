@@ -10,9 +10,6 @@ import logging
 
 import pyzor
 
-# This is the maximum time between a client signing a Pyzor request and the
-# server checking the signature.
-MAX_TIMESTAMP_DIFFERENCE = 300  # seconds
 
 def sign_msg(hashed_key, timestamp, msg, hash_=hashlib.sha1):
     """Converts the key, timestamp (epoch seconds), and msg into a digest.
@@ -52,7 +49,7 @@ def verify_signature(msg, user_key):
     user = msg["User"]
     provided_signature = msg["Sig"]
     # Check that this signature is not too old.
-    if abs(time.time() - timestamp) > MAX_TIMESTAMP_DIFFERENCE:
+    if abs(time.time() - timestamp) > pyzor.MAX_TIMESTAMP_DIFFERENCE:
         raise pyzor.SignatureError("Timestamp not within allowed range.")
     # Calculate what the correct signature is.
     hashed_user_key = hash_key(user_key, user)

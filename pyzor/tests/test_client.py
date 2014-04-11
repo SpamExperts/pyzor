@@ -6,6 +6,7 @@ import unittest
 import pyzor
 import pyzor.client
 import pyzor.account
+import pyzor.message
 
 def make_MockSocket(response, request):
     """Create a MockSocket class that will append requests to
@@ -89,8 +90,8 @@ class ClientTest(unittest.TestCase):
         socket.socket = make_MockSocket(self.response.encode("utf8"), 
                                         self.request)
 
-        real_ThreadId = pyzor.ThreadId
-        pyzor.ThreadId = make_MockThreadId(self.thread)
+        real_ThreadId = pyzor.message.ThreadId
+        pyzor.message.ThreadId = make_MockThreadId(self.thread)
         client = pyzor.client.Client(accounts)
         try:
             response = getattr(client, method)(*args, **kwargs)
@@ -98,7 +99,7 @@ class ClientTest(unittest.TestCase):
             self.check_request(self.request[0])
         finally:
             socket.socket = real_socket
-            pyzor.ThreadId = real_ThreadId
+            pyzor.message.ThreadId = real_ThreadId
         return client 
 
     def test_ping(self):

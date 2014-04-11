@@ -63,8 +63,7 @@ import logging
 import pyzor
 import pyzor.digest
 import pyzor.account
-
-sha = pyzor.sha
+import pyzor.message
 
 if not hasattr(email, "message_from_bytes"):
     # for python2.6
@@ -84,34 +83,34 @@ class Client(object):
         self.log = logging.getLogger("pyzor")
 
     def ping(self, address=("public.pyzor.org", 24441)):
-        msg = pyzor.PingRequest()
+        msg = pyzor.message.PingRequest()
         sock = self.send(msg, address)
         return self.read_response(sock, msg.get_thread())
 
     def pong(self, digest, address=("public.pyzor.org", 24441)):
-        msg = pyzor.PongRequest(digest)
+        msg = pyzor.message.PongRequest(digest)
         sock = self.send(msg, address)
         return self.read_response(sock, msg.get_thread())
 
     def info(self, digest, address=("public.pyzor.org", 24441)):
-        msg = pyzor.InfoRequest(digest)
+        msg = pyzor.message.InfoRequest(digest)
         sock = self.send(msg, address)
         return self.read_response(sock, msg.get_thread())
 
     def report(self, digest, address=("public.pyzor.org", 24441),
                spec=pyzor.digest.digest_spec):
-        msg = pyzor.ReportRequest(digest, spec)
+        msg = pyzor.message.ReportRequest(digest, spec)
         sock = self.send(msg, address)
         return self.read_response(sock, msg.get_thread())
 
     def whitelist(self, digest, address=("public.pyzor.org", 24441),
                   spec=pyzor.digest.digest_spec):
-        msg = pyzor.WhitelistRequest(digest, spec)
+        msg = pyzor.message.WhitelistRequest(digest, spec)
         sock = self.send(msg, address)
         return self.read_response(sock, msg.get_thread())
 
     def check(self, digest, address=("public.pyzor.org", 24441)):
-        msg = pyzor.CheckRequest(digest)
+        msg = pyzor.message.CheckRequest(digest)
         sock = self.send(msg, address)
         return self.read_response(sock, msg.get_thread())
 
@@ -166,7 +165,7 @@ class Client(object):
                                   % e)
 
         self.log.debug("received: %r/%r", packet, address)
-        msg = email.message_from_bytes(packet, _class=pyzor.Response)
+        msg = email.message_from_bytes(packet, _class=pyzor.message.Response)
         msg.ensure_complete()
         try:
             thread_id = msg.get_thread()
@@ -236,6 +235,7 @@ class CheckClientRunner(ClientRunner):
             sys.stdout.write(message + '\n')
 
 class InfoClientRunner(ClientRunner):
+    
     def handle_response(self, response, message):
         message += "%s\n" % str(response.head_tuple())
 
