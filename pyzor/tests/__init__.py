@@ -10,6 +10,7 @@ import test_account
 import test_gdbm_functional
 import test_pyzor_functional
 import test_mysql_functional
+import test_redis_functional
 import test_digest_functional
 import test_account_functional
 
@@ -24,6 +25,7 @@ def suite():
     test_suite.addTest(test_account.suite())
     test_suite.addTest(test_gdbm_functional.suite())
     test_suite.addTest(test_mysql_functional.suite())
+    test_suite.addTest(test_redis_functional.suite())
     test_suite.addTest(test_pyzor_functional.suite())
     test_suite.addTest(test_digest_functional.suite())
     test_suite.addTest(test_account_functional.suite())
