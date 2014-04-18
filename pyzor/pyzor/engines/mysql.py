@@ -31,14 +31,12 @@ class MySQLDBHandle(object):
     # XXX Re-organising might be faster with a r_updated index.  However,
     # XXX the re-organisation time isn't that important, and that would
     # XXX (slightly) slow down all inserts, so we leave it for now.
-    max_age = 60 * 60 * 24 * 30 * 4  # Approximately 4 months
     reorganize_period = 3600 * 24  # 1 day
     reconnect_period = 60  # seconds
     log = logging.getLogger("pyzord")
 
     def __init__(self, fn, mode, max_age=None):
-        if max_age is not None:
-            self.max_age = max_age
+        self.max_age = max_age
         self.db = None
         # The 'fn' is host,user,password,db,table.  We ignore mode.
         # We store the authentication details so that we can reconnect if
@@ -155,6 +153,8 @@ class MySQLDBHandle(object):
             c.close()
 
     def start_reorganizing(self):
+        if not self.max_age:
+            return
         self.log.debug("reorganizing the database")
         breakpoint = (datetime.datetime.now() -
                       datetime.timedelta(seconds=self.max_age))

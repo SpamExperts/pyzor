@@ -10,7 +10,6 @@ from pyzor.engines.common import *
 
 class GdbmDBHandle(object):
     absolute_source = True
-    max_age = 3600 * 24 * 30 * 4  # 3 months
     sync_period = 60
     reorganize_period = 3600 * 24  # 1 day
     _dt_decode = lambda x: None if x == 'None' else datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S.%f")
@@ -28,8 +27,7 @@ class GdbmDBHandle(object):
     log = logging.getLogger("pyzord")
 
     def __init__(self, fn, mode, max_age=None):
-        if max_age is not None:
-            self.max_age = max_age
+        self.max_age = max_age
         self.db = gdbm.open(fn, mode)
         self.start_reorganizing()
         self.start_syncing()
@@ -68,6 +66,8 @@ class GdbmDBHandle(object):
         self.db.sync()
 
     def start_reorganizing(self):
+        if not self.max_age:
+            return
         if self.db:
             self.apply_method(self._really_reorganize)
         self.reorganize_timer = threading.Timer(self.reorganize_period,
