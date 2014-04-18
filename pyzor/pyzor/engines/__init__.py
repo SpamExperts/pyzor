@@ -14,12 +14,14 @@ appropriate interval.
 
 from pyzor.engines import gdbm_
 from pyzor.engines import mysql
+from pyzor.engines import redis_
 
 
 __all__ = ["database_classes"]
 
 database_classes = {"gdbm": gdbm_.handle,
-                    "mysql": mysql.handle
+                    "mysql": mysql.handle,
+                    "redis": redis_.handle,
                     }
 
 
