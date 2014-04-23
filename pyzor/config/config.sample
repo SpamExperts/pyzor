@@ -51,15 +51,25 @@
 # AccessFile = pyzord.access
 
 ## These settings define the storage engine that the pyzord server should use.
+
 ## Example for gdbm (default):
 # Engine = gdbm
 # DigestDB   = pyzord.db
+
 ## Example for mysql:
 # Engine = mysql
 # DigestDB   = localhost,user,passwd,pyzor_db,pyzor_table
 
+## Example for redis:
+# Engine = redis
+# DigestDB = localhost,6379,,0
+## Or if a password is required
+# DigestDB = localhost,6379,passwd,0 
+
 ## The maximum age of an record, after which it will be removed.
+## To disable this set this to 0.
 # CleanupAge = 10368000 # aprox 4 months
+
 
 ## These setting define how and if the pyzord server should use concurrency
 ## For multi-threading:
