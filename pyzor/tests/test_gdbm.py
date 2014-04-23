@@ -40,6 +40,14 @@ class MockGdbm(dict):
 class GdbmTest(unittest.TestCase):
     """Test the GdbmDBHandle class"""
 
+    max_age = 60 * 60 * 24 * 30 * 4
+    r_count = 24
+    wl_count = 42
+    entered = datetime.now() - timedelta(days=10)
+    updated = datetime.now() - timedelta(days=2)
+    wl_entered = datetime.now() - timedelta(days=20)
+    wl_updated = datetime.now() - timedelta(days=3)
+
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.real_timer = threading.Timer
@@ -51,12 +59,6 @@ class GdbmTest(unittest.TestCase):
         self.real_open = gdbm.open
         gdbm.open = mock_open
 
-        self.r_count = 24
-        self.wl_count = 42
-        self.entered = datetime.now() - timedelta(days=10)
-        self.updated = datetime.now() - timedelta(days=2)
-        self.wl_entered = datetime.now() - timedelta(days=20)
-        self.wl_updated = datetime.now() - timedelta(days=3)
         self.record = pyzor.engines.common.Record(self.r_count, self.wl_count,
                                                   self.entered, self.updated,
                                                   self.wl_entered, self.wl_updated)
@@ -77,7 +79,8 @@ class GdbmTest(unittest.TestCase):
         """Test GdbmDBHandle.__setitem__"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
 
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None)
+        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
+                                                  max_age=self.max_age)
         handle[digest] = self.record
 
         self.assertEqual(self.db[digest], self.record_as_str().decode("utf8"))
@@ -86,7 +89,8 @@ class GdbmTest(unittest.TestCase):
         """Test GdbmDBHandle.__getitem__"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
 
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None)
+        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
+                                                  max_age=self.max_age)
         self.db[digest] = self.record_as_str()
 
         result = handle[digest]
@@ -96,7 +100,8 @@ class GdbmTest(unittest.TestCase):
     def test_del_item(self):
         """Test GdbmDBHandle.__delitem__"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None)
+        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
+                                                  max_age=self.max_age)
         self.db[digest] = self.record_as_str()
 
         del handle[digest]
@@ -108,16 +113,30 @@ class GdbmTest(unittest.TestCase):
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
 
         self.db[digest] = self.record_as_str()
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None, 3600 * 24)
+        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
+                                                  max_age=3600 * 24)
 
         self.assertFalse(self.db.get(digest))
+
+    def test_reorganize_older_no_max_age(self):
+        """Test GdbmDBHandle.start_reorganizing with older records, but no 
+        max_age set.
+        """
+        digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
+
+        self.db[digest] = self.record_as_str()
+        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
+                                                  max_age=None)
+
+        self.assertEqual(self.db[digest], self.record_as_str())
 
     def test_reorganize_fresh(self):
         """Test GdbmDBHandle.start_reorganizing with newer records"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
 
         self.db[digest] = self.record_as_str()
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None, 3600 * 24 * 3)
+        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
+                                                  max_age=3600 * 24 * 3)
 
         self.assertEqual(self.db[digest], self.record_as_str())
 
