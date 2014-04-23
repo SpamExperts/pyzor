@@ -2,6 +2,7 @@ import unittest
 
 import test_gdbm
 import test_mysql
+import test_redis
 import test_client
 import test_digest
 import test_server
@@ -19,6 +20,7 @@ def suite():
     test_suite = unittest.TestSuite()
     test_suite.addTest(test_gdbm.suite())
     test_suite.addTest(test_mysql.suite())
+    test_suite.addTest(test_redis.suite())
     test_suite.addTest(test_client.suite())
     test_suite.addTest(test_digest.suite())
     test_suite.addTest(test_server.suite())
