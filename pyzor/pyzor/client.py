@@ -3,11 +3,11 @@
 >>> import pyzor
 >>> import pyzor.client
 >>> import pyzor.digest
->>> import pyzor.account
+>>> import pyzor.config
 
 To load the accounts file:
 
->>> accounts = pyzor.account.load_accounts(filename)
+>>> accounts = pyzor.config.load_accounts(filename)
 
 To create a client (to then issue commands):
 

@@ -18,7 +18,7 @@ import ConfigParser
 import pyzor
 import pyzor.digest
 import pyzor.client
-import pyzor.account
+import pyzor.config
 
 def load_configuration():
     """Load the configuration for the server.
@@ -151,7 +151,7 @@ def main():
     accounts_fn = os.path.expanduser(config.get("client", "AccountsFile"))
     if not os.path.isabs(accounts_fn):
         accounts_fn = os.path.join(options.homedir, accounts_fn)
-    accounts = pyzor.account.load_accounts(accounts_fn)
+    accounts = pyzor.config.load_accounts(accounts_fn)
 
     # Run the specified commands.
     client = pyzor.client.Client(accounts,

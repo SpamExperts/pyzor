@@ -30,6 +30,7 @@ import SocketServer
 import email.message
 
 import pyzor
+import pyzor.config
 import pyzor.account
 import pyzor.engines.common
 
@@ -43,7 +44,7 @@ class Server(SocketServer.UDPServer):
     max_packet_size = 8192
     time_diff_allowance = 180
 
-    def __init__(self, address, database, accounts, acl):
+    def __init__(self, address, database, passwd_fn, access_fn):
         if ":" in address[0]:
             Server.address_family = socket.AF_INET6
         else:
@@ -51,8 +52,12 @@ class Server(SocketServer.UDPServer):
         self.log = logging.getLogger("pyzord")
         self.usage_log = logging.getLogger("pyzord-usage")
         self.database = database
-        self.accounts = accounts
-        self.acl = acl
+
+        # Handle configuration files
+        self.passwd_fn = passwd_fn
+        self.access_fn = access_fn
+        self.load_config()
+
         self.log.debug("Listening on %s", address)
         SocketServer.UDPServer.__init__(self, address, RequestHandler,
                                         bind_and_activate=False)
@@ -62,6 +67,12 @@ class Server(SocketServer.UDPServer):
             self.log.debug("Unable to set IPV6_V6ONLY to false %s", e)
         self.server_bind()
         self.server_activate()
+    
+    def load_config(self):
+        """Reads the configuration files and loads the accounts and ACLs."""
+        self.accounts = pyzor.config.load_passwd_file(self.passwd_fn)
+        self.acl = pyzor.config.load_access_file(self.access_fn, self.accounts)
+        
 
 class ThreadingServer(SocketServer.ThreadingMixIn, Server):
     """A threaded version of the pyzord server.  Each connection is served
@@ -72,8 +83,8 @@ class BoundedThreadingServer(ThreadingServer):
     """Same as ThreadingServer but this also accepts a limited number of 
     concurrent threads.
     """
-    def __init__(self, address, database, accounts, acl, max_threads):
-        ThreadingServer.__init__(self, address, database, accounts, acl)
+    def __init__(self, address, database, passwd_fn, access_fn, max_threads):
+        ThreadingServer.__init__(self, address, database, passwd_fn, access_fn)
         self.semaphore = threading.Semaphore(max_threads)
 
     def process_request(self, request, client_address):
@@ -88,9 +99,10 @@ class ProcessServer(SocketServer.ForkingMixIn, Server):
     """A multi-processing version of the pyzord server.  Each connection is 
     served in a new process. This may not be suitable for all database types.
     """
-    def __init__(self, address, database, accounts, acl, max_children=40):
+    def __init__(self, address, database, passwd_fn, access_fn,
+                 max_children=40):
         ProcessServer.max_children = max_children
-        Server.__init__(self, address, database, accounts, acl)
+        Server.__init__(self, address, database, passwd_fn, access_fn)
 
 class RequestHandler(SocketServer.DatagramRequestHandler):
     """Handle a single pyzord request."""

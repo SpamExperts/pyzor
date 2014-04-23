@@ -9,6 +9,7 @@ import unittest
 import StringIO
 
 import pyzor
+import pyzor.config
 import pyzor.account
 
 class AccountTest(unittest.TestCase):            
@@ -107,7 +108,7 @@ class LoadAccountTest(unittest.TestCase):
         """Test loading the account file"""
         self.mock_file.write("public.pyzor.org : 24441 : test : 123abc,cba321\n"
                              "public2.pyzor.org : 24441 : test2 : 123abc,cba321")
-        result = pyzor.account.load_accounts("test_file")
+        result = pyzor.config.load_accounts("test_file")
         self.assertIn(("public.pyzor.org", 24441), result)
         self.assertIn(("public2.pyzor.org", 24441), result)
         account = result[("public.pyzor.org", 24441)]
@@ -120,7 +121,7 @@ class LoadAccountTest(unittest.TestCase):
     def test_load_accounts_comment(self):
         """Test skipping commented lines"""
         self.mock_file.write("#public1.pyzor.org : 24441 : test : 123abc,cba321")
-        result = pyzor.account.load_accounts("test_file")
+        result = pyzor.config.load_accounts("test_file")
         self.assertNotIn(("public.pyzor.org", 24441), result)
         self.assertFalse(result)       
 
