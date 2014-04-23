@@ -22,6 +22,7 @@ Authenticated requests must also have "User", "Time" (timestamp), and "Sig"
 import sys
 import time
 import socket
+import signal
 import logging
 import StringIO
 import threading
@@ -67,6 +68,26 @@ class Server(SocketServer.UDPServer):
             self.log.debug("Unable to set IPV6_V6ONLY to false %s", e)
         self.server_bind()
         self.server_activate()
+
+        # Finally, set signals
+        signal.signal(signal.SIGUSR1, self.reload_handler)
+        signal.signal(signal.SIGTERM, self.shutdown_handler)
+
+    def shutdown_handler(self, signum, frame):
+        """Handler for the SIGTERM signal. This should be used to kill the 
+        daemon and ensure proper clean-up. 
+        """
+        self.log.info("SIGTERM received. Shutting down.")
+        t = threading.Thread(target=self.shutdown)
+        t.start()
+
+    def reload_handler(self, signum, frame):
+        """Handler for the SIGUSR1 signal. This should be used to reload
+        the configuration files.
+        """
+        self.log.info("SIGUSR1 received. Reloading configuration.")
+        t = threading.Thread(target=self.load_config)
+        t.start()
     
     def load_config(self):
         """Reads the configuration files and loads the accounts and ACLs."""
