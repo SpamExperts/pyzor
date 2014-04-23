@@ -1,10 +1,7 @@
 """Redis database engine."""
 
-import time
-import Queue
 import logging
 import datetime
-import threading
 
 try:
     import redis
@@ -13,8 +10,10 @@ except ImportError:
 
 from pyzor.engines.common import *
 
-encode_date = lambda d: "" if d is None else d.strftime("%Y-%m-%d %H:%M:%S.%f")
-decode_date = lambda x: None if x == "" else datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S.%f")
+NAMESPACE = "pyzord.digest"
+
+encode_date = lambda d: "" if d is None else d.strftime("%Y-%m-%d %H:%M:%S")
+decode_date = lambda x: None if x == "" else datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S")
 
 class RedisDBHandle(object):
     absolute_source = False
@@ -33,8 +32,8 @@ class RedisDBHandle(object):
         self.db_name = fn[3] or "0"
         self.db = self._get_new_connection()
 
-
-    def _encode_record(self, r):
+    @staticmethod
+    def _encode_record(r):
         return ("%s,%s,%s,%s,%s,%s" %
                 (r.r_count,
                  encode_date(r.r_entered),
@@ -43,7 +42,8 @@ class RedisDBHandle(object):
                  encode_date(r.wl_entered),
                  encode_date(r.wl_updated)))
 
-    def _decode_record(self, r):
+    @staticmethod
+    def _decode_record(r):
         if r is None:
             return Record()
         fields = r.split(",")
@@ -53,22 +53,27 @@ class RedisDBHandle(object):
                       wl_count=int(fields[3]),
                       wl_entered=decode_date(fields[4]),
                       wl_updated=decode_date(fields[5]))
+    
+    @staticmethod
+    def _real_key(key):
+        return "%s.%s" % (NAMESPACE, key)
 
     def _get_new_connection(self):
-        return redis.StrictRedis(host=self.host, port=self.port,
-                                 db=self.db_name, password=self.passwd)
+        return redis.StrictRedis(host=self.host, port=int(self.port),
+                                 db=int(self.db_name), password=self.passwd)
 
     def __getitem__(self, key):
-        return self._decode_record(self.db.get(key))
+        return self._decode_record(self.db.get(self._real_key(key)))
 
     def __setitem__(self, key, value):
         if self.max_age is None:
-            self.db.set(key, self._encode_record(value))
+            self.db.set(self._real_key(key), self._encode_record(value))
         else:
-            self.db.setex(key, self.max_age, self._encode_record(value))
+            self.db.setex(self._real_key(key), self.max_age,
+                          self._encode_record(value))
 
     def __delitem__(self, key):
-        self.db.delete(key)
+        self.db.delete(self._real_key(key))
         
 class ThreadedRedisDBHandle(RedisDBHandle):
     
