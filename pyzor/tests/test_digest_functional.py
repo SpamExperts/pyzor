@@ -785,6 +785,28 @@ VGhpcyBpcyBhIHTpc3Qg4qXG
 
 """
 
+BAD_ENCODING = """From nobody Tue Apr  1 13:18:54 2014
+Content-Type: multipart/related;
+ boundary="===============0632694142025794937=="
+MIME-Version: 1.0
+
+This is a multi-part message in MIME format.
+--===============0632694142025794937==
+Content-Type: text/plain; charset=ISO-8859-1Content-Transfer-Encoding: quoted-printable
+
+This is a test
+
+--===============0632694142025794937==
+Content-Type: text/plain; charset=us-asciia
+Content-Transfer-Encoding: quoted-printable
+
+This is a test
+
+--===============0632694142025794937==
+
+
+"""
+
 class PyzorEncodingTest(PyzorTestBase):
     # we don't need the pyzord server to test this
     @classmethod
@@ -800,6 +822,11 @@ class PyzorEncodingTest(PyzorTestBase):
     def test_encodings(self):
         expected = "47a83cd0e5cc9bd2c64c06c00e3853f79e63014f\n"
         res = self.check_pyzor("digest", None, input=ENCODING_TEST_EMAIL)
+        self.assertEqual(res.decode("utf8"), expected)
+
+    def test_bad_encoding(self):
+        expected = "2b4dbf2fb521edd21d997f3f04b1c7155ba91fff\n"
+        res = self.check_pyzor("digest", None, input=BAD_ENCODING)
         self.assertEqual(res.decode("utf8"), expected)
 
 

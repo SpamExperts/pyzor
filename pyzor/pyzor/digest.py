@@ -118,8 +118,13 @@ class DataDigester(object):
         for part in msg.walk():
             if part.get_content_maintype() == "text":
                 payload = part.get_payload(decode=True)
-                charset = part.get_content_charset() or "utf8"
-                payload = payload.decode(charset, "ignore")
+                charset = part.get_content_charset()
+                if not charset:
+                    charset = "ascii"
+                try:
+                    payload = payload.decode(charset, "ignore")
+                except LookupError:
+                    payload = payload.decode("ascii", "ignore")
                 if part.get_content_subtype() == "html":
                     yield cls.normalize_html_part(payload)
                 else:
