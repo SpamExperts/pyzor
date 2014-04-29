@@ -220,7 +220,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
 
     def handle_error(self, code, message):
         """Create an appropriate response for an error."""
-        self.server.log.error("%s: %s", code, message)
+        self.server.usage_log.error("%s: %s", code, message)
         self.response.replace_header("Code", "%d" % code)
         self.response.replace_header("Diag", message)
 

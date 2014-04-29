@@ -43,6 +43,7 @@ def load_configuration():
         "AccessFile" : "pyzord.access",
         "CleanupAge" : str(60 * 60 * 24 * 30 * 4),  # approximately 4 months
         "LogFile" : "pyzord.log",
+        "UsageLogFile": "",
     }
 
     # Process any command line options.
@@ -89,7 +90,9 @@ def load_configuration():
                    dest="CleanupAge",
                    help="time before digests expire (in seconds)")
     opt.add_option("--log-file", action="store", default=None,
-                   dest="LogFile", help="name of log file")
+                   dest="LogFile", help="name of the log file")
+    opt.add_option("--usage-log-file", action="store", default=None,
+                   dest="UsageLogFile", help="name of the usage log file")
     opt.add_option("-V", "--version", action="store_true", default=False,
                    dest="version", help="print version and exit")
     options, args = opt.parse_args()
@@ -122,6 +125,31 @@ def load_configuration():
             config.set("server", key, str(value))
     return config, options
 
+
+def setup_logging(log_name, filepath, debug):
+    """Setup logging according to the specified options. Return the Logger 
+    object.
+    """
+    if debug:
+        log_level = logging.DEBUG
+        handler = logging.StreamHandler()
+    elif not filepath:
+        handler = logging.StreamHandler()
+        log_level = logging.CRITICAL
+    else:
+        log_level = logging.INFO
+        handler = logging.FileHandler(filepath)
+
+    handler.setLevel(log_level)
+    handler.setFormatter(
+        logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logger = logging.getLogger(log_name)
+    logger.setLevel(log_level)
+    logger.addHandler(handler)
+
+    return logger
+
+
 def main():
     """Run the pyzor daemon."""
     # Set umask - this restricts this process from granting any world access
@@ -130,44 +158,9 @@ def main():
 
     config, options = load_configuration()
 
-    # Setup logging.
-    log_fn = config.get("server", "LogFile")
-    if not log_fn:
-        # If no log file is specified, then output to stdout.
-        handler = logging.StreamHandler()
-    else:
-        log_fn = os.path.expanduser(log_fn)
-        if not os.path.isabs(log_fn):
-            log_fn = os.path.join(options.homedir, log_fn)
-        handler = logging.FileHandler(log_fn)
-    if options.debug:
-        log_level = logging.DEBUG
-    else:
-        log_level = logging.INFO
-    # There are two logs - one only contains usage data - but we combine
-    # them into a single output.
-    handler.setLevel(log_level)
-    handler.setFormatter(
-        logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-    logger = logging.getLogger("pyzord")
-    logger.setLevel(log_level)
-    logger.addHandler(handler)
-    logger = logging.getLogger("pyzord-usage")
-    logger.setLevel(log_level)
-    logger.addHandler(handler)
-
-    # Load passwd_fn and ACL.
-    passwd_fn = os.path.expanduser(config.get("server", "PasswdFile"))
-    if not os.path.isabs(passwd_fn):
-        passwd_fn = os.path.join(options.homedir, passwd_fn)
-    access_fn = os.path.expanduser(config.get("server", "AccessFile"))
-    if not os.path.isabs(access_fn):
-        access_fn = os.path.join(options.homedir, access_fn)
-    address = (config.get("server", "ListenAddress"),
-               int(config.get("server", "port")))
+    homefiles = ["LogFile", "UsageLogFile", "PasswdFile", "AccessFile"]
 
     engine = config.get("server", "Engine")
-    # Open the database connection.
     database_classes = pyzor.engines.database_classes[engine]
     use_threads = config.get("server", "Threads").lower() == "true"
     use_processes = config.get("server", "Processes").lower() == "true"
@@ -175,7 +168,7 @@ def main():
     if use_threads and use_processes:
         print "You cannot use both processes and threads at the same time"
         sys.exit(1)
-
+    
     # We prefer to use the threaded server, but some database engines
     # cannot handle it.
     if use_threads and database_classes.multi_threaded:
@@ -188,12 +181,29 @@ def main():
         database_class = database_classes.single_threaded
 
     # If the DSN is a filename, then we make it absolute.
-    db_file = config.get("server", "DigestDB")
     if database_class.absolute_source:
-        db_file = os.path.expanduser(db_file)
-        if not os.path.isabs(db_file):
-            db_file = os.path.join(options.homedir, db_file)
+        homefiles.append("DigestDB")
 
+    for filename in homefiles:
+        filepath = config.get("server", filename)
+        if not filepath:
+            continue
+        filepath = os.path.expanduser(filepath)
+        if not os.path.isabs(filepath):
+            filepath = os.path.join(options.homedir, filepath)
+        config.set("server", filename, filepath)
+
+    logger = setup_logging("pyzord", config.get("server", "LogFile"),
+                           options.debug)
+    setup_logging("pyzord-usage", config.get("server", "UsageLogFile"),
+                  options.debug)
+
+    # Load passwd_fn and ACL.
+    db_file = config.get("server", "DigestDB")
+    passwd_fn = config.get("server", "PasswdFile")
+    access_fn = config.get("server", "AccessFile")
+    address = (config.get("server", "ListenAddress"), 
+               int(config.get("server", "port")))
     cleanup_age = int(config.get("server", "CleanupAge"))
 
     if use_threads:

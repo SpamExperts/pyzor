@@ -42,7 +42,9 @@
 # ListenAddress = 0.0.0.0
 
 ## This option specifies the name of the log file.
-# LogFile    = pyzord.log
+# LogFile = pyzord.log
+## This option specifies the name of the usage log file.
+# UsageLogFile = 
 
 ## This file must contain the username and their keys 
 # PasswdFile = pyzord.passwd
