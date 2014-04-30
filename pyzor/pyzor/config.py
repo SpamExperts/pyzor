@@ -1,6 +1,7 @@
 """Functions that handle parsing pyzor configuration files."""
 
 import os
+import re
 import logging
 import collections
 
@@ -118,12 +119,12 @@ def load_passwd_file(passwd_fn):
 
 # Configuration files for the Pyzor Client
 
-def load_accounts(filename):
+def load_accounts(filepath):
     """Layout of file is: host : port : username : salt,key"""
     accounts = {}
     log = logging.getLogger("pyzor")
-    if os.path.exists(filename):
-        for lineno, orig_line in enumerate(open(filename)):
+    if os.path.exists(filepath):
+        for lineno, orig_line in enumerate(open(filepath)):
             line = orig_line.strip()
             if not line or line.startswith('#'):
                 continue
@@ -152,3 +153,61 @@ def load_accounts(filename):
         log.warn("No accounts are setup.  All commands will be executed by "
                  "the anonymous user.")
     return accounts
+
+
+def load_servers(filepath):
+    """Load the servers file."""
+    logger = logging.getLogger("pyzor")
+    if not os.path.exists(filepath):
+        servers = []
+    else:
+        servers = []
+        with open(filepath) as f:
+            for line in f:
+                line = line.strip()
+                if re.match("[^#][a-zA-Z0-9.-]+:[0-9]+", line):
+                    address, port = line.rsplit(":", 1)
+                    servers.append((address, int(port)))
+    
+    if not servers:
+        logger.info("No servers specified, defaulting to public.pyzor.org.")
+        servers = [("public.pyzor.org", 24441)]
+    return servers
+
+# Common configurations
+
+def setup_logging(log_name, filepath, debug):
+    """Setup logging according to the specified options. Return the Logger 
+    object.
+    """
+    if debug:
+        log_level = logging.DEBUG
+        handler = logging.StreamHandler()
+    elif not filepath:
+        handler = logging.StreamHandler()
+        log_level = logging.CRITICAL
+    else:
+        log_level = logging.INFO
+        handler = logging.FileHandler(filepath)
+
+    handler.setLevel(log_level)
+    handler.setFormatter(
+        logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logger = logging.getLogger(log_name)
+    logger.setLevel(log_level)
+    logger.addHandler(handler)
+
+    return logger
+
+def expand_homefiles(homefiles, category, homedir, config):
+    """Set the full file path for these configuration files."""
+    for filename in homefiles:
+        filepath = config.get(category, filename)
+        if not filepath:
+            continue
+        filepath = os.path.expanduser(filepath)
+        if not os.path.isabs(filepath):
+            filepath = os.path.join(homedir, filepath)
+        config.set(category, filename, filepath)
+
+

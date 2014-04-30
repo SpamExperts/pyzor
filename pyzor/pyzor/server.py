@@ -73,6 +73,11 @@ class Server(SocketServer.UDPServer):
         signal.signal(signal.SIGUSR1, self.reload_handler)
         signal.signal(signal.SIGTERM, self.shutdown_handler)
 
+    def load_config(self):
+        """Reads the configuration files and loads the accounts and ACLs."""
+        self.accounts = pyzor.config.load_passwd_file(self.passwd_fn)
+        self.acl = pyzor.config.load_access_file(self.access_fn, self.accounts)
+
     def shutdown_handler(self, signum, frame):
         """Handler for the SIGTERM signal. This should be used to kill the 
         daemon and ensure proper clean-up. 
@@ -88,17 +93,13 @@ class Server(SocketServer.UDPServer):
         self.log.info("SIGUSR1 received. Reloading configuration.")
         t = threading.Thread(target=self.load_config)
         t.start()
-    
-    def load_config(self):
-        """Reads the configuration files and loads the accounts and ACLs."""
-        self.accounts = pyzor.config.load_passwd_file(self.passwd_fn)
-        self.acl = pyzor.config.load_access_file(self.access_fn, self.accounts)
         
 
 class ThreadingServer(SocketServer.ThreadingMixIn, Server):
     """A threaded version of the pyzord server.  Each connection is served
     in a new thread.  This may not be suitable for all database types."""
     pass
+
 
 class BoundedThreadingServer(ThreadingServer):
     """Same as ThreadingServer but this also accepts a limited number of 
@@ -116,6 +117,7 @@ class BoundedThreadingServer(ThreadingServer):
         ThreadingServer.process_request_thread(self, request, client_address)
         self.semaphore.release()
 
+
 class ProcessServer(SocketServer.ForkingMixIn, Server):
     """A multi-processing version of the pyzord server.  Each connection is 
     served in a new process. This may not be suitable for all database types.
@@ -125,8 +127,10 @@ class ProcessServer(SocketServer.ForkingMixIn, Server):
         ProcessServer.max_children = max_children
         Server.__init__(self, address, database, passwd_fn, access_fn)
 
+
 class RequestHandler(SocketServer.DatagramRequestHandler):
     """Handle a single pyzord request."""
+
     def __init__(self, *args, **kwargs):
         self.response = email.message.Message()
         SocketServer.DatagramRequestHandler.__init__(self, *args, **kwargs)
@@ -287,10 +291,11 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         self.response["WL-Count"] = "%d" % record.wl_count
 
     dispatches = {
-        'check' : handle_check,
-        'report' : handle_report,
         'ping' : None,
         'pong' : handle_pong,
         'info' : handle_info,
+        'check' : handle_check,
+        'report' : handle_report,
         'whitelist' : handle_whitelist,
         }
+

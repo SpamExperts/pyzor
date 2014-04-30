@@ -115,43 +115,14 @@ def main():
 
     config, options, args = load_configuration()
 
-    # Setup logging.
-    log_fn = config.get("client", "LogFile")
-    if not log_fn:
-        # If no log file is specified, then output to stdout.
-        handler = logging.StreamHandler()
-    else:
-        log_fn = os.path.expanduser(log_fn)
-        if not os.path.isabs(log_fn):
-            log_fn = os.path.join(options.homedir, log_fn)
-        handler = logging.FileHandler(log_fn)
-    log_level = {True : logging.DEBUG, False : logging.INFO}[options.debug]
-    handler.setLevel(log_level)
-    logger = logging.getLogger("pyzor")
-    logger.setLevel(log_level)
-    logger.addHandler(handler)
+    homefiles = ["LogFile", "ServersFile", "AccountsFile"]
+    pyzor.config.expand_homefiles(homefiles, "client", options.homedir, config)
 
-    # Load the list of servers that will be checked.
-    servers_fn = os.path.expanduser(config.get("client", "ServersFile"))
-    if not os.path.isabs(servers_fn):
-        servers_fn = os.path.join(options.homedir, servers_fn)
-    if os.path.exists(servers_fn):
-        servers = [(line.strip().rsplit(":", 1)[0],
-                    int(line.strip().rsplit(":", 1)[1]))
-                   for line in open(servers_fn)
-                   if line.strip() and not line.startswith("#") and
-                   re.match("[a-zA-Z0-9.-]+:[0-9]+", line.strip())]
-    else:
-        servers = []
-    if not servers:
-        logger.info("No servers specified, defaulting to public.pyzor.org.")
-        servers = [("public.pyzor.org", 24441)]
-
-    # Load account data (this is used for authentication to the servers).
-    accounts_fn = os.path.expanduser(config.get("client", "AccountsFile"))
-    if not os.path.isabs(accounts_fn):
-        accounts_fn = os.path.join(options.homedir, accounts_fn)
-    accounts = pyzor.config.load_accounts(accounts_fn)
+    logger = pyzor.config.setup_logging("pyzor",
+                                        config.get("client", "LogFile"),
+                                        options.debug)
+    servers = pyzor.config.load_servers(config.get("client", "ServersFile"))
+    accounts = pyzor.config.load_accounts(config.get("client", "AccountsFile"))
 
     # Run the specified commands.
     client = pyzor.client.Client(accounts,

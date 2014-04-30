@@ -126,30 +126,6 @@ def load_configuration():
     return config, options
 
 
-def setup_logging(log_name, filepath, debug):
-    """Setup logging according to the specified options. Return the Logger 
-    object.
-    """
-    if debug:
-        log_level = logging.DEBUG
-        handler = logging.StreamHandler()
-    elif not filepath:
-        handler = logging.StreamHandler()
-        log_level = logging.CRITICAL
-    else:
-        log_level = logging.INFO
-        handler = logging.FileHandler(filepath)
-
-    handler.setLevel(log_level)
-    handler.setFormatter(
-        logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
-    logger = logging.getLogger(log_name)
-    logger.setLevel(log_level)
-    logger.addHandler(handler)
-
-    return logger
-
-
 def main():
     """Run the pyzor daemon."""
     # Set umask - this restricts this process from granting any world access
@@ -172,8 +148,10 @@ def main():
     # We prefer to use the threaded server, but some database engines
     # cannot handle it.
     if use_threads and database_classes.multi_threaded:
+        use_processes = False
         database_class = database_classes.multi_threaded
     elif use_processes and database_classes.multi_processing:
+        use_threads = False
         database_class = database_classes.multi_processing
     else:
         use_threads = False
@@ -184,19 +162,14 @@ def main():
     if database_class.absolute_source:
         homefiles.append("DigestDB")
 
-    for filename in homefiles:
-        filepath = config.get("server", filename)
-        if not filepath:
-            continue
-        filepath = os.path.expanduser(filepath)
-        if not os.path.isabs(filepath):
-            filepath = os.path.join(options.homedir, filepath)
-        config.set("server", filename, filepath)
+    pyzor.config.expand_homefiles(homefiles, "server", options.homedir, config)
 
-    logger = setup_logging("pyzord", config.get("server", "LogFile"),
-                           options.debug)
-    setup_logging("pyzord-usage", config.get("server", "UsageLogFile"),
-                  options.debug)
+    logger = pyzor.config.setup_logging("pyzord",
+                                        config.get("server", "LogFile"),
+                                        options.debug)
+    pyzor.config.setup_logging("pyzord-usage",
+                               config.get("server", "UsageLogFile"),
+                               options.debug)
 
     # Load passwd_fn and ACL.
     db_file = config.get("server", "DigestDB")
