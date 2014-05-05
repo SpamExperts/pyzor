@@ -42,7 +42,7 @@ def load_configuration():
         "PasswdFile" : "pyzord.passwd",
         "AccessFile" : "pyzord.access",
         "CleanupAge" : str(60 * 60 * 24 * 30 * 4),  # approximately 4 months
-        "LogFile" : "pyzord.log",
+        "LogFile" : "",
         "UsageLogFile": "",
     }
 

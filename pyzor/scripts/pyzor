@@ -38,7 +38,7 @@ def load_configuration():
     defaults = {
         "ServersFile" : "servers",
         "AccountsFile" : "accounts",
-        "LogFile" : "pyzor.log",
+        "LogFile" : "",
         "Timeout" : "5",  # seconds
         "Style" : "msg",
         "ReportThreshold" : "0",
