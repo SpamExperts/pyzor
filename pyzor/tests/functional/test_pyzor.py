@@ -1,7 +1,7 @@
 import sys
 import unittest
 
-from util import *
+from tests.util import *
 
 class PyzorScriptTest(PyzorTestBase):
     password_file = None

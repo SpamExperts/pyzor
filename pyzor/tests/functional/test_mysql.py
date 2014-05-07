@@ -1,7 +1,7 @@
 import unittest
 import ConfigParser
 
-from util import *
+from tests.util import *
 
 try:
     import MySQLdb

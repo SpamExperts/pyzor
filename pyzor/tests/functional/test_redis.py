@@ -5,7 +5,7 @@ try:
 except ImportError:
     redis = None
 
-from util import *
+from tests.util import *
 
 @unittest.skipIf(redis == None, "redis library not available")
 class RedisPyzorTest(PyzorTest, PyzorTestBase):

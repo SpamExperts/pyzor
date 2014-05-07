@@ -1,3 +1,5 @@
+"""This package contains various utilities use in the pyzor tests."""
+
 import os
 import sys
 import time

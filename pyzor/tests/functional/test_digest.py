@@ -3,7 +3,7 @@ import sys
 import hashlib
 import unittest
 
-from util import *
+from tests.util import *
 
 TEXT = """MIME-Version: 1.0
 Sender: chirila@spamexperts.com

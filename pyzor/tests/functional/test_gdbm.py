@@ -1,6 +1,6 @@
 import unittest
 
-from util import *
+from tests.util import *
 
 class GdbmPyzorTest(PyzorTest, PyzorTestBase):
     """Test the gdbm engine"""

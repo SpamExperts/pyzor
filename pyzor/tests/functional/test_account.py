@@ -1,6 +1,6 @@
 import unittest
 
-from util import *
+from tests.util import *
 
 class AccountPyzorTest(PyzorTestBase):
     
