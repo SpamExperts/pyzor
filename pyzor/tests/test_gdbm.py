@@ -15,6 +15,8 @@ class MockTimer():
         pass
     def start(self):
         pass
+    def setDaemon(self, daemon):
+        pass
 
 class MockGdbm(dict):
     """Mock a gdbm database"""

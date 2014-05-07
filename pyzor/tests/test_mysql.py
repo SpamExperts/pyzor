@@ -14,6 +14,8 @@ class MockTimer():
         pass
     def start(self):
         pass
+    def setDaemon(self, daemon):
+        pass
 
 def make_MockMySQL(result, queries):
     class MockCursor():
