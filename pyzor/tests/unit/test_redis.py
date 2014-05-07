@@ -37,20 +37,20 @@ class EncodingRedisTest(unittest.TestCase):
 
     def test_encode_record(self):
         expected = ("24,2014-04-23 15:41:30,2014-04-25 17:22:25,"
-                    "42,2014-02-12 11:10:55,2014-03-25 05:01:50")
+                    "42,2014-02-12 11:10:55,2014-03-25 05:01:50").encode()
         result = pyzor.engines.redis_.RedisDBHandle._encode_record(self.record)
         self.assertEqual(result, expected)
 
     def test_encode_record_no_date(self):
         expected = ("24,2014-04-23 15:41:30,,"
-                    "42,2014-02-12 11:10:55,2014-03-25 05:01:50")
+                    "42,2014-02-12 11:10:55,2014-03-25 05:01:50").encode()
         self.record.r_updated = None
         result = pyzor.engines.redis_.RedisDBHandle._encode_record(self.record)
         self.assertEqual(result, expected)
 
     def test_encode_record_no_white(self):
         expected = ("24,2014-04-23 15:41:30,2014-04-25 17:22:25,"
-                    "0,,")
+                    "0,,").encode()
         self.record.wl_count = 0
         self.record.wl_entered = None
         self.record.wl_updated = None
@@ -59,20 +59,20 @@ class EncodingRedisTest(unittest.TestCase):
 
     def test_decode_record(self):
         encoded = ("24,2014-04-23 15:41:30,2014-04-25 17:22:25,"
-                   "42,2014-02-12 11:10:55,2014-03-25 05:01:50")
+                   "42,2014-02-12 11:10:55,2014-03-25 05:01:50").encode()
         result = pyzor.engines.redis_.RedisDBHandle._decode_record(encoded)
         self.compare_records(result, self.record)
 
     def test_decode_record_no_date(self):
         encoded = ("24,2014-04-23 15:41:30,,"
-                   "42,2014-02-12 11:10:55,2014-03-25 05:01:50")
+                   "42,2014-02-12 11:10:55,2014-03-25 05:01:50").encode()
         result = pyzor.engines.redis_.RedisDBHandle._decode_record(encoded)
         self.record.r_updated = None
         self.compare_records(result, self.record)
 
     def test_decode_record_no_white(self):
         encoded = ("24,2014-04-23 15:41:30,2014-04-25 17:22:25,"
-                   "0,,")
+                   "0,,").encode()
         result = pyzor.engines.redis_.RedisDBHandle._decode_record(encoded)
         self.record.wl_count = 0
         self.record.wl_entered = None

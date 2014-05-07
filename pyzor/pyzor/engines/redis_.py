@@ -40,13 +40,13 @@ class RedisDBHandle(object):
                  encode_date(r.r_updated),
                  r.wl_count,
                  encode_date(r.wl_entered),
-                 encode_date(r.wl_updated)))
+                 encode_date(r.wl_updated))).encode()
 
     @staticmethod
     def _decode_record(r):
         if r is None:
             return Record()
-        fields = r.split(",")
+        fields = r.decode().split(",")
         return Record(r_count=int(fields[0]),
                       r_entered=decode_date(fields[1]),
                       r_updated=decode_date(fields[2]),
