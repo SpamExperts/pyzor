@@ -16,7 +16,7 @@
 # AccountsFile = accounts
 
 ## This option specifies the name of the log file.
-# LogFile = pyzor.log
+# LogFile = 
 
 ## This options specifies the number of seconds that the pyzor client should
 ## wait for a response from the server before timing out.
@@ -42,9 +42,14 @@
 # ListenAddress = 0.0.0.0
 
 ## This option specifies the name of the log file.
-# LogFile = pyzord.log
+# LogFile = 
 ## This option specifies the name of the usage log file.
 # UsageLogFile = 
+
+## This file will contain the PID of the pyzord daemon, when the it's 
+## started with the --detach options. The file is removed when the daemon is 
+## closed
+# PidFile = pyzord.pid
 
 ## This file must contain the username and their keys 
 # PasswdFile = pyzord.passwd
