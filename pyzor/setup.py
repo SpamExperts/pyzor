@@ -4,6 +4,15 @@ import distutils.core
 
 import pyzor
 
+try:
+    # These automatically run 2to3 and modules and scripts while installing,
+    # when ran under Python 3
+    from distutils.command.build_py import build_py_2to3 as build_py
+    from distutils.command.build_scripts import build_scripts_2to3 as build_scripts
+except ImportError:
+    from distutils.command.build_py import build_py
+    from distutils.command.build_scripts import build_scripts
+
 long_description = """
 Pyzor is spam-blocking networked system that uses spam signatures
 to identify them.
@@ -43,4 +52,7 @@ distutils.core.setup(name='pyzor',
                                'pyzor.engines'],
                      classifiers=classifiers,
                      test_suite="tests.suite",
+                     cmdclass={'build_py': build_py,
+                               'build_scripts': build_scripts,
+                               },
                      )
