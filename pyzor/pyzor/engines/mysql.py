@@ -170,6 +170,7 @@ class MySQLDBHandle(object):
             db.close()
         self.reorganize_timer = threading.Timer(self.reorganize_period,
                                                 self.start_reorganizing)
+        self.reorganize_timer.setDaemon(True)
         self.reorganize_timer.start()
 
 class ThreadedMySQLDBHandle(MySQLDBHandle):

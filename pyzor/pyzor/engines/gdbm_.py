@@ -60,6 +60,7 @@ class GdbmDBHandle(object):
             self.apply_method(self._really_sync)
         self.sync_timer = threading.Timer(self.sync_period,
                                           self.start_syncing)
+        self.sync_timer.setDaemon(True)
         self.sync_timer.start()
 
     def _really_sync(self):
@@ -72,6 +73,7 @@ class GdbmDBHandle(object):
             self.apply_method(self._really_reorganize)
         self.reorganize_timer = threading.Timer(self.reorganize_period,
                                                 self.start_reorganizing)
+        self.reorganize_timer.setDaemon(True)
         self.reorganize_timer.start()
 
     def _really_reorganize(self):
