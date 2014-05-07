@@ -4,8 +4,8 @@
 
 import os
 import sys
-import logging
 import optparse
+import traceback
 import collections
 import ConfigParser
 
@@ -205,8 +205,16 @@ def main():
         database = database_class(db_file, "c", cleanup_age)
         logger.info("Starting pyzord server.")
         server = pyzor.server.Server(address, database, passwd_fn, access_fn)
-    # Start listening.
-    server.serve_forever()
+        
+    try:
+        # Start listening.
+        server.serve_forever()
+    except:
+        logger.critical("Failure: %s", traceback.format_exc())
+    finally:
+        logger.info("Server shut-down.")
+        server.server_close()
+
 
 if __name__ == "__main__":
     main()

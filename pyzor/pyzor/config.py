@@ -180,22 +180,32 @@ def setup_logging(log_name, filepath, debug):
     """Setup logging according to the specified options. Return the Logger 
     object.
     """
+    fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+
+    stream_handler = logging.StreamHandler()
+    file_handler = None
+
     if debug:
-        log_level = logging.DEBUG
-        handler = logging.StreamHandler()
-    elif not filepath:
-        handler = logging.StreamHandler()
-        log_level = logging.CRITICAL
+        stream_log_level = logging.DEBUG
+        file_log_level = logging.DEBUG
     else:
-        log_level = logging.INFO
+        stream_log_level = logging.CRITICAL
+        file_log_level = logging.INFO
+        
+    if filepath:
         handler = logging.FileHandler(filepath)
 
-    handler.setLevel(log_level)
-    handler.setFormatter(
-        logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
     logger = logging.getLogger(log_name)
-    logger.setLevel(log_level)
-    logger.addHandler(handler)
+    logger.setLevel(file_log_level)
+
+    stream_handler.setLevel(stream_log_level)
+    stream_handler.setFormatter(fmt)
+    logger.addHandler(stream_handler)
+    
+    if file_handler:
+        file_handler.setLevel(file_log_level)
+        file_handler.setFormatter(fmt)
+        logger.addHandler(file_handler)
 
     return logger
 
