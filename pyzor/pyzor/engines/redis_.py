@@ -15,6 +15,21 @@ NAMESPACE = "pyzord.digest"
 encode_date = lambda d: "" if d is None else d.strftime("%Y-%m-%d %H:%M:%S")
 decode_date = lambda x: None if x == "" else datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S")
 
+
+def safe_call(f):
+    """Decorator that wraps a method for handling database operations."""
+    def wrapped_f(self, *args, **kwargs):
+        # This only logs the error and raise the usual Error for consistency,
+        # the redis library takes care of reconnecting and everything else.
+        try:
+            return f(self, *args, **kwargs)
+        except redis.exceptions.RedisError as e:
+            self.log.error("Redis error while calling %s: %s",
+                           f.__name__, e)
+            raise DatabaseError("Database temporarily unavailable.")
+    return wrapped_f
+
+
 class RedisDBHandle(object):
     absolute_source = False
 
@@ -58,13 +73,16 @@ class RedisDBHandle(object):
     def _real_key(key):
         return "%s.%s" % (NAMESPACE, key)
 
+    @safe_call
     def _get_new_connection(self):
         return redis.StrictRedis(host=self.host, port=int(self.port),
                                  db=int(self.db_name), password=self.passwd)
 
+    @safe_call
     def __getitem__(self, key):
         return self._decode_record(self.db.get(self._real_key(key)))
 
+    @safe_call
     def __setitem__(self, key, value):
         if self.max_age is None:
             self.db.set(self._real_key(key), self._encode_record(value))
@@ -72,6 +90,7 @@ class RedisDBHandle(object):
             self.db.setex(self._real_key(key), self.max_age,
                           self._encode_record(value))
 
+    @safe_call
     def __delitem__(self, key):
         self.db.delete(self._real_key(key))
         
