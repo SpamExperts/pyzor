@@ -13,6 +13,58 @@ import pyzor
 import pyzor.server
 import pyzor.engines
 
+def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
+    """This forks the current process into a daemon.
+
+    The stdin, stdout, and stderr arguments are file names that
+    will be opened and be used to replace the standard file descriptors
+    in sys.stdin, sys.stdout, and sys.stderr.
+    These arguments are optional and default to /dev/null.
+    Note that stderr is opened unbuffered, so if it shares a file with
+    stdout then interleaved output may not appear in the order that you
+    expect."""
+    # Do first fork.
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # Exit first parent.
+            sys.exit(0)
+    except OSError as err:
+        print >> sys.stderr, "Fork #1 failed: (%d) %s" % \
+              (err.errno, err.strerror)
+        sys.exit(1)
+
+    # Decouple from parent environment.
+    os.chdir("/")
+    os.umask(0)
+    os.setsid()
+
+    # Do second fork.
+    try:
+        pid = os.fork()
+        if pid > 0:
+            # Exit second parent.
+            sys.exit(0)
+    except OSError as err:
+        print >> sys.stderr, "Fork #2 failed: (%d) %s" % \
+              (err.errno, err.strerror)
+        sys.exit(1)
+
+    # Open file descriptors and print start message.
+    if not stderr:
+        stderr = stdout
+    stdi = open(stdin, "r")
+    stdo = open(stdout, "a+")
+    stde = open(stderr, "a+", 0)
+    pid = str(os.getpid())
+    if pidfile:
+        open(pidfile, "w+").write("%s\n" % pid)
+
+    # Redirect standard file descriptors.
+    os.dup2(stdi.fileno(), sys.stdin.fileno())
+    os.dup2(stdo.fileno(), sys.stdout.fileno())
+    os.dup2(stde.fileno(), sys.stderr.fileno())
+
 
 def load_configuration():
     """Load the configuration for the server.
@@ -44,6 +96,7 @@ def load_configuration():
         "CleanupAge" : str(60 * 60 * 24 * 30 * 4),  # approximately 4 months
         "LogFile" : "",
         "UsageLogFile": "",
+        "PidFile": "pyzord.pid"
     }
 
     # Process any command line options.
@@ -93,6 +146,12 @@ def load_configuration():
                    dest="LogFile", help="name of the log file")
     opt.add_option("--usage-log-file", action="store", default=None,
                    dest="UsageLogFile", help="name of the usage log file")
+    opt.add_option("--pid-file", action="store", default=None,
+                   dest="PidFile", help="save the pid in this file after the "
+                   "server is daemonized")
+    opt.add_option("--detach", action="store", default=None,
+                   dest="detach", help="daemonizes the server and redirects "
+                   "any output to the specified file")
     opt.add_option("-V", "--version", action="store_true", default=False,
                    dest="version", help="print version and exit")
     options, args = opt.parse_args()
@@ -134,7 +193,8 @@ def main():
 
     config, options = load_configuration()
 
-    homefiles = ["LogFile", "UsageLogFile", "PasswdFile", "AccessFile"]
+    homefiles = ["LogFile", "UsageLogFile", "PasswdFile", "AccessFile",
+                 "PidFile"]
 
     engine = config.get("server", "Engine")
     database_classes = pyzor.engines.database_classes[engine]
@@ -171,13 +231,16 @@ def main():
                                config.get("server", "UsageLogFile"),
                                options.debug)
 
-    # Load passwd_fn and ACL.
     db_file = config.get("server", "DigestDB")
     passwd_fn = config.get("server", "PasswdFile")
     access_fn = config.get("server", "AccessFile")
+    pidfile_fn = config.get("server", "PidFile")
     address = (config.get("server", "ListenAddress"), 
                int(config.get("server", "port")))
     cleanup_age = int(config.get("server", "CleanupAge"))
+
+    if options.detach:
+        detach(stdout=options.detach, pidfile=pidfile_fn)
 
     if use_threads:
         max_threads = int(config.get("server", "MaxThreads"))
@@ -207,13 +270,18 @@ def main():
         server = pyzor.server.Server(address, database, passwd_fn, access_fn)
         
     try:
-        # Start listening.
         server.serve_forever()
     except:
         logger.critical("Failure: %s", traceback.format_exc())
     finally:
-        logger.info("Server shut-down.")
+        logger.info("Server shutdown.")
         server.server_close()
+        if options.detach and os.path.exists(pidfile_fn):
+            try:
+                os.remove(pidfile_fn)
+            except Exception as e:
+                logger.warning("Unable to remove pidfile %r: %s",
+                               pidfile_fn, e)
 
 
 if __name__ == "__main__":
