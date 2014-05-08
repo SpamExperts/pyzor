@@ -89,8 +89,8 @@ def load_configuration():
     os.nice(options.nice)
 
     # Create the configuration directory if it doesn't already exist.
-    if not os.path.exists(homedir):
-        os.mkdir(homedir)
+    if not os.path.exists(options.homedir):
+        os.mkdir(options.homedir)
 
     # Load the configuration.
     config = ConfigParser.ConfigParser()
