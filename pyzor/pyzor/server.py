@@ -78,7 +78,7 @@ class Server(SocketServer.UDPServer):
         self.accounts = pyzor.config.load_passwd_file(self.passwd_fn)
         self.acl = pyzor.config.load_access_file(self.access_fn, self.accounts)
 
-    def shutdown_handler(self, signum, frame):
+    def shutdown_handler(self, *args, **kwargs):
         """Handler for the SIGTERM signal. This should be used to kill the 
         daemon and ensure proper clean-up. 
         """
@@ -86,7 +86,7 @@ class Server(SocketServer.UDPServer):
         t = threading.Thread(target=self.shutdown)
         t.start()
 
-    def reload_handler(self, signum, frame):
+    def reload_handler(self, *args, **kwargs):
         """Handler for the SIGUSR1 signal. This should be used to reload
         the configuration files.
         """

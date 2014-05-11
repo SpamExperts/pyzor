@@ -84,16 +84,20 @@ def load_configuration():
     defaults = {
         "Port" : "24441",
         "ListenAddress" : "0.0.0.0",
+
         "Engine" : "gdbm",
         "DigestDB" : "pyzord.db",
+        "CleanupAge" : str(60 * 60 * 24 * 30 * 4),  # approximately 4 months
+
         "Threads": "False",
         "MaxThreads": "0",
         "Processes": "False",
         "MaxProcesses": "40",
         "DBConnections": "0",
+        "Gevent": "False",
+
         "PasswdFile" : "pyzord.passwd",
         "AccessFile" : "pyzord.access",
-        "CleanupAge" : str(60 * 60 * 24 * 30 * 4),  # approximately 4 months
         "LogFile" : "",
         "UsageLogFile": "",
         "PidFile": "pyzord.pid"
@@ -117,6 +121,8 @@ def load_configuration():
     opt.add_option("--dsn", action="store", default=None, dest="DigestDB",
                    help="data source name (filename for gdbm, host,user,"
                    "password,database,table for MySQL)")
+    opt.add_option("--gevent", action="store", default=None, dest="Gevent",
+                   help="set to true to use the gevent library")
     opt.add_option("--threads", action="store", default=None, dest="Threads",
                    help="set to true if multi-threading should be used"
                    " (this may not apply to all engines)")
@@ -198,6 +204,7 @@ def main():
 
     engine = config.get("server", "Engine")
     database_classes = pyzor.engines.database_classes[engine]
+    use_gevent = config.get("server", "Gevent").lower() == "true"
     use_threads = config.get("server", "Threads").lower() == "true"
     use_processes = config.get("server", "Processes").lower() == "true"
 
@@ -238,6 +245,24 @@ def main():
     address = (config.get("server", "ListenAddress"), 
                int(config.get("server", "port")))
     cleanup_age = int(config.get("server", "CleanupAge"))
+
+    if use_gevent:
+        # Monkey patch the std libraries with gevent ones
+        try:
+            import signal
+            import gevent
+            import gevent.monkey
+        except ImportError as e:
+            logger.critical("Gevent library not found: %s", e)
+            sys.exit(1)
+        gevent.monkey.patch_all()
+        # The signal method does not get patched in patch_all
+        signal.signal = gevent.signal
+        # XXX The gevent libary might already be doing this.
+        # Enssure that all modules are reloaded so they benefit from
+        # the gevent library.
+        for module in (os, sys, pyzor, pyzor.server, pyzor.engines):
+            reload(module)
 
     if options.detach:
         detach(stdout=options.detach, pidfile=pidfile_fn)
