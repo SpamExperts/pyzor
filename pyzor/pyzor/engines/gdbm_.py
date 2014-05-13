@@ -1,6 +1,10 @@
 """Gdbm database engine."""
 
-import gdbm
+try:
+    import gdbm
+except ImportError:
+    gdbm = None
+
 import time
 import logging
 import datetime
@@ -157,6 +161,13 @@ class ThreadedGdbmDBHandle(GdbmDBHandle):
 #                                       bound=bound)
 #         self.db_lock = multiprocessing.Lock()
 
-handle = DBHandle(single_threaded=GdbmDBHandle,
-                   multi_threaded=ThreadedGdbmDBHandle,
-                   multi_processing=None)
+if gdbm is None:
+    handle = DBHandle(single_threaded=None,
+                      multi_threaded=None,
+                      multi_processing=None)
+else:
+    handle = DBHandle(single_threaded=GdbmDBHandle,
+                      multi_threaded=ThreadedGdbmDBHandle,
+                      multi_processing=None)
+
+
