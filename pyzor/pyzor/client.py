@@ -64,9 +64,8 @@ import pyzor.digest
 import pyzor.account
 import pyzor.message
 
-if not hasattr(email, "message_from_bytes"):
-    # for python2.6
-    email.message_from_bytes = email.message_from_string
+import pyzor.hacks.py26
+pyzor.hacks.py26.hack_email()
 
 class Client(object):
     timeout = 5

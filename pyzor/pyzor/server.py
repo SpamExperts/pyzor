@@ -34,9 +34,8 @@ import pyzor.config
 import pyzor.account
 import pyzor.engines.common
 
-if not hasattr(email, "message_from_bytes"):
-    # for python2.6
-    email.message_from_bytes = email.message_from_string
+import pyzor.hacks.py26
+pyzor.hacks.py26.hack_all()
 
 class Server(SocketServer.UDPServer):
     """The pyzord server.  Handles incoming UDP connections in a single
