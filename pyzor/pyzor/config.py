@@ -5,7 +5,6 @@ import re
 import logging
 import collections
 
-import pyzor
 import pyzor.account
 
 # Configuration files for the Pyzor Server
@@ -168,7 +167,7 @@ def load_servers(filepath):
                 if re.match("[^#][a-zA-Z0-9.-]+:[0-9]+", line):
                     address, port = line.rsplit(":", 1)
                     servers.append((address, int(port)))
-    
+
     if not servers:
         logger.info("No servers specified, defaulting to public.pyzor.org.")
         servers = [("public.pyzor.org", 24441)]
@@ -191,9 +190,6 @@ def setup_logging(log_name, filepath, debug):
     else:
         stream_log_level = logging.CRITICAL
         file_log_level = logging.INFO
-        
-    if filepath:
-        handler = logging.FileHandler(filepath)
 
     logger = logging.getLogger(log_name)
     logger.setLevel(file_log_level)
@@ -201,8 +197,9 @@ def setup_logging(log_name, filepath, debug):
     stream_handler.setLevel(stream_log_level)
     stream_handler.setFormatter(fmt)
     logger.addHandler(stream_handler)
-    
-    if file_handler:
+
+    if filepath:
+        file_handler = logging.FileHandler(filepath)
         file_handler.setLevel(file_log_level)
         file_handler.setFormatter(fmt)
         logger.addHandler(file_handler)

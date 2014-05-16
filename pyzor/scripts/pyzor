@@ -3,7 +3,6 @@
 """Pyzor client."""
 
 import os
-import re
 import sys
 import email
 import random
@@ -15,7 +14,6 @@ import optparse
 import tempfile
 import ConfigParser
 
-import pyzor
 import pyzor.digest
 import pyzor.client
 import pyzor.config

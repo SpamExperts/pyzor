@@ -30,7 +30,6 @@ import traceback
 import SocketServer
 import email.message
 
-import pyzor
 import pyzor.config
 import pyzor.account
 import pyzor.engines.common
@@ -93,7 +92,7 @@ class Server(SocketServer.UDPServer):
         self.log.info("SIGUSR1 received. Reloading configuration.")
         t = threading.Thread(target=self.load_config)
         t.start()
-        
+
 
 class ThreadingServer(SocketServer.ThreadingMixIn, Server):
     """A threaded version of the pyzord server.  Each connection is served

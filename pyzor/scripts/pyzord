@@ -6,10 +6,9 @@ import os
 import sys
 import optparse
 import traceback
-import collections
 import ConfigParser
 
-import pyzor
+import pyzor.config
 import pyzor.server
 import pyzor.engines
 
@@ -211,7 +210,7 @@ def main():
     if use_threads and use_processes:
         print "You cannot use both processes and threads at the same time"
         sys.exit(1)
-    
+
     # We prefer to use the threaded server, but some database engines
     # cannot handle it.
     if use_threads and database_classes.multi_threaded:
@@ -242,7 +241,7 @@ def main():
     passwd_fn = config.get("server", "PasswdFile")
     access_fn = config.get("server", "AccessFile")
     pidfile_fn = config.get("server", "PidFile")
-    address = (config.get("server", "ListenAddress"), 
+    address = (config.get("server", "ListenAddress"),
                int(config.get("server", "port")))
     cleanup_age = int(config.get("server", "CleanupAge"))
 
@@ -293,7 +292,7 @@ def main():
         database = database_class(db_file, "c", cleanup_age)
         logger.info("Starting pyzord server.")
         server = pyzor.server.Server(address, database, passwd_fn, access_fn)
-        
+
     try:
         server.serve_forever()
     except:

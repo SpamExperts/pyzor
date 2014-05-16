@@ -68,7 +68,7 @@ class RedisDBHandle(object):
                       wl_count=int(fields[3]),
                       wl_entered=decode_date(fields[4]),
                       wl_updated=decode_date(fields[5]))
-    
+
     @staticmethod
     def _real_key(key):
         return "%s.%s" % (NAMESPACE, key)
@@ -93,9 +93,9 @@ class RedisDBHandle(object):
     @safe_call
     def __delitem__(self, key):
         self.db.delete(self._real_key(key))
-        
+
 class ThreadedRedisDBHandle(RedisDBHandle):
-    
+
     def __init__(self, fn, mode, max_age=None, bound=None):
         RedisDBHandle.__init__(self, fn, mode, max_age=max_age)
 

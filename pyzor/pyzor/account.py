@@ -3,10 +3,8 @@
 Note that accounts are not necessary (on the client or server), as an
 "anonymous" account always exists."""
 
-import os
 import time
 import hashlib
-import logging
 
 import pyzor
 

@@ -60,7 +60,6 @@ import email
 import socket
 import logging
 
-import pyzor
 import pyzor.digest
 import pyzor.account
 import pyzor.message
@@ -235,7 +234,7 @@ class CheckClientRunner(ClientRunner):
             sys.stdout.write(message + '\n')
 
 class InfoClientRunner(ClientRunner):
-    
+
     def handle_response(self, response, message):
         message += "%s\n" % str(response.head_tuple())
 
