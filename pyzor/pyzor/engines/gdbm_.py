@@ -5,6 +5,7 @@ try:
 except ImportError:
     gdbm = None
 
+import sys
 import time
 import logging
 import datetime
@@ -161,7 +162,7 @@ class ThreadedGdbmDBHandle(GdbmDBHandle):
 #                                       bound=bound)
 #         self.db_lock = multiprocessing.Lock()
 
-if gdbm is None:
+if sys.version_info[0] != 3 and gdbm is None:
     handle = DBHandle(single_threaded=None,
                       multi_threaded=None,
                       multi_processing=None)
