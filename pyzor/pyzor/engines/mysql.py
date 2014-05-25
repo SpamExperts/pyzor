@@ -8,6 +8,7 @@ import threading
 
 try:
     import MySQLdb
+    import MySQLdb.cursors
 except ImportError:
     # The SQL database backend will not work.
     MySQLdb = None
@@ -78,6 +79,30 @@ class MySQLDBHandle(object):
             self.db = None
         # Keep track of when we connected, so that we don't retry too often.
         self.last_connect_attempt = time.time()
+
+    def __iter__(self):
+        c = self.db.cursor(cursorclass=MySQLdb.cursors.SSCursor)
+        c.execute("SELECT digest FROM %s" % self.table_name)
+        while True:
+            row = c.fetchone()
+            if not row:
+                break
+            yield row[0]
+        c.close()
+    
+    def iteritems(self):
+        c = self.db.cursor(cursorclass=MySQLdb.cursors.SSCursor)
+        c.execute("SELECT digest, r_count, wl_count, r_entered, r_updated, "
+                  "wl_entered, wl_updated FROM %s" % self.table_name)
+        while True:
+            row = c.fetchone()
+            if not row:
+                break
+            yield row[0], Record(*row[1:])
+        c.close()
+        
+    def items(self):
+        return list(self.iteritems())
 
     def __del__(self):
         """Close the database when the object is no longer needed."""

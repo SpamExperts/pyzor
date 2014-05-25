@@ -37,6 +37,19 @@ class GdbmDBHandle(object):
         self.start_reorganizing()
         self.start_syncing()
 
+    def __iter__(self):
+        k = self.db.firstkey()
+        while k != None:
+            yield k
+            k = self.db.nextkey(k)
+    
+    def iteritems(self):
+        for k in self:
+            yield k, self._really_getitem(k)
+            
+    def items(self):
+        return list(self.iteritems())
+
     def apply_method(self, method, varargs=(), kwargs=None):
         if kwargs is None:
             kwargs = {}

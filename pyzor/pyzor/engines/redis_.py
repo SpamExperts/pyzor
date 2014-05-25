@@ -69,6 +69,17 @@ class RedisDBHandle(object):
                       wl_entered=decode_date(fields[4]),
                       wl_updated=decode_date(fields[5]))
 
+    def __iter__(self):
+        for key in self.db.keys(self._real_key("*")):
+            yield key.rsplit(".", 1)[-1]
+    
+    def iteritems(self):
+        for key in self:
+            yield key, self[key]
+
+    def items(self):
+        return list(self.iteritems())
+
     @staticmethod
     def _real_key(key):
         return "%s.%s" % (NAMESPACE, key)
