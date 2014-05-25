@@ -80,7 +80,7 @@ class EncodingRedisTest(unittest.TestCase):
         self.compare_records(result, self.record)
 
 def make_MockRedis(commands):
-    class MockRedis():
+    class MockStrictRedis():
         def __init__(self, *args, **kwargs):
             commands.append(("init", args, kwargs))
         def set(self, *args, **kwargs):
@@ -91,7 +91,16 @@ def make_MockRedis(commands):
             commands.append(("get", args, kwargs))
         def delete(self, *args, **kwargs):
             commands.append(("delete", args, kwargs))
-    return MockRedis
+    class MockError(Exception):
+        pass
+    class exceptions():
+        def __init__(self):
+            self.RedisError = MockError 
+    class MockRedis():
+        def __init__(self):
+            self.StrictRedis = MockStrictRedis
+            self.exceptions = exceptions()
+    return MockRedis()
 
 mock_encode_record = lambda s, x: x
 mock_decode_record = lambda s, x: x
@@ -105,17 +114,17 @@ class RedisTest(unittest.TestCase):
 
         self.commands = []
 
-        self.real_redis = pyzor.engines.redis_.redis.StrictRedis
+        self.real_redis = pyzor.engines.redis_.redis
         self.real_encode = pyzor.engines.redis_.RedisDBHandle._encode_record
         self.real_decode = pyzor.engines.redis_.RedisDBHandle._decode_record
 
-        pyzor.engines.redis_.redis.StrictRedis = make_MockRedis(self.commands)
+        pyzor.engines.redis_.redis = make_MockRedis(self.commands)
         pyzor.engines.redis_.RedisDBHandle._encode_record = mock_encode_record
         pyzor.engines.redis_.RedisDBHandle._decode_record = mock_decode_record
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
-        pyzor.engines.redis_.redis.StrictRedis = self.real_redis
+        pyzor.engines.redis_.redis = self.real_redis
         pyzor.engines.redis_.RedisDBHandle._encode_record = self.real_encode
         pyzor.engines.redis_.RedisDBHandle._decode_record = self.real_decode
 
