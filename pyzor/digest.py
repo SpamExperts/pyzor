@@ -123,8 +123,11 @@ class DataDigester(object):
                     charset = "ascii"
                 try:
                     payload = payload.decode(charset, "ignore")
-                except LookupError:
-                    payload = payload.decode("ascii", "ignore")
+                except (LookupError, UnicodeDecodeError):
+                    try:
+                        payload = payload.decode("ascii", "ignore")
+                    except UnicodeDecodeError:
+                        continue
                 if part.get_content_subtype() == "html":
                     yield cls.normalize_html_part(payload)
                 else:
