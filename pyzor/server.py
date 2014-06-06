@@ -43,7 +43,7 @@ class Server(SocketServer.UDPServer):
     max_packet_size = 8192
     time_diff_allowance = 180
 
-    def __init__(self, address, database, passwd_fn, access_fn):
+    def __init__(self, address, database, passwd_fn, access_fn, forwarding_server=None):
         if ":" in address[0]:
             Server.address_family = socket.AF_INET6
         else:
@@ -56,6 +56,8 @@ class Server(SocketServer.UDPServer):
         self.passwd_fn = passwd_fn
         self.access_fn = access_fn
         self.load_config()
+
+        self.forwarding_server=forwarding_server
 
         self.log.debug("Listening on %s", address)
         SocketServer.UDPServer.__init__(self, address, RequestHandler,
@@ -253,6 +255,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # database.
         record.r_increment()
         self.server.database[digest] = record
+        if self.server.forwarding_server!=None:
+            self.server.forwarding_server.queue_forward_request(digest)
 
     def handle_whitelist(self, digest, record):
         """Handle the 'whitelist' command.
@@ -263,6 +267,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # database.
         record.wl_increment()
         self.server.database[digest] = record
+        if self.server.forwarding_server!=None:
+            self.server.forwarding_server.queue_forward_request(digest,whitelist=True)
 
     def handle_info(self, digest, record):
         """Handle the 'info' command.

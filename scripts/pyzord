@@ -11,6 +11,7 @@ import ConfigParser
 import pyzor.config
 import pyzor.server
 import pyzor.engines
+import pyzor.forwarder
 
 def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
     """This forks the current process into a daemon.
@@ -65,6 +66,36 @@ def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
     os.dup2(stde.fileno(), sys.stderr.fileno())
 
 
+def initialize_forwarding(client_config_dir,debug=False):
+    """initialize the forwarder client and return a tuple client,serverlist"""
+    forward_defaults = {
+                "ServersFile" : "servers",
+                "AccountsFile" : "accounts",
+                "LogFile" : "",
+                "Timeout" : "5",  # seconds
+                "Style" : "msg",
+                "ReportThreshold" : "0",
+                "WhitelistThreshold" : "0"
+    }
+    config = ConfigParser.ConfigParser()
+    config.add_section("client")
+    for key, value in forward_defaults.iteritems():
+        config.set("client", key, value)
+    config.read(os.path.join(client_config_dir, "config"))
+    homefiles = ["LogFile", "ServersFile", "AccountsFile"]
+    pyzor.config.expand_homefiles(homefiles, "client", client_config_dir, config)
+    serversfile=config.get("client", "ServersFile")
+    remote_servers = pyzor.config.load_servers(config.get("client", "ServersFile"))
+
+    #client logging must be set up before we call load_accounts
+    pyzor.config.setup_logging("pyzor",config.get("client", "LogFile"),debug)
+    af=config.get("client", "AccountsFile")
+    accounts = pyzor.config.load_accounts(config.get("client", "AccountsFile"))
+
+    forwarding_client=pyzor.client.Client(accounts,
+                                 int(config.get("client", "Timeout")))
+    return forwarding_client,remote_servers
+
 def load_configuration():
     """Load the configuration for the server.
 
@@ -94,6 +125,8 @@ def load_configuration():
         "MaxProcesses": "40",
         "DBConnections": "0",
         "Gevent": "False",
+
+        "ForwardClientHomeDir":"",
 
         "PasswdFile" : "pyzord.passwd",
         "AccessFile" : "pyzord.access",
@@ -154,6 +187,10 @@ def load_configuration():
     opt.add_option("--pid-file", action="store", default=None,
                    dest="PidFile", help="save the pid in this file after the "
                    "server is daemonized")
+    opt.add_option("--forward-client-homedir", action="store", default=None,
+                   dest="ForwardClientHomeDir", help="Specify a pyzor client configuration directory"
+                   " to forward received digests to a remote pyzor server"
+                   )
     opt.add_option("--detach", action="store", default=None,
                    dest="detach", help="daemonizes the server and redirects "
                    "any output to the specified file")
@@ -245,6 +282,13 @@ def main():
                int(config.get("server", "port")))
     cleanup_age = int(config.get("server", "CleanupAge"))
 
+    forward_client_home = config.get('server','ForwardClientHomeDir')
+    if forward_client_home:
+        forwarding_client,remote_servers=initialize_forwarding(forward_client_home,options.debug)
+        forwarding_server=pyzor.forwarder.Forwarder(forwarding_client,remote_servers)
+    else:
+        forwarding_server=None
+
     if use_gevent:
         # Monkey patch the std libraries with gevent ones
         try:
@@ -274,24 +318,27 @@ def main():
         if max_threads == 0:
             logger.info("Starting multi-threaded pyzord server.")
             server = pyzor.server.ThreadingServer(address, database, passwd_fn,
-                                                  access_fn)
+                                                  access_fn,forwarding_server=forwarding_server)
         else:
             logger.info("Starting bounded (%s) multi-threaded pyzord server.",
                         max_threads)
             server = pyzor.server.BoundedThreadingServer(address, database,
                                                          passwd_fn, access_fn,
-                                                         max_threads)
+                                                         max_threads,forwarding_server=forwarding_server)
     elif use_processes:
         max_children = int(config.get("server", "MaxProcesses"))
         database = database_class(db_file, "c", cleanup_age)
         logger.info("Starting bounded (%s) multi-processing pyzord server.",
                     max_children)
         server = pyzor.server.ProcessServer(address, database, passwd_fn, access_fn,
-                                            max_children)
+                                            max_children,forwarding_server=forwarding_server)
     else:
         database = database_class(db_file, "c", cleanup_age)
         logger.info("Starting pyzord server.")
-        server = pyzor.server.Server(address, database, passwd_fn, access_fn)
+        server = pyzor.server.Server(address, database, passwd_fn, access_fn,forwarding_server=forwarding_server)
+
+    if forwarding_server!=None:
+        forwarding_server.start_forwarding()
 
     try:
         server.serve_forever()
@@ -300,6 +347,8 @@ def main():
     finally:
         logger.info("Server shutdown.")
         server.server_close()
+        if forwarding_server!=None:
+            forwarding_server.stop_forwarding()
         if options.detach and os.path.exists(pidfile_fn):
             try:
                 os.remove(pidfile_fn)
