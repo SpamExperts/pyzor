@@ -26,7 +26,8 @@ class Forwarder(object):
                 digest, whitelist = self.forward_queue.get(block=True,
                                                            timeout=2)
             except Queue.Empty:
-                # if the forwarding client has been deleted we should end the thread
+                # If the forwarding client has been deleted we should
+                # end the thread
                 if self.forwarding_client == None:
                     return
                 else:
@@ -43,7 +44,7 @@ class Forwarder(object):
                                   digest, server, e)
 
     def queue_forward_request(self, digest, whitelist=False):
-        """if forwarding is enabled, insert a digest into the forwarding queue
+        """If forwarding is enabled, insert a digest into the forwarding queue
         if whitelist is True, the digest will be forwarded as whitelist request
         if the queue is full, the digest is dropped
         """

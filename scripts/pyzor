@@ -18,6 +18,7 @@ import pyzor.digest
 import pyzor.client
 import pyzor.config
 
+
 def load_configuration():
     """Load the configuration for the server.
 
@@ -104,6 +105,7 @@ def load_configuration():
         if value is not None:
             config.set("client", key, str(value))
     return config, options, args
+
 
 def main():
     """Execute any requested actions."""

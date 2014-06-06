@@ -44,7 +44,7 @@ class Server(SocketServer.UDPServer):
     time_diff_allowance = 180
 
     def __init__(self, address, database, passwd_fn, access_fn,
-                 forwarding_server=None):
+                 forwarder=None):
         if ":" in address[0]:
             Server.address_family = socket.AF_INET6
         else:
@@ -58,7 +58,7 @@ class Server(SocketServer.UDPServer):
         self.access_fn = access_fn
         self.load_config()
 
-        self.forwarding_server = forwarding_server
+        self.forwarder = forwarder
 
         self.log.debug("Listening on %s", address)
         SocketServer.UDPServer.__init__(self, address, RequestHandler,
@@ -109,7 +109,7 @@ class BoundedThreadingServer(ThreadingServer):
     def __init__(self, address, database, passwd_fn, access_fn, max_threads,
                  forwarding_server=None):
         ThreadingServer.__init__(self, address, database, passwd_fn, access_fn,
-                                 forwarding_server=forwarding_server)
+                                 forwarder=forwarding_server)
         self.semaphore = threading.Semaphore(max_threads)
 
     def process_request(self, request, client_address):
@@ -129,7 +129,7 @@ class ProcessServer(SocketServer.ForkingMixIn, Server):
                  max_children=40, forwarding_server=None):
         ProcessServer.max_children = max_children
         Server.__init__(self, address, database, passwd_fn, access_fn,
-                        forwarding_server=forwarding_server)
+                        forwarder=forwarding_server)
 
 
 class RequestHandler(SocketServer.DatagramRequestHandler):
@@ -259,8 +259,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # database.
         record.r_increment()
         self.server.database[digest] = record
-        if self.server.forwarding_server:
-            self.server.forwarding_server.queue_forward_request(digest)
+        if self.server.forwarder:
+            self.server.forwarder.queue_forward_request(digest)
 
     def handle_whitelist(self, digest, record):
         """Handle the 'whitelist' command.
@@ -271,8 +271,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # database.
         record.wl_increment()
         self.server.database[digest] = record
-        if self.server.forwarding_server:
-            self.server.forwarding_server.queue_forward_request(digest, True)
+        if self.server.forwarder:
+            self.server.forwarder.queue_forward_request(digest, True)
 
     def handle_info(self, digest, record):
         """Handle the 'info' command.

@@ -20,7 +20,7 @@ class MockServer():
         self.usage_log = logging.getLogger("pyzord-usage")
         self.log.addHandler(logging.NullHandler())
         self.usage_log.addHandler(logging.NullHandler())
-        self.forwarding_server = None
+        self.forwarder = None
         
         
 class MockDatagramRequestHandler():

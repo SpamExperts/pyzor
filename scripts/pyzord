@@ -68,8 +68,12 @@ def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
     os.dup2(stde.fileno(), sys.stderr.fileno())
 
 
-def initialize_forwarding(client_config_dir, debug=False):
-    """initialize the forwarder client and return a tuple client,serverlist"""
+def initialize_forwarding(client_config_dir, debug):
+    """Reads configuration and returns a pyzor client and the list of servers
+    where the digests should be forwarded to.
+    
+    Returns the forwarder server.
+    """
     forward_defaults = {
                 "ServersFile" : "servers",
                 "AccountsFile" : "accounts",
@@ -97,11 +101,11 @@ def initialize_forwarding(client_config_dir, debug=False):
     # client logging must be set up before we call load_accounts
     pyzor.config.setup_logging("pyzor", logger_fn, debug)
 
-    remote_servers = pyzor.config.load_servers(servers_fn)
+    servers = pyzor.config.load_servers(servers_fn)
     accounts = pyzor.config.load_accounts(accounts_fn)
+    client = pyzor.client.Client(accounts, timeout)
 
-    forwarding_client = pyzor.client.Client(accounts, timeout)
-    return forwarding_client, remote_servers
+    return pyzor.forwarder.Forwarder(client, servers)
 
 
 def load_configuration():
@@ -292,10 +296,9 @@ def main():
 
     forward_client_home = config.get('server', 'ForwardClientHomeDir')
     if forward_client_home:
-        forwarding_client, remote_servers = initialize_forwarding(forward_client_home, options.debug)
-        forwarding_server = pyzor.forwarder.Forwarder(forwarding_client, remote_servers)
+        forwarder = initialize_forwarding(forward_client_home, options.debug)
     else:
-        forwarding_server = None
+        forwarder = None
 
     if use_gevent:
         # Monkey patch the std libraries with gevent ones
@@ -326,30 +329,29 @@ def main():
         if max_threads == 0:
             logger.info("Starting multi-threaded pyzord server.")
             server = pyzor.server.ThreadingServer(address, database, passwd_fn,
-                                                  access_fn, forwarding_server)
+                                                  access_fn, forwarder)
         else:
             logger.info("Starting bounded (%s) multi-threaded pyzord server.",
                         max_threads)
             server = pyzor.server.BoundedThreadingServer(address, database,
                                                          passwd_fn, access_fn,
                                                          max_threads,
-                                                         forwarding_server)
+                                                         forwarder)
     elif use_processes:
         max_children = int(config.get("server", "MaxProcesses"))
         database = database_class(db_file, "c", cleanup_age)
         logger.info("Starting bounded (%s) multi-processing pyzord server.",
                     max_children)
         server = pyzor.server.ProcessServer(address, database, passwd_fn,
-                                            access_fn, max_children,
-                                            forwarding_server)
+                                            access_fn, max_children, forwarder)
     else:
         database = database_class(db_file, "c", cleanup_age)
         logger.info("Starting pyzord server.")
         server = pyzor.server.Server(address, database, passwd_fn, access_fn,
-                                    forwarding_server)
+                                    forwarder)
 
-    if forwarding_server != None:
-        forwarding_server.start_forwarding()
+    if forwarder:
+        forwarder.start_forwarding()
 
     try:
         server.serve_forever()
@@ -358,8 +360,8 @@ def main():
     finally:
         logger.info("Server shutdown.")
         server.server_close()
-        if forwarding_server != None:
-            forwarding_server.stop_forwarding()
+        if forwarder:
+            forwarder.stop_forwarding()
         if options.detach and os.path.exists(pidfile_fn):
             try:
                 os.remove(pidfile_fn)
