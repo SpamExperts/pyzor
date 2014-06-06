@@ -4,13 +4,11 @@ import io
 import sys
 import time
 import logging
-import hashlib
 import unittest
 import SocketServer
 
 from datetime import datetime, timedelta
 
-import pyzor
 import pyzor.server
 import pyzor.engines.common
 
@@ -22,6 +20,7 @@ class MockServer():
         self.usage_log = logging.getLogger("pyzord-usage")
         self.log.addHandler(logging.NullHandler())
         self.usage_log.addHandler(logging.NullHandler())
+        self.forwarding_server = None
         
         
 class MockDatagramRequestHandler():
@@ -87,7 +86,7 @@ class RequestHandlerTest(unittest.TestCase):
         handler.wfile.seek(0)
         response = handler.wfile.read()
         response = response.decode("utf8").replace("\n\n", "\n")
-        
+
         result = {}
         for line in response.splitlines():
             key = line.split(":", 1)[0].strip()
@@ -116,7 +115,7 @@ class RequestHandlerTest(unittest.TestCase):
         
         self.request["Op"] = "pong"
         self.request["Op-Digest"] = digest
-        handler = pyzor.server.RequestHandler(self.request, database)
+        pyzor.server.RequestHandler(self.request, database)
         self.expected_response["Count"] = str(sys.maxint) 
         self.expected_response["WL-Count"] = "0"
 

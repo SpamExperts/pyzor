@@ -16,6 +16,7 @@ import test_mysql
 import test_redis
 import test_digest
 import test_account
+import test_forwarder
 
 def suite():
     """Gather all the tests from this package in a test suite."""
@@ -27,6 +28,7 @@ def suite():
     test_suite.addTest(test_pyzor.suite())
     test_suite.addTest(test_digest.suite())
     test_suite.addTest(test_account.suite())
+    test_suite.addTest(test_forwarder.suite())
     return test_suite
 
 if __name__ == '__main__':

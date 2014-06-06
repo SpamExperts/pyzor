@@ -43,7 +43,8 @@ class Server(SocketServer.UDPServer):
     max_packet_size = 8192
     time_diff_allowance = 180
 
-    def __init__(self, address, database, passwd_fn, access_fn, forwarding_server=None):
+    def __init__(self, address, database, passwd_fn, access_fn,
+                 forwarding_server=None):
         if ":" in address[0]:
             Server.address_family = socket.AF_INET6
         else:
@@ -57,7 +58,7 @@ class Server(SocketServer.UDPServer):
         self.access_fn = access_fn
         self.load_config()
 
-        self.forwarding_server=forwarding_server
+        self.forwarding_server = forwarding_server
 
         self.log.debug("Listening on %s", address)
         SocketServer.UDPServer.__init__(self, address, RequestHandler,
@@ -105,8 +106,10 @@ class BoundedThreadingServer(ThreadingServer):
     """Same as ThreadingServer but this also accepts a limited number of 
     concurrent threads.
     """
-    def __init__(self, address, database, passwd_fn, access_fn, max_threads):
-        ThreadingServer.__init__(self, address, database, passwd_fn, access_fn)
+    def __init__(self, address, database, passwd_fn, access_fn, max_threads,
+                 forwarding_server=None):
+        ThreadingServer.__init__(self, address, database, passwd_fn, access_fn,
+                                 forwarding_server=forwarding_server)
         self.semaphore = threading.Semaphore(max_threads)
 
     def process_request(self, request, client_address):
@@ -123,9 +126,10 @@ class ProcessServer(SocketServer.ForkingMixIn, Server):
     served in a new process. This may not be suitable for all database types.
     """
     def __init__(self, address, database, passwd_fn, access_fn,
-                 max_children=40):
+                 max_children=40, forwarding_server=None):
         ProcessServer.max_children = max_children
-        Server.__init__(self, address, database, passwd_fn, access_fn)
+        Server.__init__(self, address, database, passwd_fn, access_fn,
+                        forwarding_server=forwarding_server)
 
 
 class RequestHandler(SocketServer.DatagramRequestHandler):
@@ -255,7 +259,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # database.
         record.r_increment()
         self.server.database[digest] = record
-        if self.server.forwarding_server!=None:
+        if self.server.forwarding_server:
             self.server.forwarding_server.queue_forward_request(digest)
 
     def handle_whitelist(self, digest, record):
@@ -267,8 +271,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # database.
         record.wl_increment()
         self.server.database[digest] = record
-        if self.server.forwarding_server!=None:
-            self.server.forwarding_server.queue_forward_request(digest,whitelist=True)
+        if self.server.forwarding_server:
+            self.server.forwarding_server.queue_forward_request(digest, True)
 
     def handle_info(self, digest, record):
         """Handle the 'info' command.
