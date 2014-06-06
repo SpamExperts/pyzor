@@ -14,6 +14,7 @@ import pyzor.server
 import pyzor.engines
 import pyzor.forwarder
 
+
 def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
     """This forks the current process into a daemon.
 
@@ -101,6 +102,7 @@ def initialize_forwarding(client_config_dir, debug=False):
 
     forwarding_client = pyzor.client.Client(accounts, timeout)
     return forwarding_client, remote_servers
+
 
 def load_configuration():
     """Load the configuration for the server.
@@ -324,24 +326,27 @@ def main():
         if max_threads == 0:
             logger.info("Starting multi-threaded pyzord server.")
             server = pyzor.server.ThreadingServer(address, database, passwd_fn,
-                                                  access_fn, forwarding_server=forwarding_server)
+                                                  access_fn, forwarding_server)
         else:
             logger.info("Starting bounded (%s) multi-threaded pyzord server.",
                         max_threads)
             server = pyzor.server.BoundedThreadingServer(address, database,
                                                          passwd_fn, access_fn,
-                                                         max_threads, forwarding_server=forwarding_server)
+                                                         max_threads,
+                                                         forwarding_server)
     elif use_processes:
         max_children = int(config.get("server", "MaxProcesses"))
         database = database_class(db_file, "c", cleanup_age)
         logger.info("Starting bounded (%s) multi-processing pyzord server.",
                     max_children)
-        server = pyzor.server.ProcessServer(address, database, passwd_fn, access_fn,
-                                            max_children, forwarding_server=forwarding_server)
+        server = pyzor.server.ProcessServer(address, database, passwd_fn,
+                                            access_fn, max_children,
+                                            forwarding_server)
     else:
         database = database_class(db_file, "c", cleanup_age)
         logger.info("Starting pyzord server.")
-        server = pyzor.server.Server(address, database, passwd_fn, access_fn, forwarding_server=forwarding_server)
+        server = pyzor.server.Server(address, database, passwd_fn, access_fn,
+                                    forwarding_server)
 
     if forwarding_server != None:
         forwarding_server.start_forwarding()
