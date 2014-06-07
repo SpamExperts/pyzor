@@ -42,20 +42,23 @@ def migrate(opts):
            "records failed") % (ok_count, fail_count)
 
 if __name__ == '__main__':
+    """Parse command-line arguments and execute the script."""
+    description = """This scripts allows migrating pyzor records between 
+different engine types. It's arguments are pyzor's DSN, which differ according
+to the engine type. See pyzor documentation for more details.   
+    """
     logging.basicConfig()
-    parser = optparse.OptionParser()
-
+    parser = optparse.OptionParser(description=description)
     parser.add_option("--se", "--source-engine", action="store", default=None,
                    dest="source_engine", help="select source database backend")
     parser.add_option("--sd", "--source-dsn", action="store", default=None,
-                      dest="source_dsn", help="data source DSN - see pyzor "
-                      "documentation for format")
+                      dest="source_dsn", help="data source DSN")
     parser.add_option("--de", "--destination-engine", action="store",
                       default=None, dest="destination_engine", help="select "
                       "destination database backend")
     parser.add_option("--dd", "--destination-dsn", action="store",
-                      default=None, dest="destination_dsn", help="destination "
-                      "DSN - see pyzor documentation for format")
+                      default=None, dest="destination_dsn",
+                      help="destination DSN")
 
     opts, args = parser.parse_args()
 

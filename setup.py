@@ -23,7 +23,7 @@ classifiers = ["Operating System :: POSIX",
                "Environment :: Console",
                "Environment :: No Input/Output (Daemon)",
 
-               "Programming Language :: Python"
+               "Programming Language :: Python",
                "Programming Language :: Python :: 2.6",
                "Programming Language :: Python :: 3",
 
@@ -47,7 +47,8 @@ distutils.core.setup(name='pyzor',
                      platforms='POSIX',
                      keywords='spam',
                      url='http://pyzor.sourceforge.net/',
-                     scripts=['scripts/pyzor', 'scripts/pyzord'],
+                     scripts=['scripts/pyzor', 'scripts/pyzord',
+                              'scripts/pyzor-migrate'],
                      packages=['pyzor',
                                'pyzor.engines',
                                'pyzor.hacks'],
