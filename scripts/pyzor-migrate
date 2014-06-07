@@ -1,10 +1,12 @@
-#!/usr/bin/python
-import pyzor
-import pyzor.engines
+#! /usr/bin/env python
 
 import sys
 import logging
 import optparse
+
+import pyzor
+import pyzor.engines
+
 
 def get_engine(engine, dsn, mode='c'):
     engine_class = pyzor.engines.database_classes[engine].single_threaded
@@ -17,7 +19,8 @@ def migrate(opts):
     print_interval = 100000
 
     source_engine = get_engine(opts.source_engine, opts.source_dsn, mode='r')
-    destination_engine = get_engine(opts.destination_engine, opts.destination_dsn)
+    destination_engine = get_engine(opts.destination_engine,
+                                    opts.destination_dsn)
 
     it = source_engine.iteritems()
     while True:
@@ -33,7 +36,8 @@ def migrate(opts):
             fail_count += 1
             print "Record %s failed: %s" % (key, str(e))
 
-    print "Migration complete, %s records transferred successfully, %s records failed" % (ok_count, fail_count)
+    print ("Migration complete, %s records transferred successfully, %s "
+           "records failed") % (ok_count, fail_count)
 
 if __name__ == '__main__':
     logging.basicConfig()
@@ -41,16 +45,20 @@ if __name__ == '__main__':
 
     parser.add_option("--se", "--source-engine", action="store", default=None,
                    dest="source_engine", help="select source database backend")
-    parser.add_option("--sd", "--source-dsn", action="store", default=None, dest="source_dsn",
-                   help="data source DSN - see pyzor documentation for format")
-    parser.add_option("--de", "--destination-engine", action="store", default=None,
-                   dest="destination_engine", help="select destination database backend")
-    parser.add_option("--dd", "--destination-dsn", action="store", default=None, dest="destination_dsn",
-                   help="destination DSN - see pyzor documentation for format")
+    parser.add_option("--sd", "--source-dsn", action="store", default=None,
+                      dest="source_dsn", help="data source DSN - see pyzor "
+                      "documentation for format")
+    parser.add_option("--de", "--destination-engine", action="store",
+                      default=None, dest="destination_engine", help="select "
+                      "destination database backend")
+    parser.add_option("--dd", "--destination-dsn", action="store",
+                      default=None, dest="destination_dsn", help="destination "
+                      "DSN - see pyzor documentation for format")
 
-    (opts, args) = parser.parse_args()
+    opts, args = parser.parse_args()
 
-    if not (opts.source_engine and opts.source_dsn and opts.destination_engine and opts.destination_dsn):
+    if not (opts.source_engine and opts.source_dsn and opts.destination_engine
+            and opts.destination_dsn):
         print "options --se/--sd/--de/--dd are required"
         sys.exit(1)
 
