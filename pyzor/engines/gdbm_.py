@@ -45,7 +45,10 @@ class GdbmDBHandle(object):
     
     def iteritems(self):
         for k in self:
-            yield k, self._really_getitem(k)
+            try:
+                yield k, self._really_getitem(k)
+            except Exception as e:
+                self.log.warning("Invalid record %s: %s", k, e)
             
     def items(self):
         return list(self.iteritems())

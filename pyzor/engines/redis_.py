@@ -75,7 +75,10 @@ class RedisDBHandle(object):
     
     def iteritems(self):
         for key in self:
-            yield key, self[key]
+            try:
+                yield key, self[key]
+            except Exception as e:
+                self.log.warning("Invalid record %s: %s", key, e)
 
     def items(self):
         return list(self.iteritems())
