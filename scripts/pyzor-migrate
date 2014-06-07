@@ -1,5 +1,7 @@
 #! /usr/bin/env python
 
+"""This scripts allows migration of records between pyzor engines types."""
+
 import sys
 import logging
 import optparse
