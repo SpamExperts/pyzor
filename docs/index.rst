@@ -14,5 +14,6 @@ Contents:
    introduction.rst
    installation.rst
    usage.rst
+   config.rst
    pyzor.rst
 

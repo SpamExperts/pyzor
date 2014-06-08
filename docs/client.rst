@@ -21,7 +21,7 @@ The exit code will be:
  * 1 if the report count is 0 **or** the whitelist count is > 0
  * 0 if the report count is > 0 **and** the whitelist count is 0
 
-Note that you can configure this behaviour by changing the report/whitelist thresholds from the configuration file or the command-line options.
+Note that you can configure this behaviour by changing the report/whitelist thresholds from the configuration file or the command-line options. See :ref:`client-configuration`.
 
 Info
 ^^^^^^
@@ -90,6 +90,8 @@ Genkey
 
 Based upon a secret passphrase gathered from the user and randomly gathered salt, prints to standard output a tuple of "salt,key". Used to put account information into the accounts file.
 
+.. _client-input-style:
+
 Input Style
 --------------
 
@@ -98,3 +100,5 @@ Pyzor accepts messages in various forms. This can be controled with the *style* 
  * msg - individual RFC5321 message
  * mbox - mbox file of messages 
  * digests - Pyzor digests, one per line
+
+
