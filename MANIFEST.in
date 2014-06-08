@@ -1,9 +1,7 @@
 include COPYING
 include INSTALL
 include NEWS
-include README.txt
 include THANKS
-include UPGRADING
 include requirements.txt
 include config/*
 include pyzor/*
