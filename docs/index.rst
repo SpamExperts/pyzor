@@ -11,12 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 4
 
+   introduction.rst
+   installation.rst
    pyzor.rst
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
