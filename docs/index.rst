@@ -9,9 +9,9 @@ Welcome to Pyzor's documentation!
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
-
+   pyzor.rst
 
 Indices and tables
 ==================
