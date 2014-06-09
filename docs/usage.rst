@@ -9,4 +9,6 @@ Contents:
    client.rst
    server.rst
    accounts.rst
+   procmail.rst
+   readyexec.rst
    
