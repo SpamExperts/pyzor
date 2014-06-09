@@ -36,6 +36,6 @@ and server admin. Use the following steps:
     
         check report ping pong info whitelist : bob : allow
         
-    For more information see `server-access-file`.   
+    For more information see :ref:`server-access-file`.   
  #. To reload the account and access information send the ``USR1`` signal to 
     the daemon.

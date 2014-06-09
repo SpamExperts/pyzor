@@ -20,10 +20,10 @@ client configuration
 ServersFile
     Must contain a newline-separated list of server addresses to 
     report/whitelist/check with. All of these server will be contacted for 
-    every operation. See `client-server-file`.
+    every operation. See :ref:`client-server-file`.
 
 AccountsFile
-    File containing information about accounts on servers. See `accounts`.
+    File containing information about accounts on servers. See :doc:`accounts`.
 
 LogFile
     If this is empty then logging is done to stdout.
@@ -66,10 +66,11 @@ PidFile
     `--detach` option.
 
 PasswdFile
-    File containing a list of user account information. See `accounts`.
+    File containing a list of user account information. See :doc:`accounts`.
 
 AccessFile
-    File containing information about user privileges. See `server-access-file`.
+    File containing information about user privileges. See 
+    :ref:`server-access-file`.
 
 Engine
     Then engine type to be used for storage. See :ref:`server-engines`. 
@@ -92,6 +93,7 @@ MaxThreads
 DBConnections
     The number of database connections kept opened by the server (0 means a 
     new one for each request). 
+
 .. note::    
     `DBConnections` only applies to the MySQL engine.
 
