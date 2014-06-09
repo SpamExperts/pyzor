@@ -106,6 +106,7 @@ Based upon a secret passphrase gathered from the user and randomly gathered
 salt, prints to standard output a tuple of "salt,key". Used to put account 
 information into the accounts file.
 
+.. _client-server-file:
 
 Servers File
 --------------

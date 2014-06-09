@@ -20,7 +20,7 @@ client configuration
 ServersFile
     Must contain a newline-separated list of server addresses to 
     report/whitelist/check with. All of these server will be contacted for 
-    every operation.
+    every operation. See `client-server-file`.
 
 AccountsFile
     File containing information about accounts on servers.
@@ -69,7 +69,7 @@ PasswdFile
     File containing a list of user account information. 
 
 AccessFile
-    File containing information about user privileges.
+    File containing information about user privileges. See `server-access-file`.
 
 Engine
     Then engine type to be used for storage. See :ref:`server-engines`. 
