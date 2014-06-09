@@ -23,7 +23,7 @@ ServersFile
     every operation. See `client-server-file`.
 
 AccountsFile
-    File containing information about accounts on servers.
+    File containing information about accounts on servers. See `accounts`.
 
 LogFile
     If this is empty then logging is done to stdout.
@@ -66,7 +66,7 @@ PidFile
     `--detach` option.
 
 PasswdFile
-    File containing a list of user account information. 
+    File containing a list of user account information. See `accounts`.
 
 AccessFile
     File containing information about user privileges. See `server-access-file`.

@@ -8,4 +8,5 @@ Contents:
 
    client.rst
    server.rst
+   accounts.rst
    
