@@ -6,6 +6,14 @@
 Welcome to Pyzor's documentation!
 =================================
 
+.. image:: https://pypip.in/v/pyzor/badge.png
+    :target: https://pypi.python.org/pypi/pyzor/
+    :alt: Latest PyPI version
+
+.. image:: https://pypip.in/d/pyzor/badge.png
+    :target: https://pypi.python.org/pypi/pyzor/
+    :alt: Number of PyPI downloads
+
 Contents:
 
 .. toctree::
