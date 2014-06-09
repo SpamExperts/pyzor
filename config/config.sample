@@ -57,6 +57,9 @@
 ## This file defines the ACL for the users
 # AccessFile = pyzord.access
 
+## If set to True then use the gevent library.
+# Gevent = False
+
 ## These settings define the storage engine that the pyzord server should use.
 
 ## Example for gdbm (default):

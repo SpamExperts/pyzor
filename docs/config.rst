@@ -72,6 +72,9 @@ AccessFile
     File containing information about user privileges. See 
     :ref:`server-access-file`.
 
+Gevent
+    If set to true uses the gevent library.
+
 Engine
     Then engine type to be used for storage. See :ref:`server-engines`. 
 
