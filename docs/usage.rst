@@ -7,3 +7,5 @@ Contents:
    :maxdepth: 2
 
    client.rst
+   server.rst
+   
