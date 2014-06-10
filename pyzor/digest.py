@@ -129,7 +129,7 @@ class DataDigester(object):
 
                 try:
                     payload = payload.decode(charset, errors)
-                except (LookupError, UnicodeError):
+                except (LookupError, UnicodeError, AssertionError):
                     try:
                         payload = payload.decode("ascii", "ignore")
                     except UnicodeError:
