@@ -56,7 +56,10 @@ class DataDigester(object):
             for line in payload.splitlines():
                 norm = self.normalize(line)
                 if self.should_handle_line(norm):
-                    lines.append(norm.encode("utf8"))
+                    try:
+                        lines.append(norm.encode("utf8", "ignore"))
+                    except UnicodeError:
+                        continue
 
         if len(lines) <= self.atomic_num_lines:
             self.handle_atomic(lines)
