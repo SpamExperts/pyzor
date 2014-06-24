@@ -5,5 +5,5 @@ python:
   - "pypy"
 services:
   - redis-server
-install: "echo 'PASS'"
+install: true
 script: ./scripts/run_tests
