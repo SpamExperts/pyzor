@@ -1,4 +1,6 @@
 language: python
 python:
   - "2.7"
+services:
+  - redis-server
 script: ./scripts/run_tests
