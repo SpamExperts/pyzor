@@ -90,19 +90,19 @@ class LoadAccountTest(unittest.TestCase):
         self.real_exists = os.path.exists
         os.path.exists = lambda p: True
         self.mock_file = StringIO.StringIO()
-        self.real_open = pyzor.account.__builtins__["open"]
+        self.real_open = __builtins__.open
         def mock_open(path, mode="r", buffering=-1):
             if path == "test_file":
                 self.mock_file.seek(0)
                 return self.mock_file
             else:
                 return self.real_open(path, mode, buffering)        
-        pyzor.account.__builtins__["open"] = mock_open                 
+        __builtins__.open = mock_open                 
     
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         os.path.exists = self.real_exists
-        pyzor.account.__builtins__["open"] = self.real_open
+        __builtins__.open = self.real_open
     
     def test_load_accounts(self):
         """Test loading the account file"""
