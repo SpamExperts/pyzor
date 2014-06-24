@@ -1,0 +1,7 @@
+*.pyc
+/build/
+/dist/
+/docs/.build/
+/pyzor.egg-info/
+/.project
+/.pydevproject
