@@ -6,5 +6,5 @@ redis==2.9.1
 
 # If you want to use gevent you will also require 
 # this.
-gevent==1.0.1
+#gevent==1.0.1
 
