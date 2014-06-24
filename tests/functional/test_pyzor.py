@@ -8,13 +8,6 @@ class PyzorScriptTest(PyzorTestBase):
     password_file = None
     access = """ALL : anonymous : allow
 """
-    dsn = "localhost,,,10"
-    engine = "redis"
-
-    @classmethod
-    def tearDownClass(cls):
-        PyzorTestBase.tearDownClass(cls)
-        redis.StrictRedis(db=10).flushdb()
 
     def test_report_threshold(self):
         input = "Test1 report threshold 1  Test2"
