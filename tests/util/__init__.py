@@ -113,7 +113,7 @@ class PyzorTestBase(unittest.TestCase):
                 args.append(value)
                 args.append(option)
         cls.pyzord = subprocess.Popen(args)
-        time.sleep(0.3)  # allow time to initialize server
+        time.sleep(1)  # allow time to initialize server
     
     def setUp(self):
         unittest.TestCase.setUp(self)
