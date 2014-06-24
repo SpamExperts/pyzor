@@ -13,6 +13,10 @@ Pyzor is a Python implementation of a spam-blocking networked system that use sp
     :target: https://pypi.python.org/pypi/pyzor/
     :alt: Number of PyPI downloads
     
+.. image:: https://travis-ci.org/SpamExperts/pyzor.svg?branch=master
+    :target: https://travis-ci.org/SpamExperts/pyzor
+    :alt: Build status
+    
 
 Quick links:
 
