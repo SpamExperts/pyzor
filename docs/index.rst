@@ -14,6 +14,10 @@ Welcome to Pyzor's documentation!
     :target: https://pypi.python.org/pypi/pyzor/
     :alt: Number of PyPI downloads
 
+.. image:: https://travis-ci.org/SpamExperts/pyzor.svg?branch=master
+    :target: https://travis-ci.org/SpamExperts/pyzor
+    :alt: Build status
+
 Contents:
 
 .. toctree::
