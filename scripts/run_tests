@@ -1,7 +1,11 @@
 #!/bin/bash
 set -evx
 
-if [ `python -c 'import sys; print(sys.version_info[0])'` = '3' ]
+if [ `python -c 'import platform; print platform.python_implementation()'` = 'PyPy' ]
+then
+	pip install redis
+	python setup.py install
+elif [ `python -c 'import sys; print(sys.version_info[0])'` = '3' ]
 then
 	pip install redis
 	python setup.py install

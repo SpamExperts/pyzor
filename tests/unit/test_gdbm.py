@@ -1,12 +1,10 @@
 """Test the pyzor.engines.gdbm_ module."""
 
-import gdbm
 import unittest
 import threading
 
 from datetime import datetime, timedelta
 
-import pyzor.engines
 import pyzor.engines.gdbm_
 import pyzor.engines.common
 
@@ -18,7 +16,7 @@ class MockTimer():
     def setDaemon(self, daemon):
         pass
 
-class MockGdbm(dict):
+class MockGdbmDB(dict):
     """Mock a gdbm database"""
 
     def firstkey(self):
@@ -55,11 +53,13 @@ class GdbmTest(unittest.TestCase):
         self.real_timer = threading.Timer
         threading.Timer = MockTimer
 
-        self.db = MockGdbm()
-        def mock_open(fn, mode):
-            return self.db
-        self.real_open = gdbm.open
-        gdbm.open = mock_open
+        self.db = MockGdbmDB()
+        class MockGdbm():
+            @staticmethod
+            def open(fn, mode):
+                return self.db
+        self.real_gdbm = pyzor.engines.gdbm_.gdbm
+        pyzor.engines.gdbm_.gdbm = MockGdbm()
 
         self.record = pyzor.engines.common.Record(self.r_count, self.wl_count,
                                                   self.entered, self.updated,
@@ -68,7 +68,7 @@ class GdbmTest(unittest.TestCase):
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         threading.Timer = self.real_timer
-        gdbm.open = self.real_open
+        pyzor.engines.gdbm_.gdbm = self.real_gdbm
 
     def record_as_str(self, record=None):
         if not record:

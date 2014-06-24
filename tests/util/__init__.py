@@ -10,6 +10,8 @@ import ConfigParser
 
 from datetime import datetime, timedelta
 
+import redis
+
 msg = """Newsgroups: 
 Date: Wed, 10 Apr 2002 22:23:51 -0400 (EDT)
 From: Frank Tobin <ftobin@neverending.org>
@@ -56,6 +58,9 @@ class PyzorTestBase(unittest.TestCase):
     password_file = "pyzord.passwd"
     log_file = "pyzord-test.log"
     
+    dsn = "localhost,,,10"
+    engine = "redis"
+
     access = """check report ping pong info whitelist : alice : deny
                 check report ping pong info whitelist : bob : allow
                 ALL : dan : allow
@@ -128,6 +133,7 @@ class PyzorTestBase(unittest.TestCase):
         super(PyzorTestBase, cls).tearDownClass()
         cls.pyzord.kill()
         shutil.rmtree(cls.homedir, True)
+        redis.StrictRedis(db=10).flushdb()
     
     def check_pyzor(self, cmd, user, input=None,
                     code=None, exit_code=None, counts=()):

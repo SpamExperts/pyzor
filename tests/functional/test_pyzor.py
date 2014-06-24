@@ -1,4 +1,5 @@
 import sys
+import redis
 import unittest
 
 from tests.util import *
@@ -7,6 +8,14 @@ class PyzorScriptTest(PyzorTestBase):
     password_file = None
     access = """ALL : anonymous : allow
 """
+    dsn = "localhost,,,10"
+    engine = "redis"
+
+    @classmethod
+    def tearDownClass(cls):
+        PyzorTestBase.tearDownClass(cls)
+        redis.StrictRedis(db=10).flushdb()
+
     def test_report_threshold(self):
         input = "Test1 report threshold 1  Test2"
         self.client_args["-r"] = "2"
@@ -48,7 +57,7 @@ class PyzorScriptTest(PyzorTestBase):
         self.check_pyzor("check", None, input=input, code=200, exit_code=1,
                          counts=(1, 0))
         # Exit code will be success now, since the report count exceeds the
-        # threshold
+        # thresholdRedisPyzorTest
         self.check_pyzor("report", None, input=input, code=200, exit_code=0)
         self.check_pyzor("check", None, input=input, code=200, exit_code=0,
                          counts=(2, 0))        

@@ -2,6 +2,12 @@ import unittest
 
 from tests.util import *
 
+try:
+    import gdbm
+except ImportError:
+    gdbm = None
+
+@unittest.skipIf(gdbm == None, "gdbm library not available")
 class GdbmPyzorTest(PyzorTest, PyzorTestBase):
     """Test the gdbm engine"""
     dsn = "pyzord.db"
