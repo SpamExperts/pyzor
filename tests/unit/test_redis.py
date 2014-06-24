@@ -114,11 +114,14 @@ class RedisTest(unittest.TestCase):
 
         self.commands = []
 
-        self.real_redis = pyzor.engines.redis_.redis
+        try:
+            self.real_redis = pyzor.engines.redis_.redis
+        except AttributeError:
+            self.real_redis = None
         self.real_encode = pyzor.engines.redis_.RedisDBHandle._encode_record
         self.real_decode = pyzor.engines.redis_.RedisDBHandle._decode_record
 
-        pyzor.engines.redis_.redis = make_MockRedis(self.commands)
+        setattr(pyzor.engines.redis_, "redis", make_MockRedis(self.commands))
         pyzor.engines.redis_.RedisDBHandle._encode_record = mock_encode_record
         pyzor.engines.redis_.RedisDBHandle._decode_record = mock_decode_record
 

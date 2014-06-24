@@ -4,10 +4,11 @@ from tests.util import *
 
 try:
     import gdbm
+    has_gdbm = True
 except ImportError:
-    gdbm = None
+    has_gdbm = False
 
-@unittest.skipIf(gdbm == None, "gdbm library not available")
+@unittest.skipIf(not has_gdbm, "gdbm library not available")
 class GdbmPyzorTest(PyzorTest, PyzorTestBase):
     """Test the gdbm engine"""
     dsn = "pyzord.db"

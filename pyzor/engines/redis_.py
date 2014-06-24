@@ -5,8 +5,9 @@ import datetime
 
 try:
     import redis
+    _has_redis = True
 except ImportError:
-    redis = None
+    _has_redis = False
 
 from pyzor.engines.common import *
 
@@ -114,7 +115,7 @@ class ThreadedRedisDBHandle(RedisDBHandle):
         RedisDBHandle.__init__(self, fn, mode, max_age=max_age)
 
 
-if redis is None:
+if not _has_redis:
     handle = DBHandle(single_threaded=None,
                       multi_threaded=None,
                       multi_processing=None)

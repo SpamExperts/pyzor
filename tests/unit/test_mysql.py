@@ -72,8 +72,11 @@ class MySQLTest(unittest.TestCase):
         self.queries = []
 
         mock_MySQL = make_MockMySQL(self.response, self.queries)
-        self.real_mysql = pyzor.engines.mysql.MySQLdb
-        pyzor.engines.mysql.MySQLdb = mock_MySQL
+        try:
+            self.real_mysql = pyzor.engines.mysql.MySQLdb
+        except AttributeError:
+            self.real_mysql = None
+        setattr(pyzor.engines.mysql, "MySQLdb", mock_MySQL)
 
 
     def tearDown(self):

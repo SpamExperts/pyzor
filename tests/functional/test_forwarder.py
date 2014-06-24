@@ -4,6 +4,7 @@ import shutil
 import unittest
 import subprocess
 
+import redis
 
 class ForwardSetup(object):
     """Setup forwarding client and 'remote' pyzord"""
@@ -30,13 +31,17 @@ class ForwarderTest(unittest.TestCase):
         self.fwdclient = ForwardSetup('./pyzor-test-forwardingclient')
         self.fwdclient.write_homedir_file('servers', '127.0.0.1:9998\n')
 
-        args = ["pyzord", "--homedir", self.localserver.homedir, '-a', '127.0.0.1', '-p', '9999', '--forward-client-homedir', self.fwdclient.homedir]
+        args = ["pyzord", "--homedir", self.localserver.homedir, '-e', 'redis', '--dsn', 'localhost,,,10', '-a', '127.0.0.1', '-p', '9999', '--forward-client-homedir', self.fwdclient.homedir]
         self.local_pyzord_proc = subprocess.Popen(args)
 
         self.remoteserver = ForwardSetup('./pyzor-test-remoteserver')
-        args = ["pyzord", "--homedir", self.remoteserver.homedir, '-a', '127.0.0.1', '-p', '9998']
+        args = ["pyzord", "--homedir", self.remoteserver.homedir, '-e', 'redis', '--dsn', 'localhost,,,9', '-a', '127.0.0.1', '-p', '9998']
         self.remote_pyzord_proc = subprocess.Popen(args)
         time.sleep(0.3)
+
+    def tearDown(self):
+        redis.StrictRedis(db=9).flushdb()
+        redis.StrictRedis(db=10).flushdb()
 
     def test_forward_report(self):
         # submit hash to local server

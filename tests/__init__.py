@@ -2,11 +2,12 @@
 
 import unittest
 
-import unit
-import functional
 
 def suite():
     """Gather all the tests from this package in a test suite."""
+    import tests.unit as unit
+    import tests.functional as functional
+
     test_suite = unittest.TestSuite()
 
     test_suite.addTest(unit.suite())

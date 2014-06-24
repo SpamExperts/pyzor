@@ -10,16 +10,16 @@ source.
 
 import unittest
 
-import test_gdbm
-import test_pyzor
-import test_mysql
-import test_redis
-import test_digest
-import test_account
-import test_forwarder
-
 def suite():
     """Gather all the tests from this package in a test suite."""
+    import test_gdbm
+    import test_pyzor
+    import test_mysql
+    import test_redis
+    import test_digest
+    import test_account
+    import test_forwarder
+
     test_suite = unittest.TestSuite()
 
     test_suite.addTest(test_gdbm.suite())

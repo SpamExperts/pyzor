@@ -9,9 +9,9 @@ import threading
 try:
     import MySQLdb
     import MySQLdb.cursors
+    _has_mysql = True
 except ImportError:
-    # The SQL database backend will not work.
-    MySQLdb = None
+    _has_mysql = False
 
 from pyzor.engines.common import *
 
@@ -283,7 +283,7 @@ class ProcessMySQLDBHandle(MySQLDBHandle):
             if db is not None:
                 db.close()
 
-if MySQLdb is None:
+if not _has_mysql:
     handle = DBHandle(single_threaded=None,
                       multi_threaded=None,
                       multi_processing=None)

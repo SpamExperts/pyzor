@@ -1,5 +1,6 @@
 """Test the pyzor.engines.gdbm_ module."""
 
+import sys
 import unittest
 import threading
 
@@ -58,8 +59,12 @@ class GdbmTest(unittest.TestCase):
             @staticmethod
             def open(fn, mode):
                 return self.db
-        self.real_gdbm = pyzor.engines.gdbm_.gdbm
-        pyzor.engines.gdbm_.gdbm = MockGdbm()
+
+        try:
+            self.real_gdbm = pyzor.engines.gdbm_.gdbm
+        except AttributeError:
+            self.real_gdbm = None
+        setattr(pyzor.engines.gdbm_, "gdbm", MockGdbm())
 
         self.record = pyzor.engines.common.Record(self.r_count, self.wl_count,
                                                   self.entered, self.updated,

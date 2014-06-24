@@ -2,12 +2,13 @@ import unittest
 
 try:
     import redis
+    has_redis = True
 except ImportError:
-    redis = None
+    has_redis = False
 
 from tests.util import *
 
-@unittest.skipIf(redis == None, "redis library not available")
+@unittest.skipIf(not has_redis, "redis library not available")
 class RedisPyzorTest(PyzorTest, PyzorTestBase):
     """Test the redis engine"""
     dsn = "localhost,,,10"

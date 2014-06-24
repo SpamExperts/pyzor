@@ -1,9 +1,10 @@
 """Gdbm database engine."""
 
 try:
-    import gdbm
+    import gdbm as gdbm
+    _has_gdbm = True
 except ImportError:
-    gdbm = None
+    _has_gdbm = False
 
 import sys
 import time
@@ -178,7 +179,7 @@ class ThreadedGdbmDBHandle(GdbmDBHandle):
 #                                       bound=bound)
 #         self.db_lock = multiprocessing.Lock()
 
-if sys.version_info[0] != 3 and gdbm is None:
+if not _has_gdbm:
     handle = DBHandle(single_threaded=None,
                       multi_threaded=None,
                       multi_processing=None)

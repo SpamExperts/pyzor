@@ -5,8 +5,9 @@ from tests.util import *
 
 try:
     import MySQLdb
+    has_mysql = True
 except ImportError:
-    MySQLdb = None
+    has_mysql = False
     
 schema = """
     CREATE TABLE IF NOT EXISTS `%s` (
@@ -23,7 +24,7 @@ schema = """
 
 @unittest.skipIf(not os.path.exists("./test.conf"),
                  "test.conf is not available")
-@unittest.skipIf(MySQLdb == None, "MySQLdb library not available")
+@unittest.skipIf(not has_mysql, "MySQLdb library not available")
 class MySQLdbPyzorTest(PyzorTest, PyzorTestBase):
     """Test the mysql engine."""
     dsn = None
