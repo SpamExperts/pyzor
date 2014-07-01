@@ -1,6 +1,8 @@
 #!/bin/bash
 set -evx
 
+pip install pytest pytest-cov
+
 if [ `python -c 'import sys; print(sys.version_info[0])'` = '3' ]
 then
 	pip install redis
@@ -14,8 +16,8 @@ else
 	mysql -e 'create database pyzor_test'
 fi
 
-python setup.py test
-
+#XXX There is little point in running coverage on functional tests
+py.test tests/ --cov coveralls --cov-report term-missing
 
 
 

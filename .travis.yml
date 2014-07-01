@@ -6,4 +6,7 @@ python:
 services:
   - redis-server
 install: true
-script: ./scripts/run_tests
+script: 
+  - ./scripts/run_tests
+after_success:
+  - coveralls
