@@ -1,7 +1,7 @@
 #!/bin/bash
 set -evx
 
-pip install pytest pytest-cov
+pip install pytest pytest-cov python-coveralls
 
 if [ `python -c 'import sys; print(sys.version_info[0])'` = '3' ]
 then
@@ -16,8 +16,7 @@ else
 	mysql -e 'create database pyzor_test'
 fi
 
-#XXX There is little point in running coverage on functional tests
-py.test tests/ --cov coveralls --cov-report term-missing
-
+py.test tests/unit/ --cov coveralls --cov-report term-missing
+py.test tests/functional/
 
 

@@ -39,27 +39,23 @@ class ForwarderTest(unittest.TestCase):
         self.remote_pyzord_proc = subprocess.Popen(args)
         time.sleep(0.3)
 
-    def tearDown(self):
-        redis.StrictRedis(db=9).flushdb()
-        redis.StrictRedis(db=10).flushdb()
-
     def test_forward_report(self):
         # submit hash to local server
         self.check_pyzor("report", self.localserver.homedir)
 
         # make sure the local submission worked
-        self.check_pyzor("check", self.localserver.homedir, counts=(1, 0), msg='local insert failed')
+        self.check_pyzor("check", self.localserver.homedir, counts=(1, 0))
 
         # now use the forwarding client's config to check forwarded submission
         time.sleep(1)
-        self.check_pyzor("check", self.fwdclient.homedir, counts=(1, 0), msg='forwarding failed')
+        self.check_pyzor("check", self.fwdclient.homedir, counts=(1, 0))
 
         # submit the hash to the remote system, the count should go up
         self.check_pyzor("report", self.fwdclient.homedir)
-        self.check_pyzor("check", self.fwdclient.homedir, counts=(2, 0), msg='submit to remote failed')
+        self.check_pyzor("check", self.fwdclient.homedir, counts=(2, 0))
 
         # switch back to our local server, the count should still be the old value
-        self.check_pyzor("check", self.localserver.homedir, counts=(1, 0), msg='local count is wrong')
+        self.check_pyzor("check", self.localserver.homedir, counts=(1, 0))
 
     def tearDown(self):
         if self.remote_pyzord_proc != None:
@@ -71,9 +67,12 @@ class ForwarderTest(unittest.TestCase):
         shutil.rmtree(self.fwdclient.homedir, True)
         shutil.rmtree(self.remoteserver.homedir, True)
 
+        redis.StrictRedis(db=9).flushdb()
+        redis.StrictRedis(db=10).flushdb()
+
     def check_pyzor(self, cmd, homedir, counts=None, msg=None):
         """simplified check_pyzor version from PyzorTestBase"""
-        msg = "forwarding makes the world go round!"
+	msg = "This is a test message for the forwading feature"
         args = ["pyzor", '--homedir', homedir, cmd]
         pyzor = subprocess.Popen(args,
                                  stdin=subprocess.PIPE,
@@ -95,7 +94,7 @@ class ForwarderTest(unittest.TestCase):
         self.assertEqual(status[0], 200, status)
 
         if counts:
-            self.assertEqual(counts, (int(results[2]), int(results[3])), msg)
+            self.assertEqual(counts, (int(results[2]), int(results[3])))
         return stdout
 
 def suite():
