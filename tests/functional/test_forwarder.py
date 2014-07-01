@@ -72,7 +72,7 @@ class ForwarderTest(unittest.TestCase):
 
     def check_pyzor(self, cmd, homedir, counts=None, msg=None):
         """simplified check_pyzor version from PyzorTestBase"""
-	msg = "This is a test message for the forwading feature"
+        msg = "This is a test message for the forwading feature"
         args = ["pyzor", '--homedir', homedir, cmd]
         pyzor = subprocess.Popen(args,
                                  stdin=subprocess.PIPE,
