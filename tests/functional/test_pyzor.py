@@ -156,6 +156,7 @@ class PyzorScriptTest(PyzorTestBase):
         out = self.check_pyzor("digest", None, input=msg).strip()
         self.assertEqual(out.decode("utf8"), digest)
         
+
 class MultipleServerPyzorScriptTest(PyzorTestBase):
     password_file = None
     access = """ALL : anonymous : allow

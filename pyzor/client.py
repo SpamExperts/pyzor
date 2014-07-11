@@ -186,8 +186,8 @@ class BatchClient(Client):
 
     def __init__(self, accounts=None, timeout=None, spec=None):
         Client.__init__(self, accounts=accounts, timeout=timeout, spec=spec)
-        self.r_request = collections.defaultdict(self._new_r_request())
-        self.w_request = collections.defaultdict(self._new_w_request())
+        self.r_request = collections.defaultdict(self._new_r_request)
+        self.w_request = collections.defaultdict(self._new_w_request)
 
     def _new_r_request(self):
         return pyzor.message.ReportRequest(spec=self.spec)
