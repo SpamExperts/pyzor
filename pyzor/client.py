@@ -216,6 +216,7 @@ class CheckClientRunner(ClientRunner):
         self.whitelist_count = 0
         self.r_count_found = r_count
         self.wl_count_clears = wl_count
+        self.results = []
 
     def handle_response(self, response, message):
         message += "%s\t" % str(response.head_tuple())
@@ -227,12 +228,15 @@ class CheckClientRunner(ClientRunner):
             elif self.hit_count > self.r_count_found:
                 self.found_hit = True
             message += "%d\t%d" % (self.hit_count, self.whitelist_count)
-            sys.stdout.write(message + '\n')
         else:
             self.all_ok = False
-            sys.stdout.write(message + '\n')
+        self.results.append(message + "\n")
 
 class InfoClientRunner(ClientRunner):
+
+    def __init__(self, routine):
+        ClientRunner.__init__(self, routine)
+        self.results = []
 
     def handle_response(self, response, message):
         message += "%s\n" % str(response.head_tuple())
@@ -249,7 +253,8 @@ class InfoClientRunner(ClientRunner):
                     else:
                         stringed = time.ctime(val)
                     message += ("\t%s: %s\n" % (f, stringed))
-            sys.stdout.write(message + "\n")
         else:
             self.all_ok = False
-            sys.stdout.write(message + "\n")
+        self.results.append(message + "\n")
+
+

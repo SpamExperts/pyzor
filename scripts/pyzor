@@ -12,6 +12,7 @@ import getpass
 import logging
 import optparse
 import tempfile
+import threading
 import ConfigParser
 
 import pyzor.digest
@@ -184,9 +185,9 @@ def pong(client, servers, config):
     style = config.get("client", "Style")
     runner = pyzor.client.CheckClientRunner(client.pong, rt, wt)
     for digested in get_input_handler(style):
-        if digested:
-            for server in servers:
-                runner.run(server, (digested, server))
+        send_digest(digested, runner, servers)
+    sys.stdout.writelines(runner.results)
+
     return runner.all_ok and runner.found_hit and not runner.whitelisted
 
 def info(client, servers, config):
@@ -194,9 +195,9 @@ def info(client, servers, config):
     style = config.get("client", "Style")
     runner = pyzor.client.InfoClientRunner(client.info)
     for digested in get_input_handler(style):
-        if digested:
-            for server in servers:
-                runner.run(server, (digested, server))
+        send_digest(digested, runner, servers)
+    sys.stdout.writelines(runner.results)
+
     return runner.all_ok
 
 def check(client, servers, config):
@@ -210,19 +211,37 @@ def check(client, servers, config):
     style = config.get("client", "Style")
     runner = pyzor.client.CheckClientRunner(client.check, rt, wt)
     for digested in get_input_handler(style):
-        if digested:
-            for server in servers:
-                runner.run(server, (digested, server))
+        send_digest(digested, runner, servers)
+    sys.stdout.writelines(runner.results)
+
     return runner.all_ok and runner.found_hit and not runner.whitelisted
 
-def send_digest(digested, spec, client_method, servers):
+def _send_digest(runner, server, digested, spec=None):
+    """Send these digests to one server."""
+    if spec:
+        runner.run(server, (digested, server, spec))
+    else:
+        runner.run(server, (digested, server))
+
+def send_digest(digested, runner, servers, spec=None):
     """Send these digests to each server."""
-    # Digest can be None; if so, nothing is sent.
     if not digested:
         return
-    runner = pyzor.client.ClientRunner(client_method)
+
+    if len(servers) == 1:
+        _send_digest(runner, servers[0], digested, spec=spec)
+        return runner.all_ok
+    
+    threads = []
     for server in servers:
-        runner.run(server, (digested, server, spec))
+        args = (runner, server, digested, spec)
+        thread = threading.Thread(target=_send_digest, args=args)
+        threads.append(thread)
+        thread.start()
+    
+    for thread in threads:
+        thread.join()
+
     return runner.all_ok
 
 def report(client, servers, config):
@@ -230,8 +249,9 @@ def report(client, servers, config):
     style = config.get("client", "Style")
     all_ok = True
     for digested in get_input_handler(style):
-        if digested and not send_digest(digested, pyzor.digest.digest_spec,
-                                        client.report, servers):
+        runner = pyzor.client.ClientRunner(client.report)
+        if digested and not send_digest(digested, runner, servers,
+                                        pyzor.digest.digest_spec):
             all_ok = False
     return all_ok
 
@@ -240,8 +260,9 @@ def whitelist(client, servers, config):
     style = config.get("client", "Style")
     all_ok = True
     for digested in get_input_handler(style):
-        if digested and not send_digest(digested, pyzor.digest.digest_spec,
-                                        client.whitelist, servers):
+        runner = pyzor.client.ClientRunner(client.whitelist)
+        if digested and not send_digest(digested, runner, servers,
+                                        pyzor.digest.digest_spec):
             all_ok = False
     return all_ok
 
