@@ -214,16 +214,18 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
                                       "implemented.")
         # Get the existing record from the database (or a blank one if
         # there is no matching record).
-        digest = request["Op-Digest"]
+        digests = request.get_all("Op-Digest")
+
         # Do the requested operation, log what we have done, and return.
-        if dispatch:
-            try:
-                record = self.server.database[digest]
-            except KeyError:
-                record = pyzor.engines.common.Record()
-            dispatch(self, digest, record)
+        if dispatch and digests:
+            for digest in digests:
+                try:
+                    record = self.server.database[digest]
+                except KeyError:
+                    record = pyzor.engines.common.Record()
+                dispatch(self, digest, record)
         self.server.usage_log.info("%s,%s,%s,%r,%s", user,
-                                   self.client_address[0], opcode, digest,
+                                   self.client_address[0], opcode, digests,
                                    self.response["Code"])
 
     def handle_error(self, code, message):

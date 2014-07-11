@@ -59,6 +59,7 @@ import time
 import email
 import socket
 import logging
+import collections
 
 import pyzor.digest
 import pyzor.account
@@ -71,11 +72,13 @@ class Client(object):
     timeout = 5
     max_packet_size = 8192
 
-    def __init__(self, accounts=None, timeout=None):
-        if accounts:
-            self.accounts = accounts
-        else:
-            self.accounts = {}
+    def __init__(self, accounts=None, timeout=None, spec=None):
+        if accounts is None:
+            accounts = {}
+        self.accounts = accounts
+        if spec is None:
+            spec = pyzor.digest.digest_spec
+        self.spec = spec
         if timeout is not None:
             self.timeout = timeout
         self.log = logging.getLogger("pyzor")
@@ -95,15 +98,13 @@ class Client(object):
         sock = self.send(msg, address)
         return self.read_response(sock, msg.get_thread())
 
-    def report(self, digest, address=("public.pyzor.org", 24441),
-               spec=pyzor.digest.digest_spec):
-        msg = pyzor.message.ReportRequest(digest, spec)
+    def report(self, digest, address=("public.pyzor.org", 24441)):
+        msg = pyzor.message.ReportRequest(digest, self.spec)
         sock = self.send(msg, address)
         return self.read_response(sock, msg.get_thread())
 
-    def whitelist(self, digest, address=("public.pyzor.org", 24441),
-                  spec=pyzor.digest.digest_spec):
-        msg = pyzor.message.WhitelistRequest(digest, spec)
+    def whitelist(self, digest, address=("public.pyzor.org", 24441)):
+        msg = pyzor.message.WhitelistRequest(digest, self.spec)
         sock = self.send(msg, address)
         return self.read_response(sock, msg.get_thread())
 
@@ -159,8 +160,7 @@ class Client(object):
             raise pyzor.TimeoutError("Reading response timed-out.")
         except socket.error as e:
             sock.close()
-            raise pyzor.CommError("Socket error while reading response: %s"
-                                  % e)
+            raise pyzor.CommError("Socket error while reading response: %s" % e)
 
         self.log.debug("received: %r/%r", packet, address)
         msg = email.message_from_bytes(packet, _class=pyzor.message.Response)
@@ -177,6 +177,58 @@ class Client(object):
         except KeyError:
             self.log.warn("no thread id received")
         return msg
+
+
+class BatchClient(Client):
+    """Like the normal Client but with support for batching reports."""
+    
+    batch_size = 10
+
+    def __init__(self, accounts=None, timeout=None, spec=None):
+        Client.__init__(self, accounts=accounts, timeout=timeout, spec=spec)
+        self.r_request = collections.defaultdict(self._new_r_request())
+        self.w_request = collections.defaultdict(self._new_w_request())
+
+    def _new_r_request(self):
+        return pyzor.message.ReportRequest(spec=self.spec)
+
+    def _new_w_request(self):
+        return pyzor.message.WhitelistRequest(spec=self.spec)
+
+    def report(self, digest, address=("public.pyzor.org", 24441)):
+        msg = self.r_request[address]
+
+        msg.add_digest(digest)
+        if msg.digest_count >= self.batch_size:
+            try:
+                return self.send(msg, address)
+            finally:
+                del self.r_request[address]
+            
+    def whitelist(self, digest, address=("public.pyzor.org", 24441)):
+        msg = self.w_request[address]
+
+        msg.add_digest(digest)
+        if msg.digest_count >= self.batch_size:
+            try:
+                return self.send(msg, address)
+            finally:
+                del self.w_request[address]
+    
+    def force(self):
+        for address, msg in self.r_request.iteritems():
+            try:
+                self.send(msg, address)
+            except:
+                continue
+        for address, msg in self.wl_request.iteritems():
+            try:
+                self.send(msg, address)
+            except:
+                continue
+
+    def __del__(self):
+        self.force()
 
 
 class ClientRunner(object):

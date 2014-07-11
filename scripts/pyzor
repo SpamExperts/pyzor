@@ -223,18 +223,18 @@ def _send_digest(runner, server, digested, spec=None):
     else:
         runner.run(server, (digested, server))
 
-def send_digest(digested, runner, servers, spec=None):
+def send_digest(digested, runner, servers):
     """Send these digests to each server."""
     if not digested:
         return
 
     if len(servers) == 1:
-        _send_digest(runner, servers[0], digested, spec=spec)
+        _send_digest(runner, servers[0], digested)
         return runner.all_ok
     
     threads = []
     for server in servers:
-        args = (runner, server, digested, spec)
+        args = (runner, server, digested)
         thread = threading.Thread(target=_send_digest, args=args)
         threads.append(thread)
         thread.start()
@@ -250,8 +250,7 @@ def report(client, servers, config):
     all_ok = True
     for digested in get_input_handler(style):
         runner = pyzor.client.ClientRunner(client.report)
-        if digested and not send_digest(digested, runner, servers,
-                                        pyzor.digest.digest_spec):
+        if digested and not send_digest(digested, runner, servers):
             all_ok = False
     return all_ok
 
@@ -261,8 +260,7 @@ def whitelist(client, servers, config):
     all_ok = True
     for digested in get_input_handler(style):
         runner = pyzor.client.ClientRunner(client.whitelist)
-        if digested and not send_digest(digested, runner, servers,
-                                        pyzor.digest.digest_spec):
+        if digested and not send_digest(digested, runner, servers):
             all_ok = False
     return all_ok
 

@@ -5,6 +5,9 @@ import HTMLParser
 # Hard-coded for the moment.
 digest_spec = ([(20, 3), (60, 3)])
 
+HASH = hashlib.sha1
+HASH_SIZE = len(HASH(b"").hexdigest())
+
 class HTMLStripper(HTMLParser.HTMLParser):
     """Strip all tags from the HTML."""
     def __init__(self, collector):
@@ -48,7 +51,7 @@ class DataDigester(object):
 
     def __init__(self, msg, spec=digest_spec):
         self.value = None
-        self.digest = hashlib.sha1()
+        self.digest = HASH()
 
         # Need to know the total number of lines in the content.
         lines = []
@@ -68,8 +71,7 @@ class DataDigester(object):
 
         self.value = self.digest.hexdigest()
 
-        assert len(self.value) == len(hashlib.sha1(b"").hexdigest())
-        assert self.value is not None
+        assert len(self.value) == HASH_SIZE
 
     def handle_atomic(self, lines):
         """We digest everything."""

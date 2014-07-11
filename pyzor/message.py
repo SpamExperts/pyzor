@@ -95,16 +95,23 @@ class ClientSideRequest(Request):
 
 
 class SimpleDigestBasedRequest(ClientSideRequest):
-    def __init__(self, digest):
+    def __init__(self, digest=None):
         ClientSideRequest.__init__(self)
-        self["Op-Digest"] = digest
+        self.digest_count = 0
+        if digest:
+            self.add_digest(digest)
+
+    def add_digest(self, digest):
+        self.add_header("Op-Digest", digest)
+        self.digest_count += 1
 
 
 class SimpleDigestSpecBasedRequest(SimpleDigestBasedRequest):
-    def __init__(self, digest, spec):
+    def __init__(self, digest=None, spec=None):
         SimpleDigestBasedRequest.__init__(self, digest)
-        flat_spec = [item for sublist in spec for item in sublist]
-        self["Op-Spec"] = ",".join(str(part) for part in flat_spec)
+        if spec:
+            flat_spec = [item for sublist in spec for item in sublist]
+            self["Op-Spec"] = ",".join(str(part) for part in flat_spec)
 
 
 class PingRequest(ClientSideRequest):
