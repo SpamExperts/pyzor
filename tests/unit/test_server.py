@@ -88,10 +88,13 @@ class RequestHandlerTest(unittest.TestCase):
         response = response.decode("utf8").replace("\n\n", "\n")
 
         result = {}
-        for line in response.splitlines():
-            key = line.split(":", 1)[0].strip()
-            value = line.split(":")[1].strip()
-            result[key] = value
+        try:
+            for line in response.splitlines():
+                key = line.split(":", 1)[0].strip()
+                value = line.split(":")[1].strip()
+                result[key] = value
+        except (IndexError, TypeError) as e:
+            self.fail("Error parsing %r: %s" % (response, e))
         
         self.assertEqual(result, self.expected_response)            
     
