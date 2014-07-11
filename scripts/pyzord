@@ -103,7 +103,7 @@ def initialize_forwarding(client_config_dir, debug):
 
     servers = pyzor.config.load_servers(servers_fn)
     accounts = pyzor.config.load_accounts(accounts_fn)
-    client = pyzor.client.Client(accounts, timeout)
+    client = pyzor.client.BatchClient(accounts, timeout)
 
     return pyzor.forwarder.Forwarder(client, servers)
 
