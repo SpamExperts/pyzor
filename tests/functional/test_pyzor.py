@@ -156,10 +156,49 @@ class PyzorScriptTest(PyzorTestBase):
         out = self.check_pyzor("digest", None, input=msg).strip()
         self.assertEqual(out.decode("utf8"), digest)
         
+class MultipleServerPyzorScriptTest(PyzorTestBase):
+    password_file = None
+    access = """ALL : anonymous : allow
+"""
+    servers = """127.0.0.1:9999
+127.0.0.1:9998
+127.0.0.1:9997
+"""
+
+    def test_ping(self):
+        self.check_pyzor_multiple("ping", None, exit_code=0,
+                                  code=[200, 200, 200])
+
+    def test_pong(self):
+        input = "Test1 multiple pong Test2"
+        self.check_pyzor_multiple("pong", None, input=input, exit_code=0,
+                                  code=[200, 200, 200],
+                                  counts=[(sys.maxint, 0),
+                                          (sys.maxint, 0),
+                                          (sys.maxint, 0)])
+
+    def test_check(self):
+        input = "Test1 multiple check Test2"
+        self.check_pyzor_multiple("check", None, input=input, exit_code=1,
+                                  code=[200, 200, 200],
+                                  counts=[(0, 0), (0, 0), (0, 0)])
+
+    def test_report(self):
+        input = "Test1 multiple report Test2"
+        self.check_pyzor_multiple("report", None, input=input, exit_code=0,
+                                  code=[200, 200, 200])
+
+    def test_whitelist(self):
+        input = "Test1 multiple whitelist Test2"
+        self.check_pyzor_multiple("whitelist", None, input=input, exit_code=0,
+                                  code=[200, 200, 200])
+
+
 def suite():
     """Gather all the tests from this module in a test suite."""
     test_suite = unittest.TestSuite()
-    test_suite.addTest(unittest.makeSuite(PyzorScriptTest))    
+    test_suite.addTest(unittest.makeSuite(PyzorScriptTest))
+    test_suite.addTest(unittest.makeSuite(MultipleServerPyzorScriptTest))
     return test_suite
         
 if __name__ == '__main__':

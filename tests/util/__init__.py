@@ -51,8 +51,6 @@ class PyzorTestBase(unittest.TestCase):
              "log_file": "--log-file",
              }
     homedir = "./pyzor-test/"
-    address = "127.0.0.1"
-    port = "9999"
     threads = "False"
     access_file = "pyzord.access"
     password_file = "pyzord.passwd"
@@ -112,7 +110,14 @@ class PyzorTestBase(unittest.TestCase):
             if option:
                 args.append(value)
                 args.append(option)
-        cls.pyzord = subprocess.Popen(args)
+        cls.pyzord = []
+
+        for line in cls.servers.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            addr, port = line.rsplit(":", 1)
+            cls.pyzord.append(subprocess.Popen(args + ["-a", addr, "-p", port]))
         time.sleep(1)  # allow time to initialize server
     
     def setUp(self):
@@ -131,7 +136,8 @@ class PyzorTestBase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         super(PyzorTestBase, cls).tearDownClass()
-        cls.pyzord.kill()
+        for pyzord in cls.pyzord:
+            pyzord.kill()
         shutil.rmtree(cls.homedir, True)
         redis.StrictRedis(db=10).flushdb()
     
