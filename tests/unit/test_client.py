@@ -317,13 +317,16 @@ WL-Count: 0
 """
         response = email.message_from_string(response,
                                              _class=pyzor.message.Response)
-        result = ("%s:%s\t(200, 'OK')\n"
+        server = "%s:%s" % self.server
+        result = ("%s\t(200, 'OK')\n"
                   "\tCount: 4\n"
-                  "\tEntered: Fri May 16 09:29:46 2014\n"
-                  "\tUpdated: Fri May 16 09:29:54 2014\n"
+                  "\tEntered: %s\n"
+                  "\tUpdated: %s\n"
                   "\tWL-Count: 0\n"
-                  "\tWL-Entered: Thu Jan  1 02:00:00 1970\n"
-                  "\tWL-Updated: Thu Jan  1 02:00:00 1970\n\n" % self.server)
+                  "\tWL-Entered: %s\n"
+                  "\tWL-Updated: %s\n\n" %
+                  (server, time.ctime(1400221786), time.ctime(1400221794),
+                   time.ctime(0), time.ctime(0)))
         self.maxDiff = None
         self.check_runner(pyzor.client.InfoClientRunner, response, [result])
 
