@@ -221,7 +221,7 @@ class BatchClient(Client):
                 self.send(msg, address)
             except:
                 continue
-        for address, msg in self.wl_request.iteritems():
+        for address, msg in self.w_request.iteritems():
             try:
                 self.send(msg, address)
             except:
