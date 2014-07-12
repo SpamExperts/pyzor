@@ -230,7 +230,6 @@ class BatchClient(Client):
 
 
 class ClientRunner(object):
-    __slots__ = ['routine', 'all_ok', 'log']
 
     def __init__(self, routine):
         self.log = logging.getLogger("pyzor")
