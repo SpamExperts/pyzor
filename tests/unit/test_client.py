@@ -83,7 +83,7 @@ class TestBase(unittest.TestCase):
         client = pyzor.client.Client(accounts)
         got_response = getattr(client, method)(*args, **kwargs)
 
-        self.assertEqual(str(got_response), self.mresponse[0])
+        self.assertEqual(str(got_response), self.mresponse[0].decode())
         if self.expected is not None:
             self.check_request()
         return client
