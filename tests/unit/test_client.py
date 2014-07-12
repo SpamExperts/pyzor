@@ -209,6 +209,56 @@ class BatchClientTest(TestBase):
 
         self.assertEqual(list(self.get_requests()), [])
 
+    def test_force_report(self):
+        digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
+        self.patch_all()
+
+        client = pyzor.client.BatchClient()
+        for i in range(9):
+            client.report(digest)
+        client.force()
+        args, kwargs = list(self.get_requests())[0]
+
+        msg = email.message_from_string(args[0])
+        self.assertEqual(len(msg.get_all("Op-Digest")), 9)
+
+    def test_force_whitelist(self):
+        digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
+        self.patch_all()
+
+        client = pyzor.client.BatchClient()
+        for i in range(9):
+            client.whitelist(digest)
+        client.force()
+        args, kwargs = list(self.get_requests())[0]
+
+        msg = email.message_from_string(args[0])
+        self.assertEqual(len(msg.get_all("Op-Digest")), 9)
+
+    def test_flush_report(self):
+        digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
+        self.patch_all()
+
+        client = pyzor.client.BatchClient()
+        for i in range(9):
+            client.report(digest)
+        client.flush()
+
+        client.report(digest)
+        self.assertEqual(list(self.get_requests()), [])
+
+    def test_flush_whitelist(self):
+        digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
+        self.patch_all()
+
+        client = pyzor.client.BatchClient()
+        for i in range(9):
+            client.whitelist(digest)
+        client.flush()
+
+        client.whitelist(digest)
+        self.assertEqual(list(self.get_requests()), [])
+
 
 def suite():
     """Gather all the tests from this module in a test suite."""
