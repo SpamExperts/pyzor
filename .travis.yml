@@ -8,7 +8,7 @@ services:
 install: 
   - "./scripts/run_tests prepare"
 script: 
-  - "py.test tests/unit/ --cov coveralls --cov-report term-missing"
+  - "py.test tests/unit/ --cov pyzor --cov-report term-missing"
   - "py.test tests/functional/"
 after_success:
   - coveralls
