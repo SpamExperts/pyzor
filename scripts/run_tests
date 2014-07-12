@@ -13,13 +13,13 @@ else
 	sudo apt-get install -y build-essential python-dev libmysqlclient-dev
 	pip install -r requirements.txt
 	python setup.py install
-	mysql -e 'create database pyzor_test'
+#	mysql -e 'create database pyzor_test'
 fi
 
 if [ "$1" != "prepare" ]
-do
+then
 	py.test tests/unit/ --cov coveralls --cov-report term-missing
 	py.test tests/functional/
-done
+fi
 
 
