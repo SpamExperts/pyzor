@@ -17,8 +17,8 @@ Pyzor is a Python implementation of a spam-blocking networked system that use sp
     :target: https://travis-ci.org/SpamExperts/pyzor
     :alt: Build status
 
-.. image:: https://coveralls.io/repos/SpamExperts/pyzor/badge.png
-  :target: https://coveralls.io/r/SpamExperts/pyzor
+.. image:: https://coveralls.io/repos/SpamExperts/pyzor/badge.png?branch=master
+  :target: https://coveralls.io/r/SpamExperts/pyzor?branch=master
 
 
 
