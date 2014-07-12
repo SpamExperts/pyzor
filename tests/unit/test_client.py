@@ -173,7 +173,7 @@ class BatchClientTest(TestBase):
 
         args, kwargs = list(self.get_requests())[0]
 
-        msg = email.message_from_string(args[0])
+        msg = email.message_from_string(args[0].decode())
         self.assertEqual(len(msg.get_all("Op-Digest")), 10)
 
     def test_report_to_few(self):
@@ -196,7 +196,7 @@ class BatchClientTest(TestBase):
 
         args, kwargs = list(self.get_requests())[0]
 
-        msg = email.message_from_string(args[0])
+        msg = email.message_from_string(args[0].decode())
         self.assertEqual(len(msg.get_all("Op-Digest")), 10)
 
     def test_whitelist_to_few(self):
@@ -219,7 +219,7 @@ class BatchClientTest(TestBase):
         client.force()
         args, kwargs = list(self.get_requests())[0]
 
-        msg = email.message_from_string(args[0])
+        msg = email.message_from_string(args[0].decode())
         self.assertEqual(len(msg.get_all("Op-Digest")), 9)
 
     def test_force_whitelist(self):
@@ -232,7 +232,7 @@ class BatchClientTest(TestBase):
         client.force()
         args, kwargs = list(self.get_requests())[0]
 
-        msg = email.message_from_string(args[0])
+        msg = email.message_from_string(args[0].decode())
         self.assertEqual(len(msg.get_all("Op-Digest")), 9)
 
     def test_flush_report(self):
