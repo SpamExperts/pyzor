@@ -51,7 +51,7 @@ class TestBase(unittest.TestCase):
         req = {}
         for args, _ in self.get_requests():
             self.assertEqual(args[2], ('127.0.0.1', 24441))
-            req = dict(email.message_from_string(args[0]))
+            req = dict(email.message_from_string(args[0].decode()))
         self.assertEqual(req, self.expected)
 
     def patch_all(self, conf=None):
@@ -64,7 +64,7 @@ class TestBase(unittest.TestCase):
         if self.response:
             response = "\n".join("%s: %s" % (key, value)
                                  for key, value in self.response.items()) + "\n\n"
-            self.mresponse = response, ("127.0.0.1", 24441)
+            self.mresponse = response.encode(), ("127.0.0.1", 24441)
         else:
             self.mresponse = None
         addrinfo = [(2, 2, 17, '', ('127.0.0.1', 24441))]
@@ -186,7 +186,6 @@ class BatchClientTest(TestBase):
 
         self.assertEqual(list(self.get_requests()), [])
 
-
     def test_whitelist(self):
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
         self.patch_all()
@@ -209,9 +208,6 @@ class BatchClientTest(TestBase):
             client.whitelist(digest)
 
         self.assertEqual(list(self.get_requests()), [])
-
-
-
 
 
 def suite():
