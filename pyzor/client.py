@@ -37,8 +37,8 @@ To query the default server (public.pyzor.org):
 >>> client.whitelist(digest)
 >>> client.check(digest)
 
-Response will contain, depending on the type of request, some 
-of the following keys (e.g. client.ping()['Code']): 
+Response will contain, depending on the type of request, some
+of the following keys (e.g. client.ping()['Code']):
 
 All responses will have:
 - 'Diag' 'OK' or error message
@@ -54,7 +54,6 @@ All responses will have:
 - '[WL-]Updated' timestamp when message was last whitelisted/blacklisted
 """
 
-import sys
 import time
 import email
 import socket
@@ -68,6 +67,7 @@ import pyzor.message
 
 import pyzor.hacks.py26
 pyzor.hacks.py26.hack_email()
+
 
 class Client(object):
     timeout = 5
@@ -149,19 +149,20 @@ class Client(object):
                 continue
             break
         if sock is None:
-            raise pyzor.CommError("Unable to send to %s" % addr)
+            raise pyzor.CommError("Unable to send to %s:%s" % addr)
         return sock
 
     def read_response(self, sock, expected_id):
         sock.settimeout(self.timeout)
         try:
             packet, address = sock.recvfrom(self.max_packet_size)
-        except socket.timeout as e:
+        except socket.timeout as ex:
             sock.close()
             raise pyzor.TimeoutError("Reading response timed-out.")
-        except socket.error as e:
+        except socket.error as ex:
             sock.close()
-            raise pyzor.CommError("Socket error while reading response: %s" % e)
+            raise pyzor.CommError("Socket error while reading response: %s" %
+                                  ex)
 
         self.log.debug("received: %r/%r", packet, address)
         msg = email.message_from_bytes(packet, _class=pyzor.message.Response)
@@ -182,10 +183,12 @@ class Client(object):
 
 class BatchClient(Client):
     """Like the normal Client but with support for batching reports."""
-    
+
     def __init__(self, accounts=None, timeout=None, spec=None, batch_size=10):
         Client.__init__(self, accounts=accounts, timeout=timeout, spec=spec)
         self.batch_size = batch_size
+        self.r_requests = None
+        self.w_requests = None
         self.flush()
 
     def report(self, digest, address=("public.pyzor.org", 24441)):
@@ -280,25 +283,23 @@ class CheckClientRunner(ClientRunner):
             self.all_ok = False
         self.results.append(message + "\n")
 
-class InfoClientRunner(ClientRunner):
 
+class InfoClientRunner(ClientRunner):
     def handle_response(self, response, message):
         message += "%s\n" % str(response.head_tuple())
 
         if response.is_ok():
-            for f in ('Count', 'Entered', 'Updated',
-                      'WL-Count', 'WL-Entered', 'WL-Updated'):
-                if response.has_key(f):
-                    val = int(response[f])
-                    if 'Count' in f:
+            for key in ('Count', 'Entered', 'Updated', 'WL-Count',
+                        'WL-Entered', 'WL-Updated'):
+                if key in response:
+                    val = int(response[key])
+                    if 'Count' in key:
                         stringed = str(val)
                     elif val == -1:
                         stringed = 'Never'
                     else:
                         stringed = time.ctime(val)
-                    message += ("\t%s: %s\n" % (f, stringed))
+                    message += ("\t%s: %s\n" % (key, stringed))
         else:
             self.all_ok = False
         self.results.append(message + "\n")
-
-
