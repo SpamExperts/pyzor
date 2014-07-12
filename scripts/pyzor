@@ -176,6 +176,7 @@ def ping(client, servers, config):
     runner = pyzor.client.ClientRunner(client.ping)
     for server in servers:
         runner.run(server, (server,))
+    sys.stdout.writelines(runner.results)
     return runner.all_ok
 
 def pong(client, servers, config):
@@ -252,6 +253,7 @@ def report(client, servers, config):
         runner = pyzor.client.ClientRunner(client.report)
         if digested and not send_digest(digested, runner, servers):
             all_ok = False
+        sys.stdout.writelines(runner.results)
     return all_ok
 
 def whitelist(client, servers, config):
@@ -262,6 +264,7 @@ def whitelist(client, servers, config):
         runner = pyzor.client.ClientRunner(client.whitelist)
         if digested and not send_digest(digested, runner, servers):
             all_ok = False
+        sys.stdout.writelines(runner.results)
     return all_ok
 
 def digest(client, servers, config):

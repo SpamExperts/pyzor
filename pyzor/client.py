@@ -59,6 +59,7 @@ import time
 import email
 import socket
 import logging
+import functools
 import collections
 
 import pyzor.digest
@@ -182,46 +183,43 @@ class Client(object):
 class BatchClient(Client):
     """Like the normal Client but with support for batching reports."""
     
-    batch_size = 10
-
-    def __init__(self, accounts=None, timeout=None, spec=None):
+    def __init__(self, accounts=None, timeout=None, spec=None, batch_size=10):
         Client.__init__(self, accounts=accounts, timeout=timeout, spec=spec)
-        self.r_request = collections.defaultdict(self._new_r_request)
-        self.w_request = collections.defaultdict(self._new_w_request)
+        self.batch_size = batch_size
+        self.flush()
 
-    def _new_r_request(self):
-        return pyzor.message.ReportRequest(spec=self.spec)
-
-    def _new_w_request(self):
-        return pyzor.message.WhitelistRequest(spec=self.spec)
 
     def report(self, digest, address=("public.pyzor.org", 24441)):
-        msg = self.r_request[address]
+        self._add_digest(digest, address, self.r_requests)
 
-        msg.add_digest(digest)
-        if msg.digest_count >= self.batch_size:
-            try:
-                return self.send(msg, address)
-            finally:
-                del self.r_request[address]
-            
     def whitelist(self, digest, address=("public.pyzor.org", 24441)):
-        msg = self.w_request[address]
+        self._add_digest(digest, address, self.w_requests)
+
+    def _add_digest(self, digest, address, requests):
+        msg = requests[address]
 
         msg.add_digest(digest)
         if msg.digest_count >= self.batch_size:
             try:
                 return self.send(msg, address)
             finally:
-                del self.w_request[address]
-    
+                del requests[address]
+
+    def flush(self):
+        """Deleting any saved digest reports."""
+        self.r_requests = collections.defaultdict(
+            functools.partial(pyzor.message.ReportRequest, spec=self.spec))
+        self.w_requests = collections.defaultdict(
+            functools.partial(pyzor.message.WhitelistRequest, spec=self.spec))
+
     def force(self):
-        for address, msg in self.r_request.iteritems():
+        """Force send any remaining reports."""
+        for address, msg in self.r_requests.iteritems():
             try:
                 self.send(msg, address)
             except:
                 continue
-        for address, msg in self.w_request.iteritems():
+        for address, msg in self.w_requests.iteritems():
             try:
                 self.send(msg, address)
             except:
@@ -238,6 +236,7 @@ class ClientRunner(object):
         self.log = logging.getLogger("pyzor")
         self.routine = routine
         self.all_ok = True
+        self.results = []
 
     def run(self, server, args, kwargs=None):
         if kwargs is None:
@@ -255,7 +254,7 @@ class ClientRunner(object):
         """mesaage is a string we've built up so far"""
         if not response.is_ok():
             self.all_ok = False
-        sys.stdout.write("%s%s\n" % (message, response.head_tuple()))
+        self.results.append("%s%s\n" % (message, response.head_tuple()))
 
 
 class CheckClientRunner(ClientRunner):
@@ -268,7 +267,6 @@ class CheckClientRunner(ClientRunner):
         self.whitelist_count = 0
         self.r_count_found = r_count
         self.wl_count_clears = wl_count
-        self.results = []
 
     def handle_response(self, response, message):
         message += "%s\t" % str(response.head_tuple())
@@ -285,10 +283,6 @@ class CheckClientRunner(ClientRunner):
         self.results.append(message + "\n")
 
 class InfoClientRunner(ClientRunner):
-
-    def __init__(self, routine):
-        ClientRunner.__init__(self, routine)
-        self.results = []
 
     def handle_response(self, response, message):
         message += "%s\n" % str(response.head_tuple())
