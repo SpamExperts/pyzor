@@ -25,6 +25,47 @@ Contribute
 - `Issue Tracker <http://github.com/SpamExperts/pyzor/issues>`_
 - `Source Code <http://github.com/SpamExperts/pyzor>`_
 
+Getting the source
+------------------
+
+To clone the repository using git simply run::
+
+    git clone https://github.com/SpamExperts/pyzor
+
+Please feel free to `fork us <https://github.com/SpamExperts/pyzor/fork>`_
+and submit your pull requests.  
+
+Running tests
+-------------
+
+The pyzor tests are split into *unittest* and *functional* tests.
+
+*Unitests* perform checks against the current source code and **not**
+the installed version of pyzor. To run all the unittests suite::
+
+    env PYTHONPATH=. python tests/unit/__init__.py
+
+*Functional* tests perform checks against the installed version of
+pyzor and **not** the current source code. These are more extensive
+and generally take longer to run. They also might need special setup.
+To run the full suite of functional tests::
+
+    env PYTHONPATH=. python tests/functional/__init__.py
+
+There is also a `helper script <https://github.com/SpamExperts/
+pyzor/blob/master/scripts/run_tests>`_ available that sets-up 
+the testing enviroment, also taking into consideration the python 
+version you are currently using::
+
+    ./scripts/run_tests
+
+.. note::
+
+    The authentication details for the MySQL functional tests are taken from
+    the `test.conf <https://github.com/SpamExperts/pyzor/blob/master/
+    test.conf>`_ file.
+
+
 License
 -------
 

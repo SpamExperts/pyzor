@@ -188,7 +188,6 @@ class BatchClient(Client):
         self.batch_size = batch_size
         self.flush()
 
-
     def report(self, digest, address=("public.pyzor.org", 24441)):
         self._add_digest(digest, address, self.r_requests)
 
