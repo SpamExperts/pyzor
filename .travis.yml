@@ -5,8 +5,10 @@ python:
   - "pypy"
 services:
   - redis-server
-install: true
+install: 
+  - "./scripts/run_tests prepare"
 script: 
-  - ./scripts/run_tests
+  - "py.test tests/unit/ --cov coveralls --cov-report term-missing"
+  - "py.test tests/functional/"
 after_success:
   - coveralls

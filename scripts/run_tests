@@ -1,5 +1,5 @@
 #!/bin/bash
-set -evx
+set -ev
 
 pip install pytest pytest-cov python-coveralls
 
@@ -16,7 +16,10 @@ else
 	mysql -e 'create database pyzor_test'
 fi
 
-py.test tests/unit/ --cov coveralls --cov-report term-missing
-py.test tests/functional/
+if [ "$1" != "prepare" ]
+do
+	py.test tests/unit/ --cov coveralls --cov-report term-missing
+	py.test tests/functional/
+done
 
 
