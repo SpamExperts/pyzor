@@ -8,17 +8,20 @@ digest_spec = ([(20, 3), (60, 3)])
 HASH = hashlib.sha1
 HASH_SIZE = len(HASH(b"").hexdigest())
 
+
 class HTMLStripper(HTMLParser.HTMLParser):
     """Strip all tags from the HTML."""
     def __init__(self, collector):
         HTMLParser.HTMLParser.__init__(self)
         self.reset()
         self.collector = collector
+
     def handle_data(self, data):
         """Keep track of the data."""
         data = data.strip()
         if data:
             self.collector.append(data)
+
 
 class DataDigester(object):
     """The major workhouse class."""
@@ -49,7 +52,9 @@ class DataDigester(object):
     # Note that an empty string will always be used to remove whitespace.
     unwanted_txt_repl = ''
 
-    def __init__(self, msg, spec=digest_spec):
+    def __init__(self, msg, spec=None):
+        if spec is None:
+            spec = digest_spec
         self.value = None
         self.digest = HASH()
 
@@ -128,7 +133,7 @@ class DataDigester(object):
                 errors = "ignore"
                 if not charset:
                     charset = "ascii"
-                elif (charset.lower().replace("_", "-") in ("quopri-codec", 
+                elif (charset.lower().replace("_", "-") in ("quopri-codec",
                       "quopri", "quoted-printable", "quotedprintable")):
                     errors = "strict"
 

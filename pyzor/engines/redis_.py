@@ -73,13 +73,13 @@ class RedisDBHandle(object):
     def __iter__(self):
         for key in self.db.keys(self._real_key("*")):
             yield key.rsplit(".", 1)[-1]
-    
+
     def iteritems(self):
         for key in self:
             try:
                 yield key, self[key]
-            except Exception as e:
-                self.log.warning("Invalid record %s: %s", key, e)
+            except Exception as ex:
+                self.log.warning("Invalid record %s: %s", key, ex)
 
     def items(self):
         return list(self.iteritems())
@@ -109,8 +109,8 @@ class RedisDBHandle(object):
     def __delitem__(self, key):
         self.db.delete(self._real_key(key))
 
-class ThreadedRedisDBHandle(RedisDBHandle):
 
+class ThreadedRedisDBHandle(RedisDBHandle):
     def __init__(self, fn, mode, max_age=None, bound=None):
         RedisDBHandle.__init__(self, fn, mode, max_age=max_age)
 

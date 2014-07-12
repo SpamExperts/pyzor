@@ -23,5 +23,3 @@ database_classes = {"gdbm": gdbm_.handle,
                     "mysql": mysql.handle,
                     "redis": redis_.handle,
                     }
-
-

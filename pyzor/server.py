@@ -37,6 +37,7 @@ import pyzor.engines.common
 import pyzor.hacks.py26
 pyzor.hacks.py26.hack_all()
 
+
 class Server(SocketServer.UDPServer):
     """The pyzord server.  Handles incoming UDP connections in a single
     thread and single process."""
@@ -56,6 +57,8 @@ class Server(SocketServer.UDPServer):
         # Handle configuration files
         self.passwd_fn = passwd_fn
         self.access_fn = access_fn
+        self.accounts = {}
+        self.acl = {}
         self.load_config()
 
         self.forwarder = forwarder
@@ -80,8 +83,8 @@ class Server(SocketServer.UDPServer):
         self.acl = pyzor.config.load_access_file(self.access_fn, self.accounts)
 
     def shutdown_handler(self, *args, **kwargs):
-        """Handler for the SIGTERM signal. This should be used to kill the 
-        daemon and ensure proper clean-up. 
+        """Handler for the SIGTERM signal. This should be used to kill the
+        daemon and ensure proper clean-up.
         """
         self.log.info("SIGTERM received. Shutting down.")
         t = threading.Thread(target=self.shutdown)
@@ -103,7 +106,7 @@ class ThreadingServer(SocketServer.ThreadingMixIn, Server):
 
 
 class BoundedThreadingServer(ThreadingServer):
-    """Same as ThreadingServer but this also accepts a limited number of 
+    """Same as ThreadingServer but this also accepts a limited number of
     concurrent threads.
     """
     def __init__(self, address, database, passwd_fn, access_fn, max_threads,
@@ -122,7 +125,7 @@ class BoundedThreadingServer(ThreadingServer):
 
 
 class ProcessServer(SocketServer.ForkingMixIn, Server):
-    """A multi-processing version of the pyzord server.  Each connection is 
+    """A multi-processing version of the pyzord server.  Each connection is
     served in a new process. This may not be suitable for all database types.
     """
     def __init__(self, address, database, passwd_fn, access_fn,
@@ -190,7 +193,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
                 raise pyzor.SignatureError("Unknown user.")
 
         if "PV" not in request:
-            raise pyzor.ProtocolError("Protocol Version not specified in request")
+            raise pyzor.ProtocolError("Protocol Version not specified in "
+                                      "request")
 
         # The protocol version is compatible if the major number is
         # identical (changes in the minor number are unimportant).
@@ -289,6 +293,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         """
         self.server.log.debug("Request for information about digest %s",
                               digest)
+
         def time_output(time_obj):
             """Convert a datetime object to a POSIX timestamp.
 
@@ -305,11 +310,10 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         self.response["WL-Count"] = "%d" % record.wl_count
 
     dispatches = {
-        'ping' : None,
-        'pong' : handle_pong,
-        'info' : handle_info,
-        'check' : handle_check,
-        'report' : handle_report,
-        'whitelist' : handle_whitelist,
+        'ping': None,
+        'pong': handle_pong,
+        'info': handle_info,
+        'check': handle_check,
+        'report': handle_report,
+        'whitelist': handle_whitelist,
         }
-

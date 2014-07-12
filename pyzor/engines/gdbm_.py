@@ -6,13 +6,13 @@ try:
 except ImportError:
     _has_gdbm = False
 
-import sys
 import time
 import logging
 import datetime
 import threading
 
-from pyzor.engines.common import *
+from pyzor.engines.common import Record, DBHandle
+
 
 class GdbmDBHandle(object):
     absolute_source = True
@@ -35,6 +35,8 @@ class GdbmDBHandle(object):
     def __init__(self, fn, mode, max_age=None):
         self.max_age = max_age
         self.db = gdbm.open(fn, mode)
+        self.reorganize_timer = None
+        self.sync_timer = None
         self.start_reorganizing()
         self.start_syncing()
 
@@ -43,14 +45,14 @@ class GdbmDBHandle(object):
         while k != None:
             yield k
             k = self.db.nextkey(k)
-    
+
     def iteritems(self):
         for k in self:
             try:
                 yield k, self._really_getitem(k)
             except Exception as e:
                 self.log.warning("Invalid record %s: %s", k, e)
-            
+
     def items(self):
         return list(self.iteritems())
 
@@ -158,6 +160,7 @@ class GdbmDBHandle(object):
             setattr(r, f, decode(part))
         return r
 
+
 class ThreadedGdbmDBHandle(GdbmDBHandle):
     """Like GdbmDBHandle, but handles multi-threaded access."""
 
@@ -187,5 +190,3 @@ else:
     handle = DBHandle(single_threaded=GdbmDBHandle,
                       multi_threaded=ThreadedGdbmDBHandle,
                       multi_processing=None)
-
-

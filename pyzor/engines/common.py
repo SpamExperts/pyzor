@@ -10,8 +10,10 @@ __all__ = ["DBHandle", "DatabaseError", "Record"]
 DBHandle = namedtuple("DBHandle", ["single_threaded", "multi_threaded",
                                    "multi_processing"])
 
+
 class DatabaseError(Exception):
     pass
+
 
 class Record(object):
     """Prefix conventions used in this class:

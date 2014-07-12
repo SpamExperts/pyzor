@@ -2,7 +2,7 @@ import time
 import email
 import unittest
 
-from mock import Mock, patch, call
+from mock import Mock, patch
 
 import pyzor.client
 import pyzor.account
@@ -46,7 +46,7 @@ class ClientTest(unittest.TestCase):
             name, args, kwargs = call
             if name == "socket().sendto":
                 self.assertEqual(args[2], ('127.0.0.1', 24441))
-                req = dict(email.message_from_string(args[0].decode()))
+                req = dict(email.message_from_string(args[0]))
                 break
         self.assertEqual(req, self.expected)
 

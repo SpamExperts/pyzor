@@ -45,13 +45,14 @@ class MySQLDBHandle(object):
         self.host, self.user, self.passwd, self.db_name, \
             self.table_name = fn.split(",")
         self.last_connect_attempt = 0  # We have never connected.
+        self.reorganize_timer = None
         self.reconnect()
         self.start_reorganizing()
 
     def _get_new_connection(self):
         """Returns a new db connection."""
         db = MySQLdb.connect(host=self.host, user=self.user,
-                               db=self.db_name, passwd=self.passwd)
+                             db=self.db_name, passwd=self.passwd)
         db.autocommit(True)
         return db
 
@@ -89,7 +90,7 @@ class MySQLDBHandle(object):
                 break
             yield row[0]
         c.close()
-    
+
     def iteritems(self):
         c = self.db.cursor(cursorclass=MySQLdb.cursors.SSCursor)
         c.execute("SELECT digest, r_count, wl_count, r_entered, r_updated, "
@@ -100,7 +101,7 @@ class MySQLDBHandle(object):
                 break
             yield row[0], Record(*row[1:])
         c.close()
-        
+
     def items(self):
         return list(self.iteritems())
 
@@ -115,8 +116,8 @@ class MySQLDBHandle(object):
     def _safe_call(self, name, method, args):
         try:
             return method(*args, db=self.db)
-        except (MySQLdb.Error, AttributeError), e:
-            self.log.error("%s failed: %s", name, e)
+        except (MySQLdb.Error, AttributeError) as ex:
+            self.log.error("%s failed: %s", name, ex)
             self.reconnect()
             # Retrying just complicates the logic - we don't really care if
             # a single query fails (and it's possible that it would fail)
@@ -198,8 +199,8 @@ class MySQLDBHandle(object):
         self.reorganize_timer.setDaemon(True)
         self.reorganize_timer.start()
 
-class ThreadedMySQLDBHandle(MySQLDBHandle):
 
+class ThreadedMySQLDBHandle(MySQLDBHandle):
     def __init__(self, fn, mode, max_age=None, bound=None):
         self.bound = bound
         if self.bound:
@@ -222,15 +223,15 @@ class ThreadedMySQLDBHandle(MySQLDBHandle):
         db = self._get_connection()
         try:
             return method(*args, db=db)
-        except (MySQLdb.Error, AttributeError) as e:
-            self.log.error("%s failed: %s", name, e)
+        except (MySQLdb.Error, AttributeError) as ex:
+            self.log.error("%s failed: %s", name, ex)
             if not self.bound:
                 raise DatabaseError("Database temporarily unavailable.")
             try:
                 # Connection might be timeout, ping and retry
                 db.ping(True)
                 return method(*args, db=db)
-            except (MySQLdb.Error, AttributeError) as e:
+            except (MySQLdb.Error, AttributeError) as ex:
                 # attempt a new connection, if we can retry
                 db = self._reconnect(db)
                 raise DatabaseError("Database temporarily unavailable.")
@@ -261,6 +262,7 @@ class ThreadedMySQLDBHandle(MySQLDBHandle):
             except Queue.Empty:
                 break
 
+
 class ProcessMySQLDBHandle(MySQLDBHandle):
     def __init__(self, fn, mode, max_age=None):
         MySQLDBHandle.__init__(self, fn, mode, max_age=max_age)
@@ -276,8 +278,8 @@ class ProcessMySQLDBHandle(MySQLDBHandle):
         try:
             db = self._get_new_connection()
             return method(*args, db=db)
-        except (MySQLdb.Error, AttributeError) as e:
-            self.log.error("%s failed: %s", name, e)
+        except (MySQLdb.Error, AttributeError) as ex:
+            self.log.error("%s failed: %s", name, ex)
             raise DatabaseError("Database temporarily unavailable.")
         finally:
             if db is not None:

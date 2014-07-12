@@ -187,8 +187,8 @@ class BatchClient(Client):
     def __init__(self, accounts=None, timeout=None, spec=None, batch_size=10):
         Client.__init__(self, accounts=accounts, timeout=timeout, spec=spec)
         self.batch_size = batch_size
-        self.r_requests = None
-        self.w_requests = None
+        self.r_requests = {}
+        self.w_requests = {}
         self.flush()
 
     def report(self, digest, address=("public.pyzor.org", 24441)):

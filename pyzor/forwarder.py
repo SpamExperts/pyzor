@@ -2,15 +2,16 @@ import Queue
 import logging
 import threading
 
+
 class Forwarder(object):
     """Forwards digest to remote pyzor servers"""
 
     def __init__(self, forwarding_client, remote_servers,
                  max_queue_size=10000):
         """
-        forward_client: a pyzor.client.Client instance to use as 
+        forward_client: a pyzor.client.Client instance to use as
                         forwarding client
-        remote_servers: a list of (hostname,port) tuples where digests should 
+        remote_servers: a list of (hostname,port) tuples where digests should
                         be forwarded to
         max_queue_size: max amount of queued digests
         """
@@ -39,9 +40,9 @@ class Forwarder(object):
                         self.forwarding_client.whitelist(digest, server)
                     else:
                         self.forwarding_client.report(digest, server)
-                except Exception as e:
+                except Exception as ex:
                     self.log.warn('Forwarding digest %s to %s failed: %s',
-                                  digest, server, e)
+                                  digest, server, ex)
 
     def queue_forward_request(self, digest, whitelist=False):
         """If forwarding is enabled, insert a digest into the forwarding queue
@@ -58,8 +59,7 @@ class Forwarder(object):
 
     def start_forwarding(self):
         """start the forwarding thread"""
-        t = threading.Thread(target=self._forward_loop)
-        t.start()
+        threading.Thread(target=self._forward_loop).start()
 
     def stop_forwarding(self):
         """disable forwarding and tell the forwarding thread to end itself"""
