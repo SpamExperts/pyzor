@@ -260,11 +260,82 @@ class BatchClientTest(TestBase):
         self.assertEqual(list(self.get_requests()), [])
 
 
+class ClientRunnerTest(unittest.TestCase):
+
+    def setUp(self):
+        unittest.TestCase.setUp(self)
+        self.server = "test.example.com", 24441
+
+    def tearDown(self):
+        unittest.TestCase.tearDown(self)
+
+    def check_runner(self, test_class, response, results, kwargs=None):
+        if kwargs is None:
+            kwargs = {}
+        kwargs["return_value"] = response
+        mock_routine = Mock(**kwargs)
+
+        runner = test_class(mock_routine)
+        runner.run(self.server, ())
+
+        self.assertEqual(runner.results, results)
+        return runner
+
+    def test_normal(self):
+        response = pyzor.message.Response()
+        response["Diag"] = "OK"
+        response["Code"] = "200"
+        server = "%s:%s\t" % self.server
+        results = ["%s%s\n" % (server, response.head_tuple()), ]
+
+        self.check_runner(pyzor.client.ClientRunner, response, results)
+
+    def test_check(self):
+        response = pyzor.message.Response()
+        response["Diag"] = "OK"
+        response["Code"] = "200"
+        response["Count"] = "2"
+        response["WL-Count"] = "1"
+        server = "%s:%s\t" % self.server
+        results = ["%s%s\t%s\t%s\n" % (server, response.head_tuple(), "2",
+                   "1")]
+
+        self.check_runner(pyzor.client.CheckClientRunner, response, results)
+
+    def test_info(self):
+        response = """Code: 200
+Diag: OK
+PV: 2.1
+Thread: 8521
+Entered: 1400221786
+Updated: 1400221794
+WL-Entered: 0
+WL-Updated: 0
+Count: 4
+WL-Count: 0
+
+"""
+        response = email.message_from_string(response,
+                                             _class=pyzor.message.Response)
+        result = """%s:%s\t(200, 'OK')
+\tCount: 4
+\tEntered: Fri May 16 09:29:46 2014
+\tUpdated: Fri May 16 09:29:54 2014
+\tWL-Count: 0
+\tWL-Entered: Thu Jan  1 02:00:00 1970
+\tWL-Updated: Thu Jan  1 02:00:00 1970
+
+""" % self.server
+        self.check_runner(pyzor.client.InfoClientRunner, response, [result])
+
+
 def suite():
     """Gather all the tests from this module in a test suite."""
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(ClientTest))
     test_suite.addTest(unittest.makeSuite(BatchClientTest))
+    test_suite.addTest(unittest.makeSuite(ClientRunnerTest))
+
     return test_suite
 
 if __name__ == '__main__':
