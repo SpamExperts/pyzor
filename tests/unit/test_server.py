@@ -387,6 +387,7 @@ def suite():
     """Gather all the tests from this module in a test suite."""
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(RequestHandlerTest))
+    test_suite.addTest(unittest.makeSuite(ServerTest))
     return test_suite
 
 if __name__ == '__main__':
