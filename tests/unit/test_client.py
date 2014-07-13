@@ -13,6 +13,7 @@ class TestBase(unittest.TestCase):
         unittest.TestCase.setUp(self)
 
         self.thread = 33715
+        self.timeout = None
 
         patch("pyzor.account.sign_msg", return_value="TestSig").start()
         patch("pyzor.account.hash_key").start()
@@ -80,7 +81,8 @@ class TestBase(unittest.TestCase):
         """Tests if the request and response are sent
         and read correctly by the client.
         """
-        client = pyzor.client.Client(accounts)
+        client = pyzor.client.Client(accounts=accounts,
+                                     timeout=self.timeout)
         got_response = getattr(client, method)(*args, **kwargs)
 
         self.assertEqual(str(got_response), self.mresponse[0].decode())
@@ -156,10 +158,11 @@ class ClientTest(TestBase):
     def test_set_timeout(self):
         self.expected = None
         self.patch_all()
+        self.timeout = 10
         self.check_client(None, "ping")
 
-        calls = [call('socket().settimeout', (10,), {}), ]
-        self.mock_socket.has_calls(calls)
+        calls = [call.socket().settimeout(10), ]
+        self.mock_socket.assert_has_calls(calls)
 
 
 class BatchClientTest(TestBase):
@@ -327,6 +330,33 @@ WL-Count: 0
                   "\tWL-Updated: %s\n\n" %
                   (server, time.ctime(1400221786), time.ctime(1400221794),
                    time.ctime(0), time.ctime(0)))
+        self.maxDiff = None
+        self.check_runner(pyzor.client.InfoClientRunner, response, [result])
+
+    def test_info_never(self):
+        response = """Code: 200
+Diag: OK
+PV: 2.1
+Thread: 8521
+Entered: 1400221786
+Updated: 1400221794
+WL-Entered: -1
+WL-Updated: -1
+Count: 4
+WL-Count: 0
+
+"""
+        response = email.message_from_string(response,
+                                             _class=pyzor.message.Response)
+        server = "%s:%s" % self.server
+        result = ("%s\t(200, 'OK')\n"
+                  "\tCount: 4\n"
+                  "\tEntered: %s\n"
+                  "\tUpdated: %s\n"
+                  "\tWL-Count: 0\n"
+                  "\tWL-Entered: Never\n"
+                  "\tWL-Updated: Never\n\n" %
+                  (server, time.ctime(1400221786), time.ctime(1400221794)))
         self.maxDiff = None
         self.check_runner(pyzor.client.InfoClientRunner, response, [result])
 
