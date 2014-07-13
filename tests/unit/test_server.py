@@ -9,7 +9,10 @@ import SocketServer
 
 from datetime import datetime, timedelta
 
-from mock import patch, Mock, call
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 
 import pyzor.server
 import pyzor.engines.common
@@ -369,9 +372,6 @@ class RequestHandlerTest(unittest.TestCase):
 class ServerTest(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self.mock_udp = patch("pyzor.server.SocketServer.UDPServer").start()
-        self.mock_bind = patch("pyzor.server.Server.server_bind").start()
-        self.mock_activate = patch("pyzor.server.Server.server_activate").start()
         self.mock_config = patch("pyzor.config").start()
 
     def tearDown(self):
@@ -381,8 +381,6 @@ class ServerTest(unittest.TestCase):
     def test_server(self):
         pyzor.server.Server(("127.0.0.1", 24441), {}, "passwd_fn", "access_fn",
                             None)
-        self.mock_bind.assert_called_with()
-        self.mock_activate.assert_called_with()
 
 
 def suite():

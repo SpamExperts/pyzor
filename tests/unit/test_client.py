@@ -2,7 +2,11 @@ import time
 import email
 import unittest
 
-from mock import Mock, patch, call
+try:
+    from unittest.mock import Mock, patch, call
+except ImportError:
+    from mock import Mock, patch, call
+
 
 import pyzor.client
 import pyzor.account
