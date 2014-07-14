@@ -2,7 +2,7 @@
 
 __author__ = "Frank J. Tobin, ftobin@neverending.org"
 __credits__ = "Tony Meyer, Dreas von Donselaar, all the Pyzor contributors."
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 import hashlib
 
