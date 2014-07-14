@@ -217,7 +217,10 @@ def load_configuration():
     if len(args):
         opt.print_help()
         sys.exit()
-    os.nice(options.nice)
+    try:
+        os.nice(options.nice)
+    except AttributeError:
+        pass
 
     # Create the configuration directory if it doesn't already exist.
     if not os.path.exists(options.homedir):

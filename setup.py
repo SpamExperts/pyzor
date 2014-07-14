@@ -19,6 +19,7 @@ to identify them.
 """
 
 classifiers = ["Operating System :: POSIX",
+               "Operating System :: Microsoft :: Windows",
 
                "Environment :: Console",
                "Environment :: No Input/Output (Daemon)",
