@@ -19,6 +19,8 @@ The Pyzor code will also work on Python3, but requires refactoring done with
 the 2to3 tool. This has been integrated in the setup, so installation in 
 Python3 now works seamlessly with any method described above.
 
+You can also use Pyzor with `PyPy <http://pypy.org/>`_.
+
 Downloading
 ------------
 
