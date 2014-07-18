@@ -27,6 +27,7 @@ Contents:
    installation.rst
    usage.rst
    config.rst
-   about.rst
+   changelog.rst
+   about.rst   
    pyzor.rst
 
