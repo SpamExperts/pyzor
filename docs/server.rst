@@ -118,7 +118,22 @@ Or if a password is required::
     DigestDB = localhost,6379,password,0
 
 In the example above the redis database used is 0. 
- 
+
+Migrating
+^^^^^^^^^^^
+
+If you want to migrate your database from one engine to another there is an 
+utility script installed with pyzor designed to do this. Note that the 
+arguments are the equivalent of the ``Engine`` and ``DigestDB`` options. Some
+usage examples: 
+
+* Moving a database from gdbm to redis::
+
+	pyzor-migrate --se gdbm --sd testdata/backup.db --de redis --dd localhost,6379,,0
+
+* Moving a database from redis to MySQL::
+
+	pyzor-migrate --se redis --sd localhost,6379,,0 --de mysql --dd localhost,root,,pyzor,public
  
 .. _server-access-file:
 
