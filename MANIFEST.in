@@ -1,6 +1,5 @@
 include COPYING
 include INSTALL
-include NEWS
 include THANKS
 include requirements.txt
 include config/*

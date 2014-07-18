@@ -1,39 +1,11 @@
+For more details and documentation on installing and using 
+pyzor please visit http://www.pyzor.org/
+
 Pyzor requires at least Python 2.6
 
 To install this distribution, simply run the following:
 	python setup.py build
 	python setup.py install
-
-Note that your system might install the modules and scripts
-with non-world-readable permissions.
-Correct this with a command such as:
-
-	chmod -R a+rX /usr/share/doc/pyzor \
-		/usr/lib/python2.2/site-packages/pyzor \
-		/usr/bin/pyzor /usr/bin/pyzord
-
-To use the server, the Python gdbm module or MySQLdb module is required.
-You can generally check if you have the gdbm module by executing:
-	python -c 'import gdbm' && echo 'gdbm found'
-You can generally check if you have the MySQLdb module by executing:
-	python -c 'import MySQLdb' && echo 'MySQLdb found'
-
-The gdbm module is available at:
-	Debian GNU/Linux:
-		http://packages.debian.org/stable/interpreters/python-gdbm.html
-	Gentoo Linux:
-		Will be built with Python if the gdbm library is found.
-		If it isn't there with your Python, try stealing
-		the FreeBSD setup.py patchfile in their ports to
-		install just the gdbm module, or simply re-install
-		Python.
-	FreeBSD:
-		ports/databases/py-gdbm
-	tar.gz:
-		included in the Python distribution
-		(not sure of the precise procedure for simply installing
-		the gdbm module; try stealing the FreeBSD setup.py patchfile
-		in their ports).
 
 Pyzor also works with Python3.3. The code will be automatically refactored with
 2to3 during the setup:
@@ -41,5 +13,3 @@ Pyzor also works with Python3.3. The code will be automatically refactored with
 
 Note that the MySQLdb library does not currently support Python3.
 
-See docs/usage.html for usage documentation, and if you are upgrading
-from another version of Pyzor, please read the UPGRADING file.
