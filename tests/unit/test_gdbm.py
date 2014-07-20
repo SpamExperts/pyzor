@@ -1,6 +1,7 @@
 """Test the pyzor.engines.gdbm_ module."""
 
 import sys
+import time
 import unittest
 import threading
 
@@ -41,6 +42,8 @@ class MockGdbmDB(dict):
 class GdbmTest(unittest.TestCase):
     """Test the GdbmDBHandle class"""
 
+    handler = pyzor.engines.gdbm_.GdbmDBHandle
+
     max_age = 60 * 60 * 24 * 30 * 4
     r_count = 24
     wl_count = 42
@@ -79,15 +82,14 @@ class GdbmTest(unittest.TestCase):
         if not record:
             record = self.record
         return ("1,%s,%s,%s,%s,%s,%s" % (record.r_count, record.r_entered,
-                                        record.r_updated, record.wl_count,
-                                        record.wl_entered, record.wl_updated)).encode("utf8")
+                                         record.r_updated, record.wl_count,
+                                         record.wl_entered, record.wl_updated)).encode("utf8")
 
     def test_set_item(self):
         """Test GdbmDBHandle.__setitem__"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
 
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
-                                                  max_age=self.max_age)
+        handle = self.handler(None, None, max_age=self.max_age)
         handle[digest] = self.record
 
         self.assertEqual(self.db[digest], self.record_as_str().decode("utf8"))
@@ -96,19 +98,28 @@ class GdbmTest(unittest.TestCase):
         """Test GdbmDBHandle.__getitem__"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
 
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
-                                                  max_age=self.max_age)
+        handle = self.handler(None, None, max_age=self.max_age)
         self.db[digest] = self.record_as_str()
 
         result = handle[digest]
 
         self.assertEqual(self.record_as_str(result), self.record_as_str())
 
+    def test_items(self):
+        """Test GdbmDBHandle.items()"""
+        digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
+
+        handle = self.handler(None, None, max_age=self.max_age)
+        self.db[digest] = self.record_as_str()
+        key, result = handle.items()[0]
+
+        self.assertEqual(key, digest)
+        self.assertEqual(self.record_as_str(result), self.record_as_str())
+
     def test_del_item(self):
         """Test GdbmDBHandle.__delitem__"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
-                                                  max_age=self.max_age)
+        handle = self.handler(None, None, max_age=self.max_age)
         self.db[digest] = self.record_as_str()
 
         del handle[digest]
@@ -120,20 +131,18 @@ class GdbmTest(unittest.TestCase):
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
 
         self.db[digest] = self.record_as_str()
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
-                                                  max_age=3600 * 24)
+        handle = self.handler(None, None, max_age=3600 * 24)
 
         self.assertFalse(self.db.get(digest))
 
     def test_reorganize_older_no_max_age(self):
-        """Test GdbmDBHandle.start_reorganizing with older records, but no 
+        """Test GdbmDBHandle.start_reorganizing with older records, but no
         max_age set.
         """
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
 
         self.db[digest] = self.record_as_str()
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
-                                                  max_age=None)
+        handle = self.handler(None, None, max_age=None)
 
         self.assertEqual(self.db[digest], self.record_as_str())
 
@@ -142,16 +151,20 @@ class GdbmTest(unittest.TestCase):
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
 
         self.db[digest] = self.record_as_str()
-        handle = pyzor.engines.gdbm_.GdbmDBHandle(None, None,
-                                                  max_age=3600 * 24 * 3)
+        handle = self.handler(None, None, max_age=3600 * 24 * 3)
 
         self.assertEqual(self.db[digest], self.record_as_str())
+
+class ThreadingGdbmTest(GdbmTest):
+    """Test the GdbmDBHandle class"""
+    handler = pyzor.engines.gdbm_.ThreadedGdbmDBHandle
 
 
 def suite():
     """Gather all the tests from this module in a test suite."""
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(GdbmTest))
+    test_suite.addTest(unittest.makeSuite(ThreadingGdbmTest))
     return test_suite
 
 if __name__ == '__main__':
