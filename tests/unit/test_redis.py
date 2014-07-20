@@ -2,9 +2,8 @@
 
 import unittest
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
-import pyzor.engines
 import pyzor.engines.redis_
 import pyzor.engines.common
 
@@ -91,11 +90,14 @@ def make_MockRedis(commands):
             commands.append(("get", args, kwargs))
         def delete(self, *args, **kwargs):
             commands.append(("delete", args, kwargs))
+        def keys(self, *args, **kwargs):
+            commands.append(("keys", args, kwargs))
+            yield "pyzord.digest.2aedaac999d71421c9ee49b9d81f627a7bc570aa"
     class MockError(Exception):
         pass
     class exceptions():
         def __init__(self):
-            self.RedisError = MockError 
+            self.RedisError = MockError
     class MockRedis():
         def __init__(self):
             self.StrictRedis = MockStrictRedis
@@ -140,7 +142,7 @@ class RedisTest(unittest.TestCase):
         db = pyzor.engines.redis_.RedisDBHandle("example.com,6387,passwd,5",
                                                 None)
         self.assertEqual(self.commands[0], ("init", (), expected))
-        
+
     def test_init_defaults(self):
         expected = {"host": "localhost",
                     "port": 6379,
@@ -149,14 +151,14 @@ class RedisTest(unittest.TestCase):
                     }
         db = pyzor.engines.redis_.RedisDBHandle(",,,", None)
         self.assertEqual(self.commands[0], ("init", (), expected))
-        
+
     def test_set(self):
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
         value = "record test"
 
         db = pyzor.engines.redis_.RedisDBHandle(",,,", None)
         db[digest] = value
-        
+
         expected = ("pyzord.digest.%s" % digest, value)
         self.assertEqual(self.commands[1], ("set", expected, {}))
 
@@ -179,6 +181,16 @@ class RedisTest(unittest.TestCase):
 
         expected = ("pyzord.digest.%s" % digest,)
         self.assertEqual(self.commands[1], ("get", expected, {}))
+
+    def test_items(self):
+        digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
+
+        db = pyzor.engines.redis_.RedisDBHandle(",,,", None)
+        db.items()[0]
+
+        expected = ("pyzord.digest.%s" % digest,)
+        self.assertEqual(self.commands[1], ("keys", ("pyzord.digest.*",), {}))
+        self.assertEqual(self.commands[2], ("get", expected, {}))
 
     def test_delete(self):
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
