@@ -359,3 +359,4 @@ class PyzorTest(object):
         
         self.assertEqual(r["WL-Count"], "2")
         self.assertNotEqual(r["WL-Entered"], r["WL-Updated"])
+        self.check_fuzzy_date(r["WL-Updated"])
