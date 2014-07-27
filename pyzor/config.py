@@ -139,16 +139,19 @@ def load_accounts(filepath):
                 port = int(port)
             except ValueError as ex:
                 log.warn("account file: invalid line %d: %s", lineno, ex)
+                continue
             address = (host, port)
-            salt, key = pyzor.account.key_from_hexstr(key)
+            try:
+                salt, key = pyzor.account.key_from_hexstr(key)
+            except ValueError as ex:
+                log.warn("account file: invalid line %d: %s", lineno, ex)
+                continue
             if not salt and not key:
                 log.warn("account file: invalid line %d: keystuff can't be "
                          "all None's", lineno)
                 continue
-            try:
-                accounts[address] = pyzor.account.Account(username, salt, key)
-            except ValueError as ex:
-                log.warn("account file: invalid line %d: %s", lineno, ex)
+            accounts[address] = pyzor.account.Account(username, salt, key)
+
     else:
         log.warn("No accounts are setup.  All commands will be executed by "
                  "the anonymous user.")

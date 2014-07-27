@@ -13,6 +13,7 @@ import pyzor.config
 
 from tests.util import mock_open
 
+
 class TestPasswdLoad(unittest.TestCase):
     fp = "pyzord.passwd"
     alice_key = "alice_key"
@@ -42,7 +43,7 @@ class TestPasswdLoad(unittest.TestCase):
         self.assertEqual(result, {})
 
     def test_default(self):
-        result = self.get_passwd()
+        result = self.get_passwd("foobar")
         self.assertEqual(result, {})
 
     def test_passwd(self):
@@ -180,7 +181,7 @@ class TestServersLoad(unittest.TestCase):
         self.assertEqual(result, [self.public_server])
 
     def test_default(self):
-        result = self.get_servers()
+        result = self.get_servers("foobar")
         self.assertEqual(result, [self.public_server])
 
     def test_servers(self):
