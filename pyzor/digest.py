@@ -162,7 +162,3 @@ class PrintingDataDigester(DataDigester):
         print line.decode("utf8")
         super(PrintingDataDigester, self).handle_line(line)
 
-
-# Convenience function.
-def get_digest(msg):
-    return DataDigester(msg).value
