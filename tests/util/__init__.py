@@ -6,11 +6,21 @@ import time
 import shutil
 import unittest
 import subprocess
-import ConfigParser
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import redis
+
+try:
+    from unittest.mock import mock_open as _mock_open
+except ImportError:
+    from mock import mock_open as _mock_open
+
+
+def mock_open(mock=None, read_data=""):
+    mock = _mock_open(mock, read_data)
+    mock.return_value.__iter__ = lambda x: iter(read_data.splitlines())
+    return mock
 
 msg = """Newsgroups: 
 Date: Wed, 10 Apr 2002 22:23:51 -0400 (EDT)
@@ -349,5 +359,3 @@ class PyzorTest(object):
         
         self.assertEqual(r["WL-Count"], "2")
         self.assertNotEqual(r["WL-Entered"], r["WL-Updated"])
-        self.check_fuzzy_date(r["WL-Updated"])
-      

@@ -12,6 +12,7 @@ def suite():
     import test_mysql
     import test_redis
     import test_client
+    import test_config
     import test_digest
     import test_server
     import test_account
@@ -23,6 +24,7 @@ def suite():
     test_suite.addTest(test_mysql.suite())
     test_suite.addTest(test_redis.suite())
     test_suite.addTest(test_client.suite())
+    test_suite.addTest(test_config.suite())
     test_suite.addTest(test_digest.suite())
     test_suite.addTest(test_server.suite())
     test_suite.addTest(test_account.suite())

@@ -170,7 +170,7 @@ class DigestTests(unittest.TestCase):
         self.assertEqual(result, expected)
 
 
-class MessageDigest(unittest.TestCase):
+class MessageDigestTest(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         patch("pyzor.digest.DataDigester.normalize_html_part",
@@ -266,6 +266,7 @@ def suite():
     test_suite.addTest(unittest.makeSuite(HTMLStripperTests))
     test_suite.addTest(unittest.makeSuite(PreDigestTests))
     test_suite.addTest(unittest.makeSuite(DigestTests))
+    test_suite.addTest(unittest.makeSuite(MessageDigestTest))
     return test_suite
 
 

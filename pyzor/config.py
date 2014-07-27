@@ -183,7 +183,6 @@ def setup_logging(log_name, filepath, debug):
     fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 
     stream_handler = logging.StreamHandler()
-    file_handler = None
 
     if debug:
         stream_log_level = logging.DEBUG
