@@ -15,14 +15,16 @@ def get_engine(engine, dsn, mode='c'):
     engine_instance = engine_class(dsn, mode)
     return engine_instance
 
-def migrate(opts):
+
+def migrate(options):
     ok_count = 0
     fail_count = 0
     print_interval = 100000
 
-    source_engine = get_engine(opts.source_engine, opts.source_dsn, mode='r')
-    destination_engine = get_engine(opts.destination_engine,
-                                    opts.destination_dsn)
+    source_engine = get_engine(options.source_engine, options.source_dsn,
+                               mode='r')
+    destination_engine = get_engine(options.destination_engine,
+                                    options.destination_dsn)
 
     it = source_engine.iteritems()
     while True:
@@ -34,7 +36,7 @@ def migrate(opts):
                 print "%s records transferred..." % ok_count
         except StopIteration:
             break
-        except Exception, e:
+        except Exception as e:
             fail_count += 1
             print "Record %s failed: %s" % (key, str(e))
 
@@ -50,7 +52,8 @@ to the engine type. See pyzor documentation for more details.
     logging.basicConfig()
     parser = optparse.OptionParser(description=description)
     parser.add_option("--se", "--source-engine", action="store", default=None,
-                   dest="source_engine", help="select source database backend")
+                      dest="source_engine",
+                      help="select source database backend")
     parser.add_option("--sd", "--source-dsn", action="store", default=None,
                       dest="source_dsn", help="data source DSN")
     parser.add_option("--de", "--destination-engine", action="store",

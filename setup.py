@@ -8,7 +8,8 @@ try:
     # These automatically run 2to3 and modules and scripts while installing,
     # when ran under Python 3
     from distutils.command.build_py import build_py_2to3 as build_py
-    from distutils.command.build_scripts import build_scripts_2to3 as build_scripts
+    from distutils.command.build_scripts import \
+        build_scripts_2to3 as build_scripts
 except ImportError:
     from distutils.command.build_py import build_py
     from distutils.command.build_scripts import build_scripts
@@ -36,7 +37,7 @@ classifiers = ["Operating System :: POSIX",
                "Development Status :: 5 - Production/Stable",
 
                "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
-               ]
+]
 
 distutils.core.setup(name='pyzor',
                      version=pyzor.__version__,
@@ -57,5 +58,5 @@ distutils.core.setup(name='pyzor',
                      test_suite="tests.suite",
                      cmdclass={'build_py': build_py,
                                'build_scripts': build_scripts,
-                               },
-                     )
+                     },
+)

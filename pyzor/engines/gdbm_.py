@@ -2,6 +2,7 @@
 
 try:
     import gdbm as gdbm
+
     _has_gdbm = True
 except ImportError:
     _has_gdbm = False
@@ -18,17 +19,16 @@ class GdbmDBHandle(object):
     absolute_source = True
     sync_period = 60
     reorganize_period = 3600 * 24  # 1 day
-    _dt_decode = lambda x: None if x == 'None' else datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S.%f")
-    fields = (
-        'r_count', 'r_entered', 'r_updated',
-        'wl_count', 'wl_entered', 'wl_updated',
-        )
+    _dt_decode = lambda x: None if x == 'None' else datetime.datetime.strptime(
+        x, "%Y-%m-%d %H:%M:%S.%f")
+    fields = ('r_count', 'r_entered', 'r_updated',
+              'wl_count', 'wl_entered', 'wl_updated')
     _fields = [('r_count', int),
-                ('r_entered', _dt_decode),
-                ('r_updated', _dt_decode),
-                ('wl_count', int),
-                ('wl_entered', _dt_decode),
-                ('wl_updated', _dt_decode)]
+               ('r_entered', _dt_decode),
+               ('r_updated', _dt_decode),
+               ('wl_count', int),
+               ('wl_entered', _dt_decode),
+               ('wl_updated', _dt_decode)]
     this_version = '1'
     log = logging.getLogger("pyzord")
 
@@ -42,7 +42,7 @@ class GdbmDBHandle(object):
 
     def __iter__(self):
         k = self.db.firstkey()
-        while k != None:
+        while k is not None:
             yield k
             k = self.db.nextkey(k)
 
@@ -174,11 +174,12 @@ class ThreadedGdbmDBHandle(GdbmDBHandle):
         with self.db_lock:
             return GdbmDBHandle.apply_method(self, method, varargs=varargs,
                                              kwargs=kwargs)
+
 # This won't work because the gdbm object needs to be in shared memory of the
 # spawned processes.
 # class ProcessGdbmDBHandle(ThreadedGdbmDBHandle):
-#     def __init__(self, fn, mode, max_age=None, bound=None):
-#         ThreadedGdbmDBHandle.__init__(self, fn, mode, max_age=max_age,
+# def __init__(self, fn, mode, max_age=None, bound=None):
+# ThreadedGdbmDBHandle.__init__(self, fn, mode, max_age=max_age,
 #                                       bound=bound)
 #         self.db_lock = multiprocessing.Lock()
 

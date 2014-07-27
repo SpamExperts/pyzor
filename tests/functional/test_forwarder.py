@@ -59,9 +59,9 @@ class ForwarderTest(unittest.TestCase):
         self.check_pyzor("check", self.localserver.homedir, counts=(10, 0))
 
     def tearDown(self):
-        if self.remote_pyzord_proc != None:
+        if self.remote_pyzord_proc is not None:
             self.remote_pyzord_proc.kill()
-        if self.local_pyzord_proc != None:
+        if self.local_pyzord_proc is not None:
             self.local_pyzord_proc.kill()
 
         shutil.rmtree(self.localserver.homedir, True)

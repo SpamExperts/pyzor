@@ -5,8 +5,10 @@ import datetime
 
 try:
     import redis
+
     _has_redis = True
 except ImportError:
+    redis = None
     _has_redis = False
 
 from pyzor.engines.common import *
@@ -14,11 +16,13 @@ from pyzor.engines.common import *
 NAMESPACE = "pyzord.digest"
 
 encode_date = lambda d: "" if d is None else d.strftime("%Y-%m-%d %H:%M:%S")
-decode_date = lambda x: None if x == "" else datetime.datetime.strptime(x, "%Y-%m-%d %H:%M:%S")
+decode_date = lambda x: None if x == "" else datetime.datetime.strptime(
+    x, "%Y-%m-%d %H:%M:%S")
 
 
 def safe_call(f):
     """Decorator that wraps a method for handling database operations."""
+
     def wrapped_f(self, *args, **kwargs):
         # This only logs the error and raise the usual Error for consistency,
         # the redis library takes care of reconnecting and everything else.
@@ -28,6 +32,7 @@ def safe_call(f):
             self.log.error("Redis error while calling %s: %s",
                            f.__name__, e)
             raise DatabaseError("Database temporarily unavailable.")
+
     return wrapped_f
 
 

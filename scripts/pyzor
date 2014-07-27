@@ -36,13 +36,13 @@ def load_configuration():
     # Configuration defaults.  The configuration file overrides these, and
     # then the command-line options override those.
     defaults = {
-        "ServersFile" : "servers",
-        "AccountsFile" : "accounts",
-        "LogFile" : "",
-        "Timeout" : "5",  # seconds
-        "Style" : "msg",
-        "ReportThreshold" : "0",
-        "WhitelistThreshold" : "0"
+        "ServersFile": "servers",
+        "AccountsFile": "accounts",
+        "LogFile": "",
+        "Timeout": "5",  # seconds
+        "Style": "msg",
+        "ReportThreshold": "0",
+        "WhitelistThreshold": "0",
     }
 
     # Process any command line options.
@@ -59,8 +59,8 @@ def load_configuration():
     opt.add_option("-s", "--style", action="store",
                    dest="Style", default=None,
                    help="input style: 'msg' (individual RFC5321 message), "
-                   "'mbox' (mbox file of messages), 'digests' (Pyzor "
-                   "digests, one per line).")
+                        "'mbox' (mbox file of messages), 'digests' (Pyzor "
+                        "digests, one per line).")
     opt.add_option("--log-file", action="store", default=None,
                    dest="LogFile", help="name of log file")
     opt.add_option("--servers-file", action="store", default=None,
@@ -145,33 +145,36 @@ def main():
                 # error.
                 logger.error("Timeout from server in %s", command)
 
+
 def get_input_handler(style="msg", digester=pyzor.digest.DataDigester):
     """Return an object that can be iterated over to get all the digests."""
-    if style not in ("msg", "mbox", "digests"):
+    try:
+        return INPUT_HANDLERS[style](digester)
+    except KeyError:
         raise ValueError("Unknown input style.")
-    if style == "digests":
-        for line in sys.stdin:
-            yield line.strip()
-        return
 
-    if style == "msg":
-        tfile = None
-        msg = email.message_from_file(sys.stdin)
-        mbox = [msg]
-    elif style == 'mbox':
-        # We have to write the mbox to disk in order to use mailbox to work
-        # with it.
-        tfile = tempfile.NamedTemporaryFile()
-        tfile.write(sys.stdin.read().encode("utf8"))
-        tfile.seek(0)
-        mbox = mailbox.mbox(tfile.name)
 
+def _get_input_digests(dummy):
+    for line in sys.stdin:
+        yield line.strip()
+
+
+def _get_input_msg(digester):
+    msg = email.message_from_file(sys.stdin)
+    digested = digester(msg).value
+    yield digested
+
+
+def _get_input_mbox(digester):
+    tfile = tempfile.NamedTemporaryFile()
+    tfile.write(sys.stdin.read().encode("utf8"))
+    tfile.seek(0)
+    mbox = mailbox.mbox(tfile.name)
     for msg in mbox:
         digested = digester(msg).value
-        if digested:
-            yield digested
-    if tfile:
-        tfile.close()
+        yield digested
+    tfile.close()
+
 
 def ping(client, servers, config):
     """Check that the server is reachable."""
@@ -181,6 +184,7 @@ def ping(client, servers, config):
         runner.run(server, (server,))
     sys.stdout.writelines(runner.results)
     return runner.all_ok
+
 
 def pong(client, servers, config):
     """Used to test pyzor."""
@@ -194,6 +198,7 @@ def pong(client, servers, config):
 
     return runner.all_ok and runner.found_hit and not runner.whitelisted
 
+
 def info(client, servers, config):
     """Get information about each message."""
     style = config.get("client", "Style")
@@ -203,6 +208,7 @@ def info(client, servers, config):
     sys.stdout.writelines(runner.results)
 
     return runner.all_ok
+
 
 def check(client, servers, config):
     """Check each message against each server.
@@ -220,12 +226,14 @@ def check(client, servers, config):
 
     return runner.all_ok and runner.found_hit and not runner.whitelisted
 
+
 def _send_digest(runner, server, digested, spec=None):
     """Send these digests to one server."""
     if spec:
         runner.run(server, (digested, server, spec))
     else:
         runner.run(server, (digested, server))
+
 
 def send_digest(digested, runner, servers):
     """Send these digests to each server."""
@@ -235,18 +243,19 @@ def send_digest(digested, runner, servers):
     if len(servers) == 1:
         _send_digest(runner, servers[0], digested)
         return runner.all_ok
-    
+
     threads = []
     for server in servers:
         args = (runner, server, digested)
         thread = threading.Thread(target=_send_digest, args=args)
         threads.append(thread)
         thread.start()
-    
+
     for thread in threads:
         thread.join()
 
     return runner.all_ok
+
 
 def report(client, servers, config):
     """Report each message as spam."""
@@ -259,6 +268,7 @@ def report(client, servers, config):
         sys.stdout.writelines(runner.results)
     return all_ok
 
+
 def whitelist(client, servers, config):
     """Report each message as ham."""
     style = config.get("client", "Style")
@@ -269,6 +279,7 @@ def whitelist(client, servers, config):
             all_ok = False
         sys.stdout.writelines(runner.results)
     return all_ok
+
 
 def digest(client, servers, config):
     """Generate a digest for each message.
@@ -282,6 +293,7 @@ def digest(client, servers, config):
             print digested
     return True
 
+
 def predigest(client, servers, config):
     """Output the normalised version of each message, which is used to
     create the digest.
@@ -289,9 +301,10 @@ def predigest(client, servers, config):
     This method can be used to diagnose which parts of the message are
     used to determine uniqueness."""
     for unused in get_input_handler(
-        "msg", digester=pyzor.digest.PrintingDataDigester):
+            "msg", digester=pyzor.digest.PrintingDataDigester):
         pass
     return True
+
 
 def genkey(client, servers, config, hash_func=hashlib.sha1):
     """Generate a key to use to authenticate pyzor requests.  This method
@@ -320,17 +333,25 @@ def genkey(client, servers, config, hash_func=hashlib.sha1):
     print "%s,%s" % (salt_digest.hexdigest(), pass_digest.hexdigest())
     return True
 
+
 DISPATCHES = {
-    "ping" : ping,
-    "pong" : pong,
-    "info" : info,
-    "check" : check,
-    "report" : report,
-    "whitelist" : whitelist,
-    "digest" : digest,
-    "predigest" : predigest,
-    "genkey" : genkey,
-    }
+    "ping": ping,
+    "pong": pong,
+    "info": info,
+    "check": check,
+    "report": report,
+    "whitelist": whitelist,
+    "digest": digest,
+    "predigest": predigest,
+    "genkey": genkey,
+}
+
+
+INPUT_HANDLERS = {
+    "msg": _get_input_msg,
+    "mbox": _get_input_mbox,
+    "digests": _get_input_digests,
+}
 
 if __name__ == "__main__":
     main()

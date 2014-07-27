@@ -19,8 +19,8 @@ This will:
  
 Example::
 
-    $ pyzord --detach /dev/null --homedir=/home/user/.pyzor/
-    
+	$ pyzord --detach /dev/null --homedir=/home/user/.pyzor/
+
 Stopping  
 ^^^^^^^^^
 
@@ -57,9 +57,9 @@ number of requests.
 To use the the ``gdbm`` engine simply add to the config file 
 ``~/.pyzor/config``::
 
-    [server]
-    Engine = gdbm
-    DigestDB = pyzord.db
+	[server]
+	Engine = gdbm
+	DigestDB = pyzord.db
 
 The database file will be created if it didn't previously exists, and will be 
 located as usual in the specified Pyzor homedir. 
@@ -79,26 +79,26 @@ To configure the ``MySQL`` engine you will need to:
 
  * Create a MySQL database (for e.g. pyzor)
  * Create a MySQL table with the following schema::
-    
-    CREATE TABLE `digests` (
-        `digest` char(40) default NULL,
-        `r_count` int(11) default NULL,
-        `wl_count` int(11) default NULL,
-        `r_entered` datetime default NULL,
-        `wl_entered` datetime default NULL,
-        `r_updated` datetime default NULL,
-        `wl_updated` datetime default NULL,
-        PRIMARY KEY  (`digest`)
-    )
+
+	CREATE TABLE `digests` (
+		`digest` char(40) default NULL,
+		`r_count` int(11) default NULL,
+		`wl_count` int(11) default NULL,
+		`r_entered` datetime default NULL,
+		`wl_entered` datetime default NULL,
+		`r_updated` datetime default NULL,
+		`wl_updated` datetime default NULL,
+		PRIMARY KEY  (`digest`)
+	)
   
  * Create a MySQL user 
  * Grant ``ALL PRIVILEGES`` to that user on the newly created table
  
 To use the ``MySQL`` engine add to the configuration file:: 
   
-    [server]
-    Engine = mysql
-    DigestDB = localhost,user,password,pyzor,digests
+	[server]
+	Engine = mysql
+	DigestDB = localhost,user,password,pyzor,digests
  
 Redis
 ^^^^^^^
@@ -107,15 +107,15 @@ This will require the `redis <https://pypi.python.org/pypi/redis>`_ library.
 
 To use the ``redis`` engine simply add to the configuration file::
 
-    [server]
-    Engine = redis
-    DigestDB = localhost,6379,,0
+	[server]
+	Engine = redis
+	DigestDB = localhost,6379,,0
 
 Or if a password is required::
 
-    [server]
-    Engine = redis
-    DigestDB = localhost,6379,password,0
+	[server]
+	Engine = redis
+	DigestDB = localhost,6379,password,0
 
 In the example above the redis database used is 0. 
 
@@ -146,25 +146,25 @@ operations to accounts. For more information on setting up accounts see
 
 The format is very similar to the popular tcp_wrappers hosts.{allow,deny}:: 
 
-    privilege ... : username ... : allow|deny 
+	privilege ... : username ... : allow|deny
 
 :privilege: a list of whitespace-separated commands The keyword ``all`` can
-            be used to to refer to all commands.
+			be used to to refer to all commands.
 :username: a list of whitespace-separated usernames. The keyword ``all`` 
-           can be used to refer to all users. The anonymous user is 
-           refereed to as ``anonymous``.
+		   can be used to refer to all users. The anonymous user is
+		   refereed to as ``anonymous``.
 :allow|deny: whether or not the specified user(s) can perform the specified 
-             privilege(s) on the line.
+			 privilege(s) on the line.
 
 The file is processed from top to bottom, with the first match for 
 user/privilege being the value taken. Every file has the following implicit 
 final rule::
 
-    all : all : deny 
+	all : all : deny
 
 If this file is non-existant, the following default is used::
 
-    check report ping pong info : anonymous : allow
+	check report ping pong info : anonymous : allow
 
 
 

@@ -35,6 +35,7 @@ import pyzor.account
 import pyzor.engines.common
 
 import pyzor.hacks.py26
+
 pyzor.hacks.py26.hack_all()
 
 
@@ -109,6 +110,7 @@ class BoundedThreadingServer(ThreadingServer):
     """Same as ThreadingServer but this also accepts a limited number of
     concurrent threads.
     """
+
     def __init__(self, address, database, passwd_fn, access_fn, max_threads,
                  forwarding_server=None):
         ThreadingServer.__init__(self, address, database, passwd_fn, access_fn,
@@ -128,6 +130,7 @@ class ProcessServer(SocketServer.ForkingMixIn, Server):
     """A multi-processing version of the pyzord server.  Each connection is
     served in a new process. This may not be suitable for all database types.
     """
+
     def __init__(self, address, database, passwd_fn, access_fn,
                  max_children=40, forwarding_server=None):
         ProcessServer.max_children = max_children
@@ -302,6 +305,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
             if not time_obj:
                 return 0
             return time.mktime(time_obj.timetuple())
+
         self.response["Entered"] = "%d" % time_output(record.r_entered)
         self.response["Updated"] = "%d" % time_output(record.r_updated)
         self.response["WL-Entered"] = "%d" % time_output(record.wl_entered)
@@ -316,4 +320,4 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         'check': handle_check,
         'report': handle_report,
         'whitelist': handle_whitelist,
-        }
+    }

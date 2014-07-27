@@ -32,8 +32,8 @@ def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
             # Exit first parent.
             sys.exit(0)
     except OSError as err:
-        print >> sys.stderr, "Fork #1 failed: (%d) %s" % \
-              (err.errno, err.strerror)
+        print >> sys.stderr, "Fork #1 failed: (%d) %s" % (err.errno,
+                                                          err.strerror)
         sys.exit(1)
 
     # Decouple from parent environment.
@@ -48,8 +48,8 @@ def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
             # Exit second parent.
             sys.exit(0)
     except OSError as err:
-        print >> sys.stderr, "Fork #2 failed: (%d) %s" % \
-              (err.errno, err.strerror)
+        print >> sys.stderr, "Fork #2 failed: (%d) %s" % (err.errno,
+                                                          err.strerror)
         sys.exit(1)
 
     # Open file descriptors and print start message.
@@ -75,13 +75,13 @@ def initialize_forwarding(client_config_dir, debug):
     Returns the forwarder server.
     """
     forward_defaults = {
-                "ServersFile" : "servers",
-                "AccountsFile" : "accounts",
-                "LogFile" : "",
-                "Timeout" : "5",  # seconds
-                "Style" : "msg",
-                "ReportThreshold" : "0",
-                "WhitelistThreshold" : "0"
+        "ServersFile": "servers",
+        "AccountsFile": "accounts",
+        "LogFile": "",
+        "Timeout": "5",  # seconds
+        "Style": "msg",
+        "ReportThreshold": "0",
+        "WhitelistThreshold": "0"
     }
     config = ConfigParser.ConfigParser()
     config.add_section("client")
@@ -124,12 +124,12 @@ def load_configuration():
     # Configuration defaults.  The configuration file overrides these, and
     # then the command-line options override those.
     defaults = {
-        "Port" : "24441",
-        "ListenAddress" : "0.0.0.0",
+        "Port": "24441",
+        "ListenAddress": "0.0.0.0",
 
-        "Engine" : "gdbm",
-        "DigestDB" : "pyzord.db",
-        "CleanupAge" : str(60 * 60 * 24 * 30 * 4),  # approximately 4 months
+        "Engine": "gdbm",
+        "DigestDB": "pyzord.db",
+        "CleanupAge": str(60 * 60 * 24 * 30 * 4),  # approximately 4 months
 
         "Threads": "False",
         "MaxThreads": "0",
@@ -138,11 +138,11 @@ def load_configuration():
         "DBConnections": "0",
         "Gevent": "False",
 
-        "ForwardClientHomeDir":"",
+        "ForwardClientHomeDir": "",
 
-        "PasswdFile" : "pyzord.passwd",
-        "AccessFile" : "pyzord.access",
-        "LogFile" : "",
+        "PasswdFile": "pyzord.passwd",
+        "AccessFile": "pyzord.access",
+        "LogFile": "",
         "UsageLogFile": "",
         "PidFile": "pyzord.pid"
     }
@@ -164,27 +164,31 @@ def load_configuration():
                    dest="Engine", help="select database backend")
     opt.add_option("--dsn", action="store", default=None, dest="DigestDB",
                    help="data source name (filename for gdbm, host,user,"
-                   "password,database,table for MySQL)")
+                        "password,database,table for MySQL)")
     opt.add_option("--gevent", action="store", default=None, dest="Gevent",
                    help="set to true to use the gevent library")
     opt.add_option("--threads", action="store", default=None, dest="Threads",
                    help="set to true if multi-threading should be used"
-                   " (this may not apply to all engines)")
+                        " (this may not apply to all engines)")
     opt.add_option("--max-threads", action="store", default=None, type="int",
                    dest="MaxThreads", help="the maximum number of concurrent "
-                   "threads (defaults to 0 which is unlimited)")
+                                           "threads (defaults to 0 which is "
+                                           "unlimited)")
     opt.add_option("--processes", action="store", default=None,
                    dest="Processes", help="set to true if multi-processing "
-                   "should be used (this may not apply to all engines)")
+                                          "should be used (this may not apply "
+                                          "to all engines)")
     opt.add_option("--max-processes", action="store", default=None, type="int",
                    dest="MaxProcesses", help="the maximum number of concurrent "
-                   "processes (defaults to 40)")
+                                             "processes (defaults to 40)")
     opt.add_option("--db-connections", action="store", default=None, type="int",
                    dest="DBConnections", help="the number of db connections "
-                   "that will be kept by the server. This only applies if "
-                   "threads are used. Defaults to 0 which means a new "
-                   "connection is used for every thread. (this may not apply "
-                   "all engines)")
+                                              "that will be kept by the server."
+                                              " This only applies if threads "
+                                              "are used. Defaults to 0 which "
+                                              "means a new connection is used "
+                                              "for every thread. (this may not "
+                                              "apply all engines)")
     opt.add_option("--password-file", action="store", default=None,
                    dest="PasswdFile", help="name of password file")
     opt.add_option("--access-file", action="store", default=None,
@@ -198,14 +202,14 @@ def load_configuration():
                    dest="UsageLogFile", help="name of the usage log file")
     opt.add_option("--pid-file", action="store", default=None,
                    dest="PidFile", help="save the pid in this file after the "
-                   "server is daemonized")
+                                        "server is daemonized")
     opt.add_option("--forward-client-homedir", action="store", default=None,
-                   dest="ForwardClientHomeDir", help="Specify a pyzor client configuration directory"
-                   " to forward received digests to a remote pyzor server"
-                   )
+                   dest="ForwardClientHomeDir",
+                   help="Specify a pyzor client configuration directory to "
+                        "forward received digests to a remote pyzor server")
     opt.add_option("--detach", action="store", default=None,
                    dest="detach", help="daemonizes the server and redirects "
-                   "any output to the specified file")
+                                       "any output to the specified file")
     opt.add_option("-V", "--version", action="store_true", default=False,
                    dest="version", help="print version and exit")
     options, args = opt.parse_args()
@@ -351,7 +355,7 @@ def main():
         database = database_class(db_file, "c", cleanup_age)
         logger.info("Starting pyzord server.")
         server = pyzor.server.Server(address, database, passwd_fn, access_fn,
-                                    forwarder)
+                                     forwarder)
 
     if forwarder:
         forwarder.start_forwarding()

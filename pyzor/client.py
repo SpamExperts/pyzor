@@ -66,6 +66,7 @@ import pyzor.account
 import pyzor.message
 
 import pyzor.hacks.py26
+
 pyzor.hacks.py26.hack_email()
 
 
@@ -128,7 +129,8 @@ class Client(object):
         self.log.debug("sending: %r", msg.as_string())
         return self._send(msg, address)
 
-    def _send(self, msg, addr):
+    @staticmethod
+    def _send(msg, addr):
         sock = None
         for res in socket.getaddrinfo(addr[0], addr[1], 0, socket.SOCK_DGRAM,
                                       socket.IPPROTO_UDP):
@@ -232,7 +234,6 @@ class BatchClient(Client):
 
 
 class ClientRunner(object):
-
     def __init__(self, routine):
         self.log = logging.getLogger("pyzor")
         self.routine = routine
@@ -259,7 +260,6 @@ class ClientRunner(object):
 
 
 class CheckClientRunner(ClientRunner):
-
     def __init__(self, routine, r_count=0, wl_count=0):
         ClientRunner.__init__(self, routine)
         self.found_hit = False

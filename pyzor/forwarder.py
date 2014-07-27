@@ -29,7 +29,7 @@ class Forwarder(object):
             except Queue.Empty:
                 # If the forwarding client has been deleted we should
                 # end the thread
-                if self.forwarding_client == None:
+                if self.forwarding_client is None:
                     return
                 else:
                     continue
@@ -49,7 +49,7 @@ class Forwarder(object):
         if whitelist is True, the digest will be forwarded as whitelist request
         if the queue is full, the digest is dropped
         """
-        if self.forwarding_client == None:  # forwarding has been disabled
+        if self.forwarding_client is None:  # forwarding has been disabled
             return
 
         try:
