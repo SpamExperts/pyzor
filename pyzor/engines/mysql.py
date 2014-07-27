@@ -81,8 +81,8 @@ class MySQLDBHandle(object):
         # Keep track of when we connected, so that we don't retry too often.
         self.last_connect_attempt = time.time()
 
-    def __iter__(self):
-        c = self.db.cursor(cursorclass=MySQLdb.cursors.SSCursor)
+    def _iter(self, db):
+        c = db.cursor(cursorclass=MySQLdb.cursors.SSCursor)
         c.execute("SELECT digest FROM %s" % self.table_name)
         while True:
             row = c.fetchone()
@@ -91,8 +91,11 @@ class MySQLDBHandle(object):
             yield row[0]
         c.close()
 
-    def _iteritems(self):
-        c = self.db.cursor(cursorclass=MySQLdb.cursors.SSCursor)
+    def __iter__(self):
+        return self._safe_call("iter", self._iter, ())
+
+    def _iteritems(self, db):
+        c = db.cursor(cursorclass=MySQLdb.cursors.SSCursor)
         c.execute("SELECT digest, r_count, wl_count, r_entered, r_updated, "
                   "wl_entered, wl_updated FROM %s" % self.table_name)
         while True:
@@ -103,10 +106,10 @@ class MySQLDBHandle(object):
         c.close()
 
     def iteritems(self):
-        return self._iteritems()
+        return self._safe_call("iteritems", self._iteritems, ())
 
     def items(self):
-        return list(self._iteritems())
+        return list(self._safe_call("iteritems", self._iteritems, ()))
 
     def __del__(self):
         """Close the database when the object is no longer needed."""
