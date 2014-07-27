@@ -46,15 +46,18 @@ class GdbmDBHandle(object):
             yield k
             k = self.db.nextkey(k)
 
-    def iteritems(self):
+    def _iteritems(self):
         for k in self:
             try:
                 yield k, self._really_getitem(k)
             except Exception as e:
                 self.log.warning("Invalid record %s: %s", k, e)
 
+    def iteritems(self):
+        return self._iteritems()
+
     def items(self):
-        return list(self.iteritems())
+        return list(self._iteritems())
 
     def apply_method(self, method, varargs=(), kwargs=None):
         if kwargs is None:
@@ -129,7 +132,6 @@ class GdbmDBHandle(object):
             raise StandardError("don't know how to handle db value %s" %
                                 repr(s))
         parts = s.split(',')
-        dispatch = None
         version = parts[0]
         if len(parts) == 3:
             dispatch = cls.decode_record_0

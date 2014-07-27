@@ -79,15 +79,18 @@ class RedisDBHandle(object):
         for key in self.db.keys(self._real_key("*")):
             yield key.rsplit(".", 1)[-1]
 
-    def iteritems(self):
+    def _iteritems(self):
         for key in self:
             try:
                 yield key, self[key]
             except Exception as ex:
                 self.log.warning("Invalid record %s: %s", key, ex)
 
+    def iteritems(self):
+        return self._iteritems()
+
     def items(self):
-        return list(self.iteritems())
+        return list(self._iteritems())
 
     @staticmethod
     def _real_key(key):

@@ -91,7 +91,7 @@ class MySQLDBHandle(object):
             yield row[0]
         c.close()
 
-    def iteritems(self):
+    def _iteritems(self):
         c = self.db.cursor(cursorclass=MySQLdb.cursors.SSCursor)
         c.execute("SELECT digest, r_count, wl_count, r_entered, r_updated, "
                   "wl_entered, wl_updated FROM %s" % self.table_name)
@@ -102,8 +102,11 @@ class MySQLDBHandle(object):
             yield row[0], Record(*row[1:])
         c.close()
 
+    def iteritems(self):
+        return self._iteritems()
+
     def items(self):
-        return list(self.iteritems())
+        return list(self._iteritems())
 
     def __del__(self):
         """Close the database when the object is no longer needed."""
