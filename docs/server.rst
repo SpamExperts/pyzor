@@ -151,8 +151,8 @@ The format is very similar to the popular tcp_wrappers hosts.{allow,deny}::
 :privilege: a list of whitespace-separated commands The keyword ``all`` can
 			be used to to refer to all commands.
 :username: a list of whitespace-separated usernames. The keyword ``all`` 
-		   can be used to refer to all users. The anonymous user is
-		   refereed to as ``anonymous``.
+		   can be used to refer to all users other than the anonymous
+                   user. The anonymous user is refereed to as ``anonymous``.
 :allow|deny: whether or not the specified user(s) can perform the specified 
 			 privilege(s) on the line.
 
@@ -160,7 +160,7 @@ The file is processed from top to bottom, with the first match for
 user/privilege being the value taken. Every file has the following implicit 
 final rule::
 
-	all : all : deny
+	all : all anonymous : deny
 
 If this file is non-existant, the following default is used::
 
