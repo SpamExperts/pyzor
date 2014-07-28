@@ -155,7 +155,7 @@ class Client(object):
         return sock
 
     def read_response(self, sock, expected_id):
-        sock.settimeout()(self.timeout)
+        sock.settimeout(self.timeout)
         try:
             packet, address = sock.recvfrom(self.max_packet_size)
         except socket.timeout as ex:
