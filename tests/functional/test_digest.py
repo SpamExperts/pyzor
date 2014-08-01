@@ -61,6 +61,36 @@ sites that are hosting malware.</div>
 --001a11c25ff293069304f0126bfd--
 """
 
+HTML_TEXT_STYLE_SCRIPT = """MIME-Version: 1.0
+Sender: chirila@gapps.spamexperts.com
+Received: by 10.216.157.70 with HTTP; Thu, 16 Jan 2014 00:43:31 -0800 (PST)
+Date: Thu, 16 Jan 2014 10:43:31 +0200
+Delivered-To: chirila@gapps.spamexperts.com
+X-Google-Sender-Auth: ybCmONS9U9D6ZUfjx-9_tY-hF2Q
+Message-ID: <CAK-mJS8sE-V6qtspzzZ+bZ1eSUE_FNMt3K-5kBOG-z3NMgU_Rg@mail.gmail.com>
+Subject: Test
+From: Alexandru Chirila <chirila@spamexperts.com>
+To: Alexandru Chirila <chirila@gapps.spamexperts.com>
+Content-Type: multipart/alternative; boundary=001a11c25ff293069304f0126bfd
+
+--001a11c25ff293069304f0126bfd
+Content-Type: text/plain; charset=ISO-8859-1
+
+This is a test.
+
+--001a11c25ff293069304f0126bfd
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+
+<div dir=3D"ltr">
+<style> This is my style.</style>
+<script> This is my script.</script>
+<div>This is a test.</div>
+</div>
+
+--001a11c25ff293069304f0126bfd--
+"""
+
 TEXT_ATTACHMENT = """MIME-Version: 1.0
 Received: by 10.76.127.40 with HTTP; Fri, 17 Jan 2014 02:21:43 -0800 (PST)
 Date: Fri, 17 Jan 2014 12:21:43 +0200
@@ -661,6 +691,13 @@ Emailspam.Emailspam,alsoknownasjunkemailorbulkemail,isasubsetofspaminvolvingnear
         res = self.check_pyzor("predigest", None, input=HTML_TEXT)
         self.assertEqual(res, expected)
 
+    def test_predigest_html_style_script(self):
+        expected = """Thisisatest.
+Thisisatest.
+""".encode("utf8")
+        res = self.check_pyzor("predigest", None, input=HTML_TEXT_STYLE_SCRIPT)
+        self.assertEqual(res, expected)
+
     def test_predigest_attachemnt(self):
         expected = b"Thisisatestmailing\n"
         res = self.check_pyzor("predigest", None, input=TEXT_ATTACHMENT)
@@ -748,6 +785,12 @@ Emailspam.Emailspam,alsoknownasjunkemailorbulkemail,isasubsetofspaminvolvingnear
         self.assertEqual(res.decode("utf8"),
                          hashlib.sha1(expected).hexdigest().lower() + "\n")
 
+    def test_digest_html_style_script(self):
+        expected = """Thisisatest.Thisisatest.""".encode("utf8")
+        res = self.check_pyzor("digest", None, input=HTML_TEXT_STYLE_SCRIPT)
+        self.assertEqual(res.decode("utf8"),
+                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+
     def test_digest_attachemnt(self):
         expected = b"Thisisatestmailing"
         res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT)
@@ -806,6 +849,7 @@ This is a test
 
 
 """
+
 
 class PyzorEncodingTest(PyzorTestBase):
     # we don't need the pyzord server to test this

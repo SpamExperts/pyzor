@@ -25,6 +25,14 @@ HTML_TEXT_STRIPED = 'Email spam Email spam , also known as junk email or unsolic
                     ' . Clicking on links in spam email may send users to phishing web sites or sites that are hosting malware .'
 
 
+HTML_STYLE = """<html><head></head><sTyle>Some random style</stylE>
+<body>This is a test.</body></html>
+"""
+
+HTML_SCRIPT = """<html><head></head><SCRIPT>Some random script</SCRIPT>
+<body>This is a test.</body></html>
+"""
+
 
 class HTMLStripperTests(unittest.TestCase):
     def setUp(self):
@@ -39,6 +47,18 @@ class HTMLStripperTests(unittest.TestCase):
         stripper.feed(HTML_TEXT)
         res = " ".join(self.data)
         self.assertEqual(res, HTML_TEXT_STRIPED)
+
+    def test_strip_style(self):
+        stripper = HTMLStripper(self.data)
+        stripper.feed(HTML_STYLE)
+        res = " ".join(self.data)
+        self.assertEqual(res, "This is a test.")
+
+    def test_strip_script(self):
+        stripper = HTMLStripper(self.data)
+        stripper.feed(HTML_SCRIPT)
+        res = " ".join(self.data)
+        self.assertEqual(res, "This is a test.")
 
 
 class PreDigestTests(unittest.TestCase):
