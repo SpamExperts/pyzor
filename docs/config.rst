@@ -57,9 +57,21 @@ ListenAddress
 
 LogFile
     File to contain server logs.
+    
+SentryDSN
+    If set add a SentryHandler to the log file.
+    
+SentryLogLevel
+    Set the log level for the SentryHandler. (default is ``WARN``)
 
 UsageLogFile
     File to contain server usage logs (information about each request).
+
+UsageSentryDSN
+    If set add a SentryHandler to the usage log file.
+    
+UsageSentryLogLevel
+    Set the log level for the usage SentryHandler. (default is ``WARN``)
 
 PidFile
     This file contain the pid of the pyzord daemon when used with the 
