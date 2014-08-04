@@ -5,6 +5,12 @@ import re
 import logging
 import collections
 
+try:
+    from raven.handlers.logging import SentryHandler
+    _has_raven = True
+except ImportError:
+    _has_raven = False
+
 import pyzor.account
 
 
@@ -179,7 +185,8 @@ def load_servers(filepath):
 
 
 # Common configurations
-def setup_logging(log_name, filepath, debug):
+def setup_logging(log_name, filepath, debug, sentry_dsn=None,
+                  sentry_lvl="WARN"):
     """Setup logging according to the specified options. Return the Logger
     object.
     """
@@ -206,6 +213,12 @@ def setup_logging(log_name, filepath, debug):
         file_handler.setLevel(file_log_level)
         file_handler.setFormatter(fmt)
         logger.addHandler(file_handler)
+
+    if sentry_dsn and _has_raven:
+        sentry_level = getattr(logging, sentry_lvl)
+        sentry_handler = SentryHandler(sentry_dsn)
+        sentry_handler.setLevel(sentry_level)
+        logger.addHandler(sentry_handler)
 
     return logger
 

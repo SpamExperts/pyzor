@@ -24,7 +24,6 @@ import time
 import socket
 import signal
 import logging
-import StringIO
 import threading
 import traceback
 import SocketServer
@@ -152,22 +151,19 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         self.response["PV"] = "%s" % pyzor.proto_version
         try:
             self._really_handle()
-        except NotImplementedError, e:
+        except NotImplementedError as e:
             self.handle_error(501, "Not implemented: %s" % e)
-        except pyzor.UnsupportedVersionError, e:
+        except pyzor.UnsupportedVersionError as e:
             self.handle_error(505, "Version Not Supported: %s" % e)
-        except pyzor.ProtocolError, e:
+        except pyzor.ProtocolError as e:
             self.handle_error(400, "Bad request: %s" % e)
-        except pyzor.SignatureError, e:
+        except pyzor.SignatureError as e:
             self.handle_error(401, "Unauthorized: Signature Error: %s" % e)
-        except pyzor.AuthorizationError, e:
+        except pyzor.AuthorizationError as e:
             self.handle_error(403, "Forbidden: %s" % e)
-        except Exception, e:
+        except Exception as e:
             self.handle_error(500, "Internal Server Error: %s" % e)
-            trace = StringIO.StringIO()
-            traceback.print_exc(file=trace)
-            trace.seek(0)
-            self.server.log.error(trace.read())
+            self.server.log.error(traceback.format_exc())
         self.server.log.debug("Sending: %r", self.response.as_string())
         self.wfile.write(self.response.as_string().encode("utf8"))
 

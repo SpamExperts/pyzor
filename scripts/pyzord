@@ -71,7 +71,7 @@ def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
 def initialize_forwarding(client_config_dir, debug):
     """Reads configuration and returns a pyzor client and the list of servers
     where the digests should be forwarded to.
-    
+
     Returns the forwarder server.
     """
     forward_defaults = {
@@ -143,7 +143,11 @@ def load_configuration():
         "PasswdFile": "pyzord.passwd",
         "AccessFile": "pyzord.access",
         "LogFile": "",
+        "SentryDSN": "",
+        "SentryLogLevel": "WARN",
         "UsageLogFile": "",
+        "UsageSentryDSN": "",
+        "UsageSentryLogLevel": "WARN",
         "PidFile": "pyzord.pid"
     }
 
@@ -240,7 +244,7 @@ def load_configuration():
     config.read(os.path.join(options.homedir, "config"))
     # Override with the command-line options.
     for key in defaults:
-        value = getattr(options, key)
+        value = getattr(options, key, None)
         if value is not None:
             config.set("server", key, str(value))
     return config, options
@@ -288,10 +292,14 @@ def main():
 
     logger = pyzor.config.setup_logging("pyzord",
                                         config.get("server", "LogFile"),
-                                        options.debug)
+                                        options.debug,
+                                        config.get("server", "SentryDSN"),
+                                        config.get("server", "SentryLogLevel"))
     pyzor.config.setup_logging("pyzord-usage",
                                config.get("server", "UsageLogFile"),
-                               options.debug)
+                               options.debug,
+                               config.get("server", "UsageSentryDSN"),
+                               config.get("server", "UsageSentryLogLevel"))
 
     db_file = config.get("server", "DigestDB")
     passwd_fn = config.get("server", "PasswdFile")
