@@ -98,6 +98,10 @@ class Server(SocketServer.UDPServer):
         t = threading.Thread(target=self.load_config)
         t.start()
 
+    def handle_error(self, request, client_address):
+        self.log.error("Error while processing request from: %s",
+                       client_address, exc_info=True)
+
 
 class ThreadingServer(SocketServer.ThreadingMixIn, Server):
     """A threaded version of the pyzord server.  Each connection is served
