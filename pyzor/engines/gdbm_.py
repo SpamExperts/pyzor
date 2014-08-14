@@ -14,13 +14,20 @@ import threading
 
 from pyzor.engines.common import Record, DBHandle
 
+def _dt_decode(dt):
+    if dt=='None':
+        return None
+    try:
+        return datetime.datetime.strptime(
+            dt, "%Y-%m-%d %H:%M:%S.%f")
+    except ValueError:
+        return datetime.datetime.strptime(
+            dt, "%Y-%m-%d %H:%M:%S")
 
 class GdbmDBHandle(object):
     absolute_source = True
     sync_period = 60
     reorganize_period = 3600 * 24  # 1 day
-    _dt_decode = lambda x: None if x == 'None' else datetime.datetime.strptime(
-        x, "%Y-%m-%d %H:%M:%S.%f")
     fields = ('r_count', 'r_entered', 'r_updated',
               'wl_count', 'wl_entered', 'wl_updated')
     _fields = [('r_count', int),
