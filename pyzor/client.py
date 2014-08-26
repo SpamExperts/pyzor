@@ -77,7 +77,8 @@ class Client(object):
     def __init__(self, accounts=None, timeout=None, spec=None):
         if accounts is None:
             accounts = {}
-        self.accounts = accounts
+        self.accounts = dict(((host, int(port)), account)
+                             for (host, port), account in accounts.iteritems())
         if spec is None:
             spec = pyzor.digest.digest_spec
         self.spec = spec
@@ -116,6 +117,7 @@ class Client(object):
         return self.read_response(sock, msg.get_thread())
 
     def send(self, msg, address=("public.pyzor.org", 24441)):
+        address = (address[0], int(address[1]))
         msg.init_for_sending()
         try:
             account = self.accounts[address]
@@ -200,6 +202,7 @@ class BatchClient(Client):
         self._add_digest(digest, address, self.w_requests)
 
     def _add_digest(self, digest, address, requests):
+        address = (address[0], int(address[1]))
         msg = requests[address]
 
         msg.add_digest(digest)
