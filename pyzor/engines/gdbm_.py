@@ -2,7 +2,6 @@
 
 try:
     import gdbm as gdbm
-
     _has_gdbm = True
 except ImportError:
     _has_gdbm = False
@@ -14,15 +13,16 @@ import threading
 
 from pyzor.engines.common import Record, DBHandle
 
-def _dt_decode(dt):
-    if dt=='None':
+
+def _dt_decode(datetime_str):
+    """Decode a string into a datetime object."""
+    if datetime_str == 'None':
         return None
     try:
-        return datetime.datetime.strptime(
-            dt, "%Y-%m-%d %H:%M:%S.%f")
+        return datetime.datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S.%f")
     except ValueError:
-        return datetime.datetime.strptime(
-            dt, "%Y-%m-%d %H:%M:%S")
+        return datetime.datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
+
 
 class GdbmDBHandle(object):
     absolute_source = True
