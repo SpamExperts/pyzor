@@ -1,6 +1,12 @@
-import Queue
+"""Manage the forwarder process."""
+
 import logging
 import threading
+
+try:
+    import Queue
+except ImportError:
+    import queue as Queue
 
 
 class Forwarder(object):

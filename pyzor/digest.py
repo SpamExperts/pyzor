@@ -1,6 +1,14 @@
+"""Handle digesting the messages."""
+
+from __future__ import print_function
+
 import re
 import hashlib
-import HTMLParser
+
+try:
+    import HTMLParser
+except ImportError:
+    import html.parser as HTMLParser
 
 # Hard-coded for the moment.
 digest_spec = ([(20, 3), (60, 3)])
@@ -170,5 +178,5 @@ class DataDigester(object):
 class PrintingDataDigester(DataDigester):
     """Extends DataDigester: prints out what we're digesting."""
     def handle_line(self, line):
-        print line.decode("utf8")
+        print(line.decode("utf8"))
         super(PrintingDataDigester, self).handle_line(line)

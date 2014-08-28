@@ -26,14 +26,19 @@ import signal
 import logging
 import threading
 import traceback
-import SocketServer
 import email.message
+
+try:
+    import SocketServer
+except ImportError:
+    import socketserver as SocketServer
 
 import pyzor.config
 import pyzor.account
 import pyzor.engines.common
 
 import pyzor.hacks.py26
+
 
 pyzor.hacks.py26.hack_all()
 

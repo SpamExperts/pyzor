@@ -2,6 +2,8 @@
 
 """Pyzor client."""
 
+from __future__ import print_function
+
 import os
 import sys
 import email
@@ -13,7 +15,11 @@ import logging
 import optparse
 import tempfile
 import threading
-import ConfigParser
+
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 import pyzor.digest
 import pyzor.client
@@ -80,7 +86,7 @@ def load_configuration():
     options, args = opt.parse_args()
 
     if options.version:
-        print "%s %s" % (sys.argv[0], pyzor.__version__)
+        print("%s %s" % (sys.argv[0], pyzor.__version__))
         sys.exit(0)
 
     if not len(args):
@@ -115,7 +121,7 @@ def main():
     """Execute any requested actions."""
     # Set umask - this restricts this process from granting any world access
     # to files/directories created by this process.
-    os.umask(0077)
+    os.umask(0o0077)
 
     config, options, args = load_configuration()
 
@@ -290,7 +296,7 @@ def digest(client, servers, config):
     style = config.get("client", "Style")
     for digested in get_input_handler(style):
         if digested:
-            print digested
+            print(digested)
     return True
 
 
@@ -329,8 +335,8 @@ def genkey(client, servers, config, hash_func=hashlib.sha1):
     salt_digest = hash_func(salt)
     pass_digest = hash_func(salt_digest.digest())
     pass_digest.update(password.encode("utf8"))
-    print "salt,key:"
-    print "%s,%s" % (salt_digest.hexdigest(), pass_digest.hexdigest())
+    print("salt,key:")
+    print("%s,%s" % (salt_digest.hexdigest(), pass_digest.hexdigest()))
     return True
 
 

@@ -2,6 +2,8 @@
 
 """This scripts allows migration of records between pyzor engines types."""
 
+from __future__ import print_function
+
 import sys
 import logging
 import optparse
@@ -33,15 +35,15 @@ def migrate(options):
             destination_engine[key] = record
             ok_count += 1
             if ok_count % print_interval == 0:
-                print "%s records transferred..." % ok_count
+                print("%s records transferred..." % ok_count)
         except StopIteration:
             break
         except Exception as e:
             fail_count += 1
-            print "Record %s failed: %s" % (key, str(e))
+            print("Record %s failed: %s" % (key, str(e)))
 
-    print ("Migration complete, %s records transferred successfully, %s "
-           "records failed") % (ok_count, fail_count)
+    print("Migration complete, %s records transferred successfully, %s "
+          "records failed" % (ok_count, fail_count))
 
 if __name__ == '__main__':
     """Parse command-line arguments and execute the script."""
@@ -67,15 +69,15 @@ to the engine type. See pyzor documentation for more details.
 
     if not (opts.source_engine and opts.source_dsn and opts.destination_engine
             and opts.destination_dsn):
-        print "options --se/--sd/--de/--dd are required"
+        print("options --se/--sd/--de/--dd are required")
         sys.exit(1)
 
     if opts.source_engine not in pyzor.engines.database_classes:
-        print "Unsupported source engine: %s" % opts.source_engine
+        print("Unsupported source engine: %s" % opts.source_engine)
         sys.exit(1)
 
     if opts.destination_engine not in pyzor.engines.database_classes:
-        print "Unsupported destination engine: %s" % opts.destination_engine
+        print("Unsupported destination engine: %s" % opts.destination_engine)
         sys.exit(1)
 
     migrate(opts)

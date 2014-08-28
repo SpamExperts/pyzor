@@ -1,10 +1,14 @@
 """MySQLdb database engine."""
 
 import time
-import Queue
 import logging
 import datetime
 import threading
+
+try:
+    import Queue
+except ImportError:
+    import queue as Queue
 
 try:
     import MySQLdb
@@ -75,7 +79,7 @@ class MySQLDBHandle(object):
                 pass
         try:
             self.db = self._get_new_connection()
-        except MySQLdb.Error, e:
+        except MySQLdb.Error as e:
             self.log.error("Unable to connect to database: %s", e)
             self.db = None
         # Keep track of when we connected, so that we don't retry too often.
@@ -195,7 +199,7 @@ class MySQLDBHandle(object):
         try:
             c.execute("DELETE FROM %s WHERE r_updated<%%s" %
                       self.table_name, (breakpoint,))
-        except (MySQLdb.Error, AttributeError), e:
+        except (MySQLdb.Error, AttributeError) as e:
             self.log.warn("Unable to reorganise: %s", e)
         finally:
             c.close()

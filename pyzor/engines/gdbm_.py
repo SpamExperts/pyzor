@@ -4,7 +4,11 @@ try:
     import gdbm as gdbm
     _has_gdbm = True
 except ImportError:
-    _has_gdbm = False
+    try:
+        import dbm.gnu as gdbm
+        _has_gdbm = True
+    except ImportError:
+        _has_gdbm = False
 
 import time
 import logging

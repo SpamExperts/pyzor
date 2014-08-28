@@ -2,6 +2,8 @@
 
 """A front-end interface to the pyzor daemon."""
 
+from __future__ import print_function
+
 import os
 import sys
 import optparse
@@ -32,8 +34,8 @@ def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
             # Exit first parent.
             sys.exit(0)
     except OSError as err:
-        print >> sys.stderr, "Fork #1 failed: (%d) %s" % (err.errno,
-                                                          err.strerror)
+        print("Fork #1 failed: (%d) %s" % (err.errno, err.strerror),
+              file=sys.stderr)
         sys.exit(1)
 
     # Decouple from parent environment.
@@ -48,8 +50,8 @@ def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
             # Exit second parent.
             sys.exit(0)
     except OSError as err:
-        print >> sys.stderr, "Fork #2 failed: (%d) %s" % (err.errno,
-                                                          err.strerror)
+        print("Fork #2 failed: (%d) %s" % (err.errno, err.strerror),
+              file=sys.stderr)
         sys.exit(1)
 
     # Open file descriptors and print start message.
@@ -219,7 +221,7 @@ def load_configuration():
     options, args = opt.parse_args()
 
     if options.version:
-        print "%s %s" % (sys.argv[0], pyzor.__version__)
+        print("%s %s" % (sys.argv[0], pyzor.__version__), file=sys.stderr)
         sys.exit(0)
 
     if len(args):
@@ -268,7 +270,7 @@ def main():
     use_processes = config.get("server", "Processes").lower() == "true"
 
     if use_threads and use_processes:
-        print "You cannot use both processes and threads at the same time"
+        print("You cannot use both processes and threads at the same time")
         sys.exit(1)
 
     # We prefer to use the threaded server, but some database engines
