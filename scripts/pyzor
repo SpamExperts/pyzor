@@ -135,7 +135,7 @@ def main():
         try:
             dispatch = DISPATCHES[command]
         except KeyError:
-            logger.error("Unknown command: %s", command)
+            logger.critical("Unknown command: %s", command)
         else:
             try:
                 if not dispatch(client, servers, config):

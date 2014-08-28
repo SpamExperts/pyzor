@@ -251,7 +251,8 @@ class ClientRunner(object):
         try:
             response = self.routine(*args, **kwargs)
             self.handle_response(response, message)
-        except (pyzor.CommError, KeyError, ValueError), e:
+        except (pyzor.CommError, KeyError, ValueError) as e:
+            self.results.append("%s%s\n" % (message, (e.code, str(e))))
             self.log.error("%s\t%s: %s", server, e.__class__.__name__, e)
             self.all_ok = False
 

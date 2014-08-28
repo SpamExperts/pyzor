@@ -22,17 +22,17 @@ MAX_TIMESTAMP_DIFFERENCE = 300  # seconds
 
 class CommError(Exception):
     """Something in general went wrong with the transaction."""
-    pass
+    code = 400
 
 
 class ProtocolError(CommError):
     """Something is wrong with talking the protocol."""
-    pass
+    code = 400
 
 
 class TimeoutError(CommError):
     """The connection timed out."""
-    pass
+    code = 504
 
 
 class IncompleteMessageError(ProtocolError):
