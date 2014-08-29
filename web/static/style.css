@@ -1,0 +1,20 @@
+#header-title {
+    display: inline-block;
+    margin-left: 50px;
+}
+
+input {
+    display: block;
+}
+
+div.error{
+    display: inline;
+    color: red;
+}
+
+#whitelist_form label{
+    display: block;
+}
+
+#whitelist_form input{
+}

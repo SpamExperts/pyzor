@@ -1,0 +1,3 @@
+flask==0.10.1
+flask-wtf==0.9.5
+raven==5.0.0

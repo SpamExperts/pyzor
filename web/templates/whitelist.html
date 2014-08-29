@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Whitelist{% endblock %}
+{% block header %}
+
+{% endblock %}
+{% block content %}
+    <h1>Whitelist</h1>
+    <div>
+        <form action="." method="post" enctype="multipart/form-data" id="whitelist_form">
+            {{ form.digest.label }}{{ form.digest }}<div class="error">{{ form.errors.digest }}</div>
+            {{ form.message.label }}{{ form.message }}<div class="error">{{ form.errors.message }}</div>
+            {{ form.name.label }}{{ form.name }}<div class="error">{{ form.errors.name }}</div>
+            {{ form.email.label }}{{ form.email }}<div class="error">{{ form.errors.email }}</div>
+            {{ form.comment.label }}{{ form.comment }}<div class="error">{{ form.errors.comment }}</div>
+            {{ form.recaptcha }}<div class="error">{{ form.errors.recaptcha }}</div>
+            {{ form.submit }}
+        </form>
+    </div>
+{% endblock %}

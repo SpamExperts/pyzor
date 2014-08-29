@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    {% block head %}
+    <link rel="stylesheet" href="../static/style.css" />
+    <title>{% block title %}{% endblock %} - Pyzor</title>
+    {% endblock %}
+</head>
+<body>
+    <div id="header">
+        <img src="../static/pyzor.gif" />
+        {% block header %}{% endblock %}
+        <hr />
+    </div>
+    <div id="content">{% block content %}{% endblock %}</div>
+    <div id="footer">
+        {% block footer %}
+        {% endblock %}
+    </div>
+</body>
