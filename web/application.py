@@ -65,7 +65,7 @@ def load_configuration():
             "sender": "no-reply@%s" % socket.gethostname(),
         },
         "logging": {
-            "file": "/var/log/pyzor_web.log",
+            "file": "/var/log/pyzor/web.log",
             "level": "INFO",
             "sentry": "",
             "sentry_level": "WARNING",
