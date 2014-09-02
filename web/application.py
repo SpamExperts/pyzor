@@ -161,12 +161,13 @@ class WhitelistMessage(MethodView):
                                      error=None)
 
     def post(self):
-        error = None
+        success = False
         if self.form.validate():
             msg = self.build_notification()
             self.send_email(msg)
+            success = True
         return flask.render_template('whitelist.html', form=self.form,
-                                     error=error)
+                                     success=success)
 
     def build_notification(self):
         data = {"name": self.form.name.data,

@@ -37,7 +37,11 @@
             {{ form.email.label }}{{ form.email }}{{ error('email') }}
             {{ form.comment.label }}{{ form.comment }}{{ error('comment') }}
             {{ form.recaptcha }}<div class="error">{{ error('recaptcha') }}
-            <br/>
+        	<div id="success_message">
+    			{% if success %}
+    				Request was successfully submitted. 
+    			{% endif %}
+    		</div>
             {{ form.submit }}
         </form>
     </div>

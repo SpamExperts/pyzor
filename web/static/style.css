@@ -50,3 +50,7 @@ div.error{
 
 #whitelist_form input{
 }
+
+#success_message {
+	color: green;
+}
