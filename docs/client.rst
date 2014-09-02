@@ -92,12 +92,18 @@ and 0 whitelist, regardless of the message::
 Predigest
 ^^^^^^^^^^^
 
-Prints the message after the predigest phase of the pyzor algorithm.
+Prints the message after the predigest phase of the pyzor algorithm::
+
+	$ pyzor predigest < test.eml
+	Thisisatest.
 
 Digest
 ^^^^^^^^^
 
-Prints the message digest, that will be sent to the server.
+Prints the message digest, that will be sent to the server::
+
+	$ pyzor digest < spam.eml
+	c3a8e8d987f07843792d2ab1823b04cc3cb87482
 
 Genkey
 ^^^^^^^^
