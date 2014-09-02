@@ -8,14 +8,16 @@
     {% endblock %}
 </head>
 <body>
+<div id="body_wrapper">
     <div id="header">
-        <img src="../static/pyzor.gif" />
+        <img src="../static/pyzor.gif"/>
         {% block header %}{% endblock %}
-        <hr />
+        <hr/>
     </div>
     <div id="content">{% block content %}{% endblock %}</div>
     <div id="footer">
         {% block footer %}
         {% endblock %}
     </div>
+</div>
 </body>

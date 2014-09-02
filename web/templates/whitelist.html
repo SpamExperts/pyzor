@@ -1,18 +1,43 @@
 {% extends "base.html" %}
+
+{% macro error(name) -%}
+    <div class="error">
+    	{% if name in form.errors %}
+    		{{ form.errors[name][0] }}
+    	{% endif %}
+    </div>
+{%- endmacro %}
+
 {% block title %}Whitelist{% endblock %}
 {% block header %}
-
+  
 {% endblock %}
 {% block content %}
-    <h1>Whitelist</h1>
-    <div>
+	<h1>Whitelist</h1>
+    <div class="description">
+    	<p>
+    	Please use this form to request whitelisting a message on 
+    	<em>public.pyzor.org</em>. Please note that these message are not automatically 
+    	updated, and they are first verified manually. For more information 
+    	about pyzor visit <a href="http://pyzor.org">pyzor.org</a>.
+    	</p>
+    	<p>
+    	In order to submit the request you will need to upload the original 
+    	message and enter the pyzor digest of the message. See 
+    	<a href="http://www.pyzor.org/en/latest/client.html#digest" target="_blank"> documentation </a>
+    	for more details. 
+    	</p> 
+    </div>
+    <div class="form_wrapper">
+    	<hr/>
         <form action="." method="post" enctype="multipart/form-data" id="whitelist_form">
-            {{ form.digest.label }}{{ form.digest }}<div class="error">{{ form.errors.digest }}</div>
-            {{ form.message.label }}{{ form.message }}<div class="error">{{ form.errors.message }}</div>
-            {{ form.name.label }}{{ form.name }}<div class="error">{{ form.errors.name }}</div>
-            {{ form.email.label }}{{ form.email }}<div class="error">{{ form.errors.email }}</div>
-            {{ form.comment.label }}{{ form.comment }}<div class="error">{{ form.errors.comment }}</div>
-            {{ form.recaptcha }}<div class="error">{{ form.errors.recaptcha }}</div>
+            {{ form.digest.label }}{{ form.digest }}{{ error('digest') }}
+            {{ form.message.label }}{{ form.message }}{{ error('message') }}
+            {{ form.name.label }}{{ form.name }}{{ error('name') }}
+            {{ form.email.label }}{{ form.email }}{{ error('email') }}
+            {{ form.comment.label }}{{ form.comment }}{{ error('comment') }}
+            {{ form.recaptcha }}<div class="error">{{ error('recaptcha') }}
+            <br/>
             {{ form.submit }}
         </form>
     </div>

@@ -1,15 +1,47 @@
-#header-title {
-    display: inline-block;
-    margin-left: 50px;
+#header img {
+}
+
+#body_wrapper {
+	margin: auto;
+	width: 700px;
+}
+
+
+#content {
+	padding: 10px;
+}
+
+.description {
+	text-align: justify;
+}
+
+.form_wrapper {
+	margin: 10px;
+}
+
+label {
+	display: block;
 }
 
 input {
-    display: block;
+	width: 250px;
+    margin: 10px 0px 10px 0px
+}
+
+textarea {
+	height: 130px; 
+	width: 435px;
+	margin: 10px 0px 10px 0px
+}
+
+#submit {
+	width: 70px;
 }
 
 div.error{
     display: inline;
     color: red;
+    margin-left: 10px;
 }
 
 #whitelist_form label{
