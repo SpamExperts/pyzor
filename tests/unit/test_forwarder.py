@@ -4,9 +4,9 @@ import time
 import unittest
 import threading
 
-import pyzor.client
-import pyzor.forwarder
+from mock import call, Mock
 
+import pyzor.forwarder
 
 
 class ForwarderTest(unittest.TestCase):
@@ -18,10 +18,11 @@ class ForwarderTest(unittest.TestCase):
         unittest.TestCase.tearDown(self)
 
     def test_queue(self):
-        client = pyzor.client.Client()
+        client = Mock()
         servlist = []
         max_qsize = 10
-        forwarder = pyzor.forwarder.Forwarder(client, servlist, max_queue_size=max_qsize)
+        forwarder = pyzor.forwarder.Forwarder(client, servlist,
+                                              max_queue_size=max_qsize)
         for _ in xrange(max_qsize * 2):
             forwarder.queue_forward_request('975422c090e7a43ab7c9bf0065d5b661259e6d74')
             self.assertGreater(forwarder.forward_queue.qsize(), 0, 'queue insert failed')
@@ -34,6 +35,26 @@ class ForwarderTest(unittest.TestCase):
         forwarder.stop_forwarding()
         t.join(5)
         self.assertFalse(t.isAlive(), 'forward thread did not end')
+
+    def test_remote_servers(self):
+        client = Mock()
+        digest = '975422c090e7a43ab7c9bf0065d5b661259e6d74'
+        servlist = [("test1.example.com", 24441),
+                    ("test2.example.com", 24442)]
+        forwarder = pyzor.forwarder.Forwarder(client, servlist)
+
+        forwarder.queue_forward_request(digest)
+        forwarder.queue_forward_request(digest, whitelist=True)
+
+        forwarder.start_forwarding()
+        time.sleep(2)
+        forwarder.stop_forwarding()
+
+        client.report.assert_has_calls([call(digest, servlist[0]),
+                                        call(digest, servlist[1])])
+        client.whitelist.assert_has_calls([call(digest, servlist[0]),
+                                           call(digest, servlist[1])])
+
 
 def suite():
     """Gather all the tests from this module in a test suite."""
