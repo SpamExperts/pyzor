@@ -58,6 +58,7 @@ class Server(SocketServer.UDPServer):
         self.log = logging.getLogger("pyzord")
         self.usage_log = logging.getLogger("pyzord-usage")
         self.database = database
+        self.one_step = getattr(self.database, "handles_one_step", False)
 
         # Handle configuration files
         self.passwd_fn = passwd_fn
@@ -221,7 +222,6 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
                 "User is not authorized to request the operation.")
         self.server.log.debug("Got a %s command from %s", opcode,
                               self.client_address[0])
-
         # Get a handle to the appropriate method to execute this operation.
         try:
             dispatch = self.dispatches[opcode]
@@ -234,12 +234,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
 
         # Do the requested operation, log what we have done, and return.
         if dispatch and digests:
-            for digest in digests:
-                try:
-                    record = self.server.database[digest]
-                except KeyError:
-                    record = pyzor.engines.common.Record()
-                dispatch(self, digest, record)
+            dispatch(self, digests)
         self.server.usage_log.info("%s,%s,%s,%r,%s", user,
                                    self.client_address[0], opcode, digests,
                                    self.response["Code"])
@@ -250,55 +245,79 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         self.response.replace_header("Code", "%d" % code)
         self.response.replace_header("Diag", message)
 
-    def handle_pong(self, digest, _):
+    def handle_pong(self, digests):
         """Handle the 'pong' command.
 
         This command returns maxint for report counts and 0 whitelist.
         """
-        self.server.log.debug("Request pong for %s", digest)
+        self.server.log.debug("Request pong for %s", digests[0])
         self.response["Count"] = "%d" % sys.maxint
         self.response["WL-Count"] = "%d" % 0
 
-    def handle_check(self, digest, record):
+    def handle_check(self, digests):
         """Handle the 'check' command.
 
         This command returns the spam/ham counts for the specified digest.
         """
+        digest = digests[0]
+        try:
+            record = self.server.database[digest]
+        except KeyError:
+            record = pyzor.engines.common.Record()
         self.server.log.debug("Request to check digest %s", digest)
         self.response["Count"] = "%d" % record.r_count
         self.response["WL-Count"] = "%d" % record.wl_count
 
-    def handle_report(self, digest, record):
-        """Handle the 'report' command.
+    def handle_report(self, digests):
+        """Handle the 'report' command in a single step.
 
-        This command increases the spam count for the specified digest."""
-        self.server.log.debug("Request to report digest %s", digest)
-        # Increase the count, and store the altered record back in the
-        # database.
-        record.r_increment()
-        self.server.database[digest] = record
+        This command increases the spam count for the specified digests."""
+        self.server.log.debug("Request to report digests %s", digests)
+        if self.server.one_step:
+            self.server.database.report(digests)
+        else:
+            for digest in digests:
+                try:
+                    record = self.server.database[digest]
+                except KeyError:
+                    record = pyzor.engines.common.Record()
+                record.r_increment()
+                self.server.database[digest] = record
         if self.server.forwarder:
-            self.server.forwarder.queue_forward_request(digest)
+            for digest in digests:
+                self.server.forwarder.queue_forward_request(digest)
 
-    def handle_whitelist(self, digest, record):
-        """Handle the 'whitelist' command.
+    def handle_whitelist(self, digests):
+        """Handle the 'whitelist' command in a single step.
 
-        This command increases the ham count for the specified digest."""
-        self.server.log.debug("Request to whitelist digest %s", digest)
-        # Increase the count, and store the altered record back in the
-        # database.
-        record.wl_increment()
-        self.server.database[digest] = record
+        This command increases the ham count for the specified digests."""
+        self.server.log.debug("Request to whitelist digests %s", digests)
+        if self.server.one_step:
+            self.server.database.whitelist(digests)
+        else:
+            for digest in digests:
+                try:
+                    record = self.server.database[digest]
+                except KeyError:
+                    record = pyzor.engines.common.Record()
+                record.wl_increment()
+                self.server.database[digest] = record
         if self.server.forwarder:
-            self.server.forwarder.queue_forward_request(digest, True)
+            for digest in digests:
+                self.server.forwarder.queue_forward_request(digest, True)
 
-    def handle_info(self, digest, record):
+    def handle_info(self, digests):
         """Handle the 'info' command.
 
         This command returns diagnostic data about a digest (timestamps for
         when the digest was first/last seen as spam/ham, and spam/ham
         counts).
         """
+        digest = digests[0]
+        try:
+            record = self.server.database[digest]
+        except KeyError:
+            record = pyzor.engines.common.Record()
         self.server.log.debug("Request for information about digest %s",
                               digest)
 

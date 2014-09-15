@@ -27,6 +27,7 @@ class MockServer():
         self.log.addHandler(logging.NullHandler())
         self.usage_log.addHandler(logging.NullHandler())
         self.forwarder = None
+        self.one_step = False
 
 
 class MockDatagramRequestHandler():

@@ -3,6 +3,7 @@
 import time
 import logging
 import datetime
+import itertools
 import threading
 
 try:
@@ -22,6 +23,7 @@ from pyzor.engines.common import *
 
 class MySQLDBHandle(object):
     absolute_source = False
+    handles_one_step = True
     # The table must already exist, and have this schema:
     #   CREATE TABLE `public` (
     #   `digest` char(40) default NULL,
@@ -135,6 +137,12 @@ class MySQLDBHandle(object):
             # the server, and a 'nice' message provided to the caller.
             raise DatabaseError("Database temporarily unavailable.")
 
+    def report(self, keys):
+        return self._safe_call("report", self._report, (keys,))
+
+    def whitelist(self, keys):
+        return self._safe_call("whitelist", self._whitelist, (keys,))
+
     def __getitem__(self, key):
         return self._safe_call("getitem", self._really__getitem__, (key,))
 
@@ -144,6 +152,30 @@ class MySQLDBHandle(object):
 
     def __delitem__(self, key):
         return self._safe_call("delitem", self._really__delitem__, (key,))
+
+    def _report(self, keys, db=None):
+        c = db.cursor()
+        try:
+            c.executemany("INSERT INTO %s (digest, r_count, wl_count, "
+                          "r_entered, r_updated, wl_entered, wl_updated) "
+                          "VALUES (%%s, 1, 0, NOW(), NOW(), NOW(), NOW()) ON "
+                          "DUPLICATE KEY UPDATE r_count=r_count+1, "
+                          "r_updated=NOW()" % self.table_name,
+                          itertools.imap(lambda key: (key,), keys))
+        finally:
+            c.close()
+
+    def _whitelist(self, keys, db=None):
+        c = db.cursor()
+        try:
+            c.executemany("INSERT INTO %s (digest, r_count, wl_count, "
+                          "r_entered, r_updated, wl_entered, wl_updated) "
+                          "VALUES (%%s, 0, 1, NOW(), NOW(), NOW(), NOW()) ON "
+                          "DUPLICATE KEY UPDATE wl_count=wl_count+1, "
+                          "wl_updated=NOW()" % self.table_name,
+                          itertools.imap(lambda key: (key,), keys))
+        finally:
+            c.close()
 
     def _really__getitem__(self, key, db=None):
         """__getitem__ without the exception handling."""

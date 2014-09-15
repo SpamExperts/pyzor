@@ -38,6 +38,7 @@ def safe_call(f):
 
 class RedisDBHandle(object):
     absolute_source = False
+    handles_one_step = False
 
     log = logging.getLogger("pyzord")
 

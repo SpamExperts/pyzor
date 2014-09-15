@@ -30,6 +30,8 @@ def _dt_decode(datetime_str):
 
 class GdbmDBHandle(object):
     absolute_source = True
+    handles_one_step = False
+
     sync_period = 60
     reorganize_period = 3600 * 24  # 1 day
     fields = ('r_count', 'r_entered', 'r_updated',
