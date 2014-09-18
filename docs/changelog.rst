@@ -1,6 +1,33 @@
 Changelog
 ===========
 
+Pyzor 0.9.0
+------------
+
+Bug fixes:
+
+	* Fix gdbm decoding issue. (`#20 <https://github.com/SpamExperts/pyzor/issues/20>`_)
+	* Fix inconsistencies accounts and addresses. (`#22 <https://github.com/SpamExperts/pyzor/issues/22>`_)
+	
+New features:
+
+	* Strip content inside ``<style>`` and `<script>` tags during HTML 
+	  normalization. (`#19 <https://github.com/SpamExperts/pyzor/issues/19>`_)
+ 	* Improvements in Pyzor client error codes. (`#17 <https://github.com/SpamExperts/pyzor/issues/17>`_)
+ 	* Add support for logging to Sentry (`#7 <https://github.com/SpamExperts/pyzor/issues/7>`_)
+      
+Perfomance enhancements:
+
+	* Do report and whitelist in a single step for MySQL Server Engine. 
+	  (`#5 <https://github.com/SpamExperts/pyzor/issues/23>`_)
+		  
+      
+Others:
+
+	* You can now requests whitelisting a message by using a simple form 
+	  available at: `http://public.pyzor.org/whitelist/ <http://public.pyzor.org/whitelist/>`_
+
+
 Pyzor 0.8.0
 --------------
 
