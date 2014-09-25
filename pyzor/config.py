@@ -53,7 +53,8 @@ def load_access_file(access_fn, accounts):
         acl[pyzor.anonymous_user] = set(("check", "report", "ping", "pong",
                                          "info"))
         return acl
-    for line in open(access_fn):
+    accessf = open(access_fn)
+    for line in accessf:
         if not line.strip() or line[0] == "#":
             continue
         try:
@@ -88,6 +89,7 @@ def load_access_file(access_fn, accounts):
                 # If these operations are not allowed yet, this will have
                 # no effect.
                 acl[user].difference_update(operations)
+    accessf.close()
     log.info("ACL: %r", acl)
     return acl
 
@@ -107,7 +109,8 @@ def load_passwd_file(passwd_fn):
         log.info("Accounts file does not exist - only the anonymous user "
                  "will be available.")
         return accounts
-    for line in open(passwd_fn):
+    passwdf = open(passwd_fn)
+    for line in passwdf:
         if not line.strip() or line[0] == "#":
             continue
         try:
@@ -119,6 +122,7 @@ def load_passwd_file(passwd_fn):
         key = key.strip()
         log.debug("Creating an account for %s with key %s.", user, key)
         accounts[user] = key
+    passwdf.close()
     # Don't log the keys at 'info' level, just ther usernames.
     log.info("Accounts: %s", ",".join(accounts))
     return accounts
@@ -130,7 +134,8 @@ def load_accounts(filepath):
     accounts = {}
     log = logging.getLogger("pyzor")
     if os.path.exists(filepath):
-        for lineno, orig_line in enumerate(open(filepath)):
+        accountsf = open(filepath)
+        for lineno, orig_line in enumerate(accountsf):
             line = orig_line.strip()
             if not line or line.startswith('#'):
                 continue
@@ -157,6 +162,7 @@ def load_accounts(filepath):
                          "all None's", lineno)
                 continue
             accounts[address] = pyzor.account.Account(username, salt, key)
+        accountsf.close()
 
     else:
         log.warn("No accounts are setup.  All commands will be executed by "
