@@ -62,7 +62,8 @@ def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
     stde = open(stderr, "ab+", 0)
     pid = str(os.getpid())
     if pidfile:
-        open(pidfile, "w+").write("%s\n" % pid)
+        with open(pidfile, "w+") as pidf:
+            pidf.write("%s\n" % pid)
 
     # Redirect standard file descriptors.
     os.dup2(stdi.fileno(), sys.stdin.fileno())
