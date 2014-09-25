@@ -14,6 +14,11 @@ import pyzor.config
 from tests.util import mock_open
 
 
+class MockData(list):
+    def close(self):
+        pass
+
+
 class TestPasswdLoad(unittest.TestCase):
     fp = "pyzord.passwd"
     alice_key = "alice_key"
@@ -21,7 +26,7 @@ class TestPasswdLoad(unittest.TestCase):
 
     def setUp(self):
         super(TestPasswdLoad, self).setUp()
-        self.data = []
+        self.data = MockData()
         self.exists = True
         real_exists = os.path.exists
         patch("pyzor.config.open", return_value=self.data,
@@ -74,7 +79,7 @@ class TestAccessLoad(unittest.TestCase):
 
     def setUp(self):
         super(TestAccessLoad, self).setUp()
-        self.data = []
+        self.data = MockData()
         self.exists = True
         real_exists = os.path.exists
         patch("pyzor.config.open", return_value=self.data,
