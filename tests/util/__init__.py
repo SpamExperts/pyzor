@@ -59,6 +59,7 @@ class PyzorTestBase(unittest.TestCase):
              "access_file": "--access-file",
              "cleanup_age": "--cleanup-age",
              "log_file": "--log-file",
+             "detach": "--detach",
              }
     homedir = "./pyzor-test/"
     threads = "False"

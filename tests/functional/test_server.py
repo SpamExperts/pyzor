@@ -199,12 +199,29 @@ class RedisBatchedPyzorTest(BatchedDigestsTest, PyzorTestBase):
         redis.StrictRedis(db=10).flushdb()
 
 
+class DetachPyzorTest(PyzorTestBase):
+    detach = "/dev/null"
+    homedir = os.path.join(os.getcwd(), "pyzor-test")
+
+    def test_pid(self):
+        self.assertTrue(os.path.exists(os.path.join(self.homedir,
+                                                    "pyzord.pid")))
+
+    @classmethod
+    def tearDownClass(cls):
+        with open(os.path.join(cls.homedir, "pyzord.pid")) as pidf:
+            pid = int(pidf.read().strip())
+        os.kill(pid, 15)
+        super(DetachPyzorTest, cls).tearDownClass()
+
+
 def suite():
     """Gather all the tests from this module in a test suite."""
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(MySQLdbBatchedPyzorTest))
     # test_suite.addTest(unittest.makeSuite(GdbmBatchedPyzorTest))
     test_suite.addTest(unittest.makeSuite(RedisBatchedPyzorTest))
+    test_suite.addTest(unittest.makeSuite(DetachPyzorTest))
     return test_suite
 
 if __name__ == '__main__':
