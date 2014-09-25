@@ -59,7 +59,7 @@ def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
         stderr = stdout
     stdi = open(stdin, "r")
     stdo = open(stdout, "a+")
-    stde = open(stderr, "a+", 0)
+    stde = open(stderr, "ab+", 0)
     pid = str(os.getpid())
     if pidfile:
         open(pidfile, "w+").write("%s\n" % pid)
