@@ -18,9 +18,10 @@ a response will always match the "Thread" header of the appropriate request.
 Authenticated requests must also have "User", "Time" (timestamp), and "Sig"
 (signature) headers.
 """
-
+import os
 import sys
 import time
+import errno
 import socket
 import signal
 import logging
@@ -41,6 +42,16 @@ import pyzor.hacks.py26
 
 
 pyzor.hacks.py26.hack_all()
+
+
+def _eintr_retry(func, *args):
+    """restart a system call interrupted by EINTR"""
+    while True:
+        try:
+            return func(*args)
+        except OSError as e:
+            if e.args[0] != errno.EINTR:
+                raise
 
 
 class Server(SocketServer.UDPServer):
@@ -107,6 +118,55 @@ class Server(SocketServer.UDPServer):
     def handle_error(self, request, client_address):
         self.log.error("Error while processing request from: %s",
                        client_address, exc_info=True)
+
+
+class PreForkServer(Server):
+    """The same as Server, but prefork itself when starting the self, by
+    forking a number of child-processes.
+
+    The parent process will then wait for all his child process to complete.
+    """
+    def __init__(self, address, database, passwd_fn, access_fn, prefork=4):
+        """The same as Server.__init__ but requires a list of databases
+        instead of a single database connection.
+        """
+        Server.__init__(self, address, database, passwd_fn, access_fn)
+        assert len(database) == prefork
+        self._prefork = prefork
+        self.pids = None
+
+    def serve_forever(self, poll_interval=0.5):
+        """Fork the current process and wait for all children to finish."""
+        pids = []
+        for database in self.database[:]:
+            pid = os.fork()
+            if not pid:
+                self.database = database
+                Server.serve_forever(self, poll_interval=poll_interval)
+                os._exit(0)
+            else:
+                pids.append(pid)
+        self.pids = pids
+        for pid in self.pids:
+            _eintr_retry(os.waitpid, pid, 0)
+
+    def shutdown(self):
+        """If this is the parent process send the TERM signal to all children,
+        else call the super method.
+        """
+        for pid in self.pids or ():
+            os.kill(pid, signal.SIGTERM)
+        if self.pids is None:
+            Server.shutdown(self)
+
+    def load_config(self):
+        """If this is the parent process send the USR1 signal to all children,
+        else call the super method.
+        """
+        for pid in self.pids or ():
+            os.kill(pid, signal.SIGUSR1)
+        if self.pids is None:
+            Server.load_config(self)
 
 
 class ThreadingServer(SocketServer.ThreadingMixIn, Server):

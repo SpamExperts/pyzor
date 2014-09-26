@@ -196,7 +196,8 @@ def setup_logging(log_name, filepath, debug, sentry_dsn=None,
     """Setup logging according to the specified options. Return the Logger
     object.
     """
-    fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    fmt = logging.Formatter('%(asctime)s (%(process)d) %(levelname)s '
+                            '%(message)s')
 
     stream_handler = logging.StreamHandler()
 

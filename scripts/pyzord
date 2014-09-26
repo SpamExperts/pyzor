@@ -139,6 +139,7 @@ def load_configuration():
         "Processes": "False",
         "MaxProcesses": "40",
         "DBConnections": "0",
+        "PreFork": "0",
         "Gevent": "False",
 
         "ForwardClientHomeDir": "",
@@ -196,6 +197,8 @@ def load_configuration():
                                               "means a new connection is used "
                                               "for every thread. (this may not "
                                               "apply all engines)")
+    opt.add_option("--pre-fork", action="store", default=None,
+                   dest="PreFork", help="")
     opt.add_option("--password-file", action="store", default=None,
                    dest="PasswdFile", help="name of password file")
     opt.add_option("--access-file", action="store", default=None,
@@ -269,6 +272,7 @@ def main():
     use_gevent = config.get("server", "Gevent").lower() == "true"
     use_threads = config.get("server", "Threads").lower() == "true"
     use_processes = config.get("server", "Processes").lower() == "true"
+    use_prefork = int(config.get("server", "PreFork"))
 
     if use_threads and use_processes:
         print("You cannot use both processes and threads at the same time")
@@ -339,7 +343,13 @@ def main():
     if options.detach:
         detach(stdout=options.detach, pidfile=pidfile_fn)
 
-    if use_threads:
+    if use_prefork:
+        databases = []
+        for dummy in xrange(use_prefork):
+            databases.append(database_class(db_file, "c", cleanup_age))
+        server = pyzor.server.PreForkServer(address, databases, passwd_fn,
+                                            access_fn, use_prefork)
+    elif use_threads:
         max_threads = int(config.get("server", "MaxThreads"))
         bound = int(config.get("server", "DBConnections"))
 

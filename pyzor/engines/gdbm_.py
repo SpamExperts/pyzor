@@ -201,8 +201,10 @@ class ThreadedGdbmDBHandle(GdbmDBHandle):
 if not _has_gdbm:
     handle = DBHandle(single_threaded=None,
                       multi_threaded=None,
-                      multi_processing=None)
+                      multi_processing=None,
+                      prefork=None)
 else:
     handle = DBHandle(single_threaded=GdbmDBHandle,
                       multi_threaded=ThreadedGdbmDBHandle,
-                      multi_processing=None)
+                      multi_processing=None,
+                      prefork=None)

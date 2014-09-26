@@ -330,8 +330,10 @@ class ProcessMySQLDBHandle(MySQLDBHandle):
 if not _has_mysql:
     handle = DBHandle(single_threaded=None,
                       multi_threaded=None,
-                      multi_processing=None)
+                      multi_processing=None,
+                      prefork=None)
 else:
     handle = DBHandle(single_threaded=MySQLDBHandle,
                       multi_threaded=ThreadedMySQLDBHandle,
-                      multi_processing=ProcessMySQLDBHandle)
+                      multi_processing=ProcessMySQLDBHandle,
+                      prefork=MySQLDBHandle)

@@ -130,8 +130,10 @@ class ThreadedRedisDBHandle(RedisDBHandle):
 if not _has_redis:
     handle = DBHandle(single_threaded=None,
                       multi_threaded=None,
-                      multi_processing=None)
+                      multi_processing=None,
+                      prefork=None)
 else:
     handle = DBHandle(single_threaded=RedisDBHandle,
                       multi_threaded=ThreadedRedisDBHandle,
-                      multi_processing=None)
+                      multi_processing=None,
+                      prefork=RedisDBHandle)

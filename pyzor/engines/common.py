@@ -8,7 +8,7 @@ from collections import namedtuple
 __all__ = ["DBHandle", "DatabaseError", "Record"]
 
 DBHandle = namedtuple("DBHandle", ["single_threaded", "multi_threaded",
-                                   "multi_processing"])
+                                   "multi_processing", "prefork"])
 
 
 class DatabaseError(Exception):
