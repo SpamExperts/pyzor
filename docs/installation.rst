@@ -11,15 +11,19 @@ In order to upgrade your Pyzor version run::
  
     pip install --upgrade pyzor
 
-.. note::
 
-   The latest version requires at least Python 2.6.6
+Compatibility
+-------------
 
-The Pyzor code will also work on Python3, but requires refactoring done with 
-the 2to3 tool. This has been integrated in the setup, so installation in 
-Python3 now works seamlessly with any method described above.
+Pyzor is compatible with the following Python versions and implementations:
 
-You can also use Pyzor with `PyPy <http://pypy.org/>`_.
+   - Python 2.6
+   - Python 2.7
+   - Python 3.2+
+   - PyPy
+   - PyPy3
+
+Pyzor will also work on Windows. 
 
 Downloading
 ------------
