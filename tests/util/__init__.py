@@ -150,6 +150,7 @@ class PyzorTestBase(unittest.TestCase):
         super(PyzorTestBase, cls).tearDownClass()
         for pyzord in cls.pyzord:
             pyzord.terminate()
+            pyzord.wait()
         shutil.rmtree(cls.homedir, True)
         redis.StrictRedis(db=10).flushdb()
 
