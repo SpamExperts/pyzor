@@ -37,7 +37,7 @@ def safe_call(f):
     return wrapped_f
 
 
-class RedisDBHandle(object):
+class RedisDBHandle(BaseEngine):
     absolute_source = False
     handles_one_step = False
 

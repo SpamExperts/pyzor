@@ -15,7 +15,7 @@ import logging
 import datetime
 import threading
 
-from pyzor.engines.common import Record, DBHandle
+from pyzor.engines.common import Record, DBHandle, BaseEngine
 
 
 def _dt_decode(datetime_str):
@@ -28,7 +28,7 @@ def _dt_decode(datetime_str):
         return datetime.datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
 
 
-class GdbmDBHandle(object):
+class GdbmDBHandle(BaseEngine):
     absolute_source = True
     handles_one_step = False
 

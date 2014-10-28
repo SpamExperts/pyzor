@@ -22,7 +22,7 @@ except ImportError:
 from pyzor.engines.common import *
 
 
-class MySQLDBHandle(object):
+class MySQLDBHandle(BaseEngine):
     absolute_source = False
     handles_one_step = True
     # The table must already exist, and have this schema:
