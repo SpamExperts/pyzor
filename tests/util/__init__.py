@@ -60,6 +60,7 @@ class PyzorTestBase(unittest.TestCase):
              "cleanup_age": "--cleanup-age",
              "log_file": "--log-file",
              "detach": "--detach",
+             "prefork": "--pre-fork",
              }
     homedir = "./pyzor-test/"
     threads = "False"
@@ -148,7 +149,7 @@ class PyzorTestBase(unittest.TestCase):
     def tearDownClass(cls):
         super(PyzorTestBase, cls).tearDownClass()
         for pyzord in cls.pyzord:
-            pyzord.kill()
+            pyzord.terminate()
         shutil.rmtree(cls.homedir, True)
         redis.StrictRedis(db=10).flushdb()
 

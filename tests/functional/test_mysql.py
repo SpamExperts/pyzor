@@ -8,7 +8,7 @@ try:
     has_mysql = True
 except ImportError:
     has_mysql = False
-    
+
 schema = """
     CREATE TABLE IF NOT EXISTS `%s` (
     `digest` char(40) default NULL,
@@ -29,7 +29,7 @@ class MySQLdbPyzorTest(PyzorTest, PyzorTestBase):
     """Test the mysql engine."""
     dsn = None
     engine = "mysql"
-    
+
     @classmethod
     def setUpClass(cls):
         conf = ConfigParser.ConfigParser()    
@@ -68,10 +68,12 @@ class MySQLdbPyzorTest(PyzorTest, PyzorTestBase):
         except:
             pass
 
+
 class ThreadsMySQLdbPyzorTest(MySQLdbPyzorTest):
     """Test the mysql engine with threads activated."""
     threads = "True"
     max_threads = "0"
+
 
 class BoundedThreadsMySQLdbPyzorTest(MySQLdbPyzorTest):
     """Test the mysql engine with threads and DBConnections set."""
@@ -79,20 +81,28 @@ class BoundedThreadsMySQLdbPyzorTest(MySQLdbPyzorTest):
     max_threads = "0"
     db_connections = "10"
 
+
 class MaxThreadsMySQLdbPyzorTest(MySQLdbPyzorTest):
     """Test the mysql engine with threads and MaxThreads set."""
     threads = "True"
     max_threads = "10"
+
 
 class BoundedMaxThreadsMySQLdbPyzorTest(MySQLdbPyzorTest):
     """Test the mysql engine with threads, MaxThreads and DBConnections set."""
     threads = "True"
     max_threads = "10"
     db_connections = "10"
-    
+
+
 class ProcessesMySQLdbPyzorTest(MySQLdbPyzorTest):
     processes = "True"
     max_processes = "10"
+
+
+class PreForkMySQLdbPyzorTest(MySQLdbPyzorTest):
+    prefork = "4"
+
 
 def suite():
     """Gather all the tests from this module in a test suite."""
@@ -103,6 +113,7 @@ def suite():
     test_suite.addTest(unittest.makeSuite(MaxThreadsMySQLdbPyzorTest))
     test_suite.addTest(unittest.makeSuite(BoundedMaxThreadsMySQLdbPyzorTest))
     test_suite.addTest(unittest.makeSuite(ProcessesMySQLdbPyzorTest))
+    test_suite.addTest(unittest.makeSuite(PreForkMySQLdbPyzorTest))
     return test_suite
         
 if __name__ == '__main__':
