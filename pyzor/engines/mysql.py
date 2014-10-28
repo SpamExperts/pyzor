@@ -4,6 +4,7 @@ import time
 import logging
 import datetime
 import itertools
+import functools
 import threading
 
 try:
@@ -240,6 +241,16 @@ class MySQLDBHandle(object):
                                                 self.start_reorganizing)
         self.reorganize_timer.setDaemon(True)
         self.reorganize_timer.start()
+
+    @classmethod
+    def get_prefork_connections(cls, fn, mode, max_age=None):
+        """Yields a number of database connections suitable for a Pyzor
+        pre-fork server.
+        """
+        # Only run the reorganize timer in the first child process.
+        yield functools.partial(cls, fn, mode, max_age=max_age)
+        while True:
+            yield functools.partial(cls, fn, mode, max_age=None)
 
 
 class ThreadedMySQLDBHandle(MySQLDBHandle):

@@ -130,18 +130,19 @@ class PreForkServer(Server):
         """The same as Server.__init__ but requires a list of databases
         instead of a single database connection.
         """
-        Server.__init__(self, address, database, passwd_fn, access_fn)
-        assert len(database) == prefork
-        self._prefork = prefork
         self.pids = None
+        Server.__init__(self, address, database, passwd_fn, access_fn)
+        self._prefork = prefork
 
     def serve_forever(self, poll_interval=0.5):
         """Fork the current process and wait for all children to finish."""
         pids = []
-        for database in self.database[:]:
+        for dummy in xrange(self._prefork):
+            database = self.database.next()
             pid = os.fork()
             if not pid:
-                self.database = database
+                # Create the database in the child process, to prevent issues
+                self.database = database()
                 Server.serve_forever(self, poll_interval=poll_interval)
                 os._exit(0)
             else:

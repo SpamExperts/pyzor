@@ -344,9 +344,11 @@ def main():
         detach(stdout=options.detach, pidfile=pidfile_fn)
 
     if use_prefork:
-        databases = []
-        for dummy in xrange(use_prefork):
-            databases.append(database_class(db_file, "c", cleanup_age))
+        if use_prefork < 2:
+            logger.critical("Pre-fork value cannot be lower than 2.")
+            sys.exit(1)
+        databases = database_class.get_prefork_connections(db_file, "c",
+                                                           cleanup_age)
         server = pyzor.server.PreForkServer(address, databases, passwd_fn,
                                             access_fn, use_prefork)
     elif use_threads:

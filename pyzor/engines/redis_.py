@@ -2,6 +2,7 @@
 
 import logging
 import datetime
+import functools
 
 try:
     import redis
@@ -120,6 +121,14 @@ class RedisDBHandle(object):
     @safe_call
     def __delitem__(self, key):
         self.db.delete(self._real_key(key))
+
+    @classmethod
+    def get_prefork_connections(cls, fn, mode, max_age=None):
+        """Yields a number of database connections suitable for a Pyzor
+        pre-fork server.
+        """
+        while True:
+            yield functools.partial(cls, fn, mode, max_age=max_age)
 
 
 class ThreadedRedisDBHandle(RedisDBHandle):
