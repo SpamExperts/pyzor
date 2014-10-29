@@ -33,6 +33,8 @@ def migrate(options):
         try:
             key, record = it.next()
             destination_engine[key] = record
+            if options.delete:
+                del source_engine[key]
             ok_count += 1
             if ok_count % print_interval == 0:
                 print("%s records transferred..." % ok_count)
@@ -64,6 +66,8 @@ to the engine type. See pyzor documentation for more details.
     parser.add_option("--dd", "--destination-dsn", action="store",
                       default=None, dest="destination_dsn",
                       help="destination DSN")
+    parser.add_option("--delete", action="store_true", dest="delete",
+                      default=False, help="delete old records")
 
     opts, args = parser.parse_args()
 

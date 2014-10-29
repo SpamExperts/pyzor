@@ -1,12 +1,15 @@
-"""Redis database engine."""
+"""Redis database engine.
 
-import time
+XXX Deprecated version.
+"""
+
 import logging
 import datetime
 import functools
 
 try:
     import redis
+
     _has_redis = True
 except ImportError:
     redis = None
@@ -14,23 +17,11 @@ except ImportError:
 
 from pyzor.engines.common import *
 
-VERSION = "1"
-NAMESPACE = "pyzord.digest_v%s" % VERSION
+NAMESPACE = "pyzord.digest"
 
-
-def encode_date(date):
-    """Convert the date to Unix Timestamp"""
-    if date is None:
-        return 0
-    return int(time.mktime(date.timetuple()))
-
-
-def decode_date(stamp):
-    """Return a datetime object from a Unix Timestamp."""
-    stamp = int(stamp)
-    if stamp == 0:
-        return None
-    return datetime.datetime.utcfromtimestamp(stamp)
+encode_date = lambda d: "" if d is None else d.strftime("%Y-%m-%d %H:%M:%S")
+decode_date = lambda x: None if x == "" else datetime.datetime.strptime(
+    x, "%Y-%m-%d %H:%M:%S")
 
 
 def safe_call(f):
@@ -51,7 +42,7 @@ def safe_call(f):
 
 class RedisDBHandle(BaseEngine):
     absolute_source = False
-    handles_one_step = True
+    handles_one_step = False
 
     log = logging.getLogger("pyzord")
 
@@ -60,35 +51,34 @@ class RedisDBHandle(BaseEngine):
         # The 'fn' is host,port,password,db.  We ignore mode.
         # We store the authentication details so that we can reconnect if
         # necessary.
-        self._dsn = fn
         fn = fn.split(",")
         self.host = fn[0] or "localhost"
         self.port = fn[1] or "6379"
         self.passwd = fn[2] or None
         self.db_name = fn[3] or "0"
         self.db = self._get_new_connection()
-        self._check_version()
 
     @staticmethod
     def _encode_record(r):
-        return {"r_count": r.r_count,
-                "r_entered": encode_date(r.r_entered),
-                "r_updated": encode_date(r.r_updated),
-                "wl_count": r.wl_count,
-                "wl_entered": encode_date(r.wl_entered),
-                "wl_updated": encode_date(r.wl_updated)
-                }
+        return ("%s,%s,%s,%s,%s,%s" %
+                (r.r_count,
+                 encode_date(r.r_entered),
+                 encode_date(r.r_updated),
+                 r.wl_count,
+                 encode_date(r.wl_entered),
+                 encode_date(r.wl_updated))).encode()
 
     @staticmethod
     def _decode_record(r):
-        if not r:
+        if r is None:
             return Record()
-        return Record(r_count=int(r["r_count"]),
-                      r_entered=decode_date(r["r_entered"]),
-                      r_updated=decode_date(r["r_updated"]),
-                      wl_count=int(r["wl_count"]),
-                      wl_entered=decode_date(r["wl_entered"]),
-                      wl_updated=decode_date(r["w;_updated"]))
+        fields = r.decode().split(",")
+        return Record(r_count=int(fields[0]),
+                      r_entered=decode_date(fields[1]),
+                      r_updated=decode_date(fields[2]),
+                      wl_count=int(fields[3]),
+                      wl_entered=decode_date(fields[4]),
+                      wl_updated=decode_date(fields[5]))
 
     def __iter__(self):
         for key in self.db.keys(self._real_key("*")):
@@ -121,48 +111,19 @@ class RedisDBHandle(BaseEngine):
 
     @safe_call
     def __getitem__(self, key):
-        return self._decode_record(self.db.hgetall(self._real_key(key)))
+        return self._decode_record(self.db.get(self._real_key(key)))
 
     @safe_call
     def __setitem__(self, key, value):
-        real_key = self._real_key(key)
-        self.db.hmset(real_key, self._encode_record(value))
         if self.max_age is None:
-            self.db.expire(real_key, self.max_age)
+            self.db.set(self._real_key(key), self._encode_record(value))
+        else:
+            self.db.setex(self._real_key(key), self.max_age,
+                          self._encode_record(value))
 
     @safe_call
     def __delitem__(self, key):
         self.db.delete(self._real_key(key))
-
-    @safe_call
-    def report(self, keys):
-        now = int(time.time())
-        for key in keys:
-            real_key = self._real_key(key)
-            if not self.db.exists(real_key):
-                self.db.hmset(real_key, {"r_count": 1, "r_entered": now,
-                                         "r_updated": now, "wl_count": 0,
-                                         "wl_entered": 0, "wl_updated": 0})
-            else:
-                self.db.hincrby(real_key, "r_count")
-                self.db.hset(real_key, "r_updated", now)
-            if self.max_age:
-                self.db.expire(real_key, self.max_age)
-
-    @safe_call
-    def whitelist(self, keys):
-        now = int(time.time())
-        for key in keys:
-            real_key = self._real_key(key)
-            if not self.db.exists(real_key):
-                self.db.hmset(real_key, {"r_count": 0, "r_entered": 0,
-                                         "r_updated": 0, "wl_count": 1,
-                                         "wl_entered": now, "wl_updated": now})
-            else:
-                self.db.hincrby(real_key, "wl_count")
-                self.db.hset(real_key, "wl_updated", now)
-            if self.max_age:
-                self.db.expire(real_key, self.max_age)
 
     @classmethod
     def get_prefork_connections(cls, fn, mode, max_age=None):
@@ -171,16 +132,6 @@ class RedisDBHandle(BaseEngine):
         """
         while True:
             yield functools.partial(cls, fn, mode, max_age=max_age)
-
-    def _check_version(self):
-        """Check if there are deprecated records and warn the user."""
-        old_keys = len(self.db.keys("pyzord.digest.*"))
-        if old_keys:
-            cmd = ("pyzor-migrate --delete --se=redis_v0 --sd=%s "
-                   "--de=redis --dd=%s" % (self._dsn, self._dsn))
-            self.log.critical("You have %s records in the deprecated version "
-                              "of the redis engine.", old_keys)
-            self.log.critical("Please migrate the records with: %r", cmd)
 
 
 class ThreadedRedisDBHandle(RedisDBHandle):
