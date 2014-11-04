@@ -8,21 +8,17 @@ import unittest
 
 def suite():
     """Gather all the tests from this package in a test suite."""
-    import test_gdbm
-    import test_mysql
-    import test_redis
     import test_client
     import test_config
     import test_digest
     import test_server
     import test_account
     import test_forwarder
+    import test_engines
 
     test_suite = unittest.TestSuite()
 
-    test_suite.addTest(test_gdbm.suite())
-    test_suite.addTest(test_mysql.suite())
-    test_suite.addTest(test_redis.suite())
+    test_suite.addTest(test_engines.suite())
     test_suite.addTest(test_client.suite())
     test_suite.addTest(test_config.suite())
     test_suite.addTest(test_digest.suite())
