@@ -11,12 +11,14 @@ def suite():
     """Gather all the tests from this package in a test suite."""
     import test_gdbm
     import test_mysql
+    import test_redis
     import test_redis_v0
 
     test_suite = unittest.TestSuite()
 
     test_suite.addTest(test_gdbm.suite())
     test_suite.addTest(test_mysql.suite())
+    test_suite.addTest(test_redis.suite())
     test_suite.addTest(test_redis_v0.suite())
     return test_suite
 

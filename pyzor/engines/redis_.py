@@ -30,7 +30,7 @@ def decode_date(stamp):
     stamp = int(stamp)
     if stamp == 0:
         return None
-    return datetime.datetime.utcfromtimestamp(stamp)
+    return datetime.datetime.fromtimestamp(stamp)
 
 
 def safe_call(f):
@@ -88,7 +88,7 @@ class RedisDBHandle(BaseEngine):
                       r_updated=decode_date(r["r_updated"]),
                       wl_count=int(r["wl_count"]),
                       wl_entered=decode_date(r["wl_entered"]),
-                      wl_updated=decode_date(r["w;_updated"]))
+                      wl_updated=decode_date(r["wl_updated"]))
 
     def __iter__(self):
         for key in self.db.keys(self._real_key("*")):
@@ -127,7 +127,7 @@ class RedisDBHandle(BaseEngine):
     def __setitem__(self, key, value):
         real_key = self._real_key(key)
         self.db.hmset(real_key, self._encode_record(value))
-        if self.max_age is None:
+        if self.max_age is not None:
             self.db.expire(real_key, self.max_age)
 
     @safe_call
