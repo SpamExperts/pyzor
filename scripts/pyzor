@@ -230,11 +230,11 @@ def check(client, servers, config):
     wt = int(config.get("client", "WhitelistThreshold"))
     style = config.get("client", "Style")
     lwhitelist_fp = config.get("client", "LocalWhitelist")
-    local_whitelist = pyzor.config.load_local_whitelist(lwhitelist_fp)
+    lwhitelist = pyzor.config.load_local_whitelist(lwhitelist_fp)
     runner = pyzor.client.CheckClientRunner(client.check, rt, wt)
     mock_runner = pyzor.client.CheckClientRunner(client._mock_check, rt, wt)
     for digested in get_input_handler(style):
-        if digested in local_whitelist:
+        if digested in lwhitelist:
             send_digest(digested, mock_runner, servers)
         else:
             send_digest(digested, runner, servers)
@@ -311,6 +311,37 @@ def digest(client, servers, config):
     return True
 
 
+def local_whitelist(client, servers, config):
+    """Add to the local whitelist."""
+    logger = logging.getLogger("pyzor")
+    lwhitelist_fp = config.get("client", "LocalWhitelist")
+    lwhitelist = pyzor.config.load_local_whitelist(lwhitelist_fp)
+    style = config.get("client", "Style")
+    for digested in get_input_handler(style):
+        if digested in lwhitelist:
+            logger.critical("Digest %s already whitelisted locally", digested)
+        lwhitelist.add(digested)
+    with open(lwhitelist_fp, "w") as lwhitelist_f:
+        lwhitelist_f.write("\n".join(lwhitelist))
+    return True
+
+
+def local_unwhitelist(client, servers, config):
+    """Remove from the local whitelist."""
+    logger = logging.getLogger("pyzor")
+    lwhitelist_fp = config.get("client", "LocalWhitelist")
+    lwhitelist = pyzor.config.load_local_whitelist(lwhitelist_fp)
+    style = config.get("client", "Style")
+    for digested in get_input_handler(style):
+        if digested not in lwhitelist:
+            logger.critical("Digest %s is not whitelisted.", digested)
+            continue
+        lwhitelist.remove(digested)
+    with open(lwhitelist_fp, "w") as lwhitelist_f:
+        lwhitelist_f.write("\n".join(lwhitelist))
+    return True
+
+
 def predigest(client, servers, config):
     """Output the normalised version of each message, which is used to
     create the digest.
@@ -361,6 +392,8 @@ DISPATCHES = {
     "digest": digest,
     "predigest": predigest,
     "genkey": genkey,
+    "local_whitelist": local_whitelist,
+    "local_unwhitelist": local_unwhitelist,
 }
 
 
