@@ -212,6 +212,7 @@ class DetachPyzorTest(PyzorTestBase):
         with open(os.path.join(cls.homedir, "pyzord.pid")) as pidf:
             pid = int(pidf.read().strip())
         os.kill(pid, 15)
+        os.wait(pid, 0)
         super(DetachPyzorTest, cls).tearDownClass()
 
 
