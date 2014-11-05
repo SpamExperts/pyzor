@@ -18,6 +18,7 @@ class TestBase(unittest.TestCase):
 
         self.thread = 33715
         self.timeout = None
+        self.time = str(int(time.time()))
 
         patch("pyzor.account.sign_msg", return_value="TestSig").start()
         patch("pyzor.account.hash_key").start()
@@ -26,7 +27,8 @@ class TestBase(unittest.TestCase):
         self.response = {"Code": "200",
                          "Diag": "OK",
                          "PV": "2.1",
-                         "Thread": "33715"
+                         "Thread": "33715",
+                         "Time": self.time
         }
         self.mresponse = None
         self.mock_socket = None
@@ -35,7 +37,7 @@ class TestBase(unittest.TestCase):
         self.expected = {"Thread": str(self.thread),
                          "PV": str(pyzor.proto_version),
                          "User": "anonymous",
-                         "Time": str(int(time.time())),
+                         "Time": self.time,
                          "Sig": "TestSig"
         }
 
