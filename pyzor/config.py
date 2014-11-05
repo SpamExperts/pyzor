@@ -13,6 +13,8 @@ except ImportError:
 
 import pyzor.account
 
+_COMMENT_P = re.compile(r"((?<=[^\\])#.*)")
+
 
 # Configuration files for the Pyzor Server
 def load_access_file(access_fn, accounts):
@@ -188,6 +190,21 @@ def load_servers(filepath):
         logger.info("No servers specified, defaulting to public.pyzor.org.")
         servers = [("public.pyzor.org", 24441)]
     return servers
+
+
+def load_local_whitelist(filepath):
+    """Load the local digest skip file."""
+    if not os.path.exists(filepath):
+        return set()
+
+    whitelist = set()
+    with open(filepath) as serverf:
+        for line in serverf:
+            # Remove any comments
+            line = _COMMENT_P.sub("", line).strip()
+            if line:
+                whitelist.add(line)
+    return whitelist
 
 
 # Common configurations

@@ -44,6 +44,7 @@ def load_configuration():
     defaults = {
         "ServersFile": "servers",
         "AccountsFile": "accounts",
+        "LocalWhitelist": "whitelist",
         "LogFile": "",
         "Timeout": "5",  # seconds
         "Style": "msg",
@@ -73,6 +74,9 @@ def load_configuration():
                    dest="ServersFile", help="name of servers file")
     opt.add_option("--accounts-file", action="store", default=None,
                    dest="AccountsFile", help="name of accounts file")
+    opt.add_option("--local-whitelist", action="store", default=None,
+                   dest="LocalWhitelist", help="name of the local whitelist "
+                   "file")
     opt.add_option("-t", "--timeout", dest="Timeout", type="int",
                    help="timeout (in seconds)", default=None)
     opt.add_option("-r", "--report-threshold", dest="ReportThreshold",
@@ -125,7 +129,7 @@ def main():
 
     config, options, args = load_configuration()
 
-    homefiles = ["LogFile", "ServersFile", "AccountsFile"]
+    homefiles = ["LogFile", "ServersFile", "AccountsFile", "LocalWhitelist"]
     pyzor.config.expand_homefiles(homefiles, "client", options.homedir, config)
 
     logger = pyzor.config.setup_logging("pyzor",
@@ -225,9 +229,16 @@ def check(client, servers, config):
     rt = int(config.get("client", "ReportThreshold"))
     wt = int(config.get("client", "WhitelistThreshold"))
     style = config.get("client", "Style")
+    lwhitelist_fp = config.get("client", "LocalWhitelist")
+    local_whitelist = pyzor.config.load_local_whitelist(lwhitelist_fp)
     runner = pyzor.client.CheckClientRunner(client.check, rt, wt)
+    mock_runner = pyzor.client.CheckClientRunner(client._mock_check, rt, wt)
     for digested in get_input_handler(style):
-        send_digest(digested, runner, servers)
+        if digested in local_whitelist:
+            send_digest(digested, mock_runner, servers)
+        else:
+            send_digest(digested, runner, servers)
+    sys.stdout.writelines(mock_runner.results)
     sys.stdout.writelines(runner.results)
 
     return runner.all_ok and runner.found_hit and not runner.whitelisted

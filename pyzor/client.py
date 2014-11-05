@@ -116,6 +116,12 @@ class Client(object):
         sock = self.send(msg, address)
         return self.read_response(sock, msg.get_thread())
 
+    def _mock_check(self, digests, address=None):
+        msg = (b"Code: %s\nDiag: OK\nPV: %s\nThread: 1024\nCount: 0\n"
+               b"WL-Count: 0" % (pyzor.message.Response.ok_code,
+                                 pyzor.proto_version))
+        return email.message_from_bytes(msg, _class=pyzor.message.Response)
+
     def send(self, msg, address=("public.pyzor.org", 24441)):
         address = (address[0], int(address[1]))
         msg.init_for_sending()
