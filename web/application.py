@@ -8,6 +8,7 @@ import smtplib
 import datetime
 import email.utils
 import ConfigParser
+import email.mime.base
 import email.mime.text
 import email.mime.multipart
 
@@ -141,7 +142,16 @@ class MessageForm(Form):
                 self.add_error("digest", "Digest does not match message.")
                 return False
             client = pyzor.client.Client(timeout=20)
-            response = client.check(digest)
+            try:
+                response = client.check(digest)
+            except pyzor.TimeoutError as e:
+                self.add_error("message", "Temporary error please try again.")
+                self.logger.warn("Timeout: %s", e)
+                return False
+            except pyzor.CommError as e:
+                self.add_error("message", "Temporary error please try again.")
+                self.logger.warn("Error: %s", e)
+                return False
             if not response.is_ok():
                 self.add_error("message", "Temporary error please try again.")
                 self.logger.warn("Invalid response from server: %s", response)
