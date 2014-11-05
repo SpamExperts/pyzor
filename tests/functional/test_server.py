@@ -1,4 +1,6 @@
 import sys
+import time
+import errno
 import unittest
 import ConfigParser
 
@@ -206,13 +208,22 @@ class DetachPyzorTest(PyzorTestBase):
     def test_pid(self):
         self.assertTrue(os.path.exists(os.path.join(self.homedir,
                                                     "pyzord.pid")))
+    @staticmethod
+    def is_running(pid):
+        try:
+            os.kill(pid, 0)
+        except OSError as err:
+            if err.errno == errno.ESRCH:
+                return False
+        return True
 
     @classmethod
     def tearDownClass(cls):
         with open(os.path.join(cls.homedir, "pyzord.pid")) as pidf:
             pid = int(pidf.read().strip())
         os.kill(pid, 15)
-        os.wait(pid, 0)
+        while cls.is_running(pid):
+            time.sleep(0.25)
         super(DetachPyzorTest, cls).tearDownClass()
 
 
