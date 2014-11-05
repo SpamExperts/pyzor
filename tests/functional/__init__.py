@@ -10,25 +10,22 @@ source.
 
 import unittest
 
+
 def suite():
     """Gather all the tests from this package in a test suite."""
-    import test_gdbm
     import test_pyzor
-    import test_mysql
-    import test_redis
     import test_server
     import test_digest
+    import test_engines
     import test_account
     import test_forwarder
 
     test_suite = unittest.TestSuite()
 
-    test_suite.addTest(test_gdbm.suite())
-    test_suite.addTest(test_mysql.suite())
-    test_suite.addTest(test_redis.suite())
     test_suite.addTest(test_pyzor.suite())
     test_suite.addTest(test_digest.suite())
     test_suite.addTest(test_server.suite())
+    test_suite.addTest(test_engines.suite())
     test_suite.addTest(test_account.suite())
     test_suite.addTest(test_forwarder.suite())
     return test_suite

@@ -267,7 +267,7 @@ class PyzorTestBase(unittest.TestCase):
             self.fail("Error parsing %r: %s" % (info, e))
         return record
 
-    def check_fuzzy_date(self, date1, date2=None, seconds=5):
+    def check_fuzzy_date(self, date1, date2=None, seconds=10):
         """Check if the given date is almost equal to now."""
         date1 = _dt_decode(date1)
         if not date2:
