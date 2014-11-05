@@ -86,24 +86,24 @@ class EncodingRedisTest(unittest.TestCase):
 
     def test_decode_record(self):
         encoded = {
-            "r_count": 24,
-            "r_entered": self.entered_st,
-            "r_updated": self.updated_st,
-            "wl_count": 42,
-            "wl_entered": self.wl_entered_st,
-            "wl_updated": self.wl_updated_st
+            b"r_count": 24,
+            b"r_entered": self.entered_st,
+            b"r_updated": self.updated_st,
+            b"wl_count": 42,
+            b"wl_entered": self.wl_entered_st,
+            b"wl_updated": self.wl_updated_st
         }
         result = pyzor.engines.redis_.RedisDBHandle._decode_record(encoded)
         self.compare_records(result, self.record)
 
     def test_decode_record_no_date(self):
         encoded = {
-            "r_count": 24,
-            "r_entered": self.entered_st,
-            "r_updated": 0,
-            "wl_count": 42,
-            "wl_entered": self.wl_entered_st,
-            "wl_updated": self.wl_updated_st
+            b"r_count": 24,
+            b"r_entered": self.entered_st,
+            b"r_updated": 0,
+            b"wl_count": 42,
+            b"wl_entered": self.wl_entered_st,
+            b"wl_updated": self.wl_updated_st
         }
         result = pyzor.engines.redis_.RedisDBHandle._decode_record(encoded)
         self.record.r_updated = None
@@ -111,12 +111,12 @@ class EncodingRedisTest(unittest.TestCase):
 
     def test_decode_record_no_white(self):
         encoded = {
-            "r_count": 24,
-            "r_entered": self.entered_st,
-            "r_updated": self.updated_st,
-            "wl_count": 0,
-            "wl_entered": 0,
-            "wl_updated": 0
+            b"r_count": 24,
+            b"r_entered": self.entered_st,
+            b"r_updated": self.updated_st,
+            b"wl_count": 0,
+            b"wl_entered": 0,
+            b"wl_updated": 0
         }
         result = pyzor.engines.redis_.RedisDBHandle._decode_record(encoded)
         self.record.wl_count = 0
