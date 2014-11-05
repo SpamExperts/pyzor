@@ -83,12 +83,12 @@ class RedisDBHandle(BaseEngine):
     def _decode_record(r):
         if not r:
             return Record()
-        return Record(r_count=int(r["r_count"]),
-                      r_entered=decode_date(r["r_entered"]),
-                      r_updated=decode_date(r["r_updated"]),
-                      wl_count=int(r["wl_count"]),
-                      wl_entered=decode_date(r["wl_entered"]),
-                      wl_updated=decode_date(r["wl_updated"]))
+        return Record(r_count=int(r.get("r_count", 0)),
+                      r_entered=decode_date(r.get("r_entered", 0)),
+                      r_updated=decode_date(r.get("r_updated", 0)),
+                      wl_count=int(r.get("wl_count", 0)),
+                      wl_entered=decode_date(r.get("wl_entered", 0)),
+                      wl_updated=decode_date(r.get("wl_updated", 0)))
 
     def __iter__(self):
         for key in self.db.keys(self._real_key("*")):
@@ -139,13 +139,9 @@ class RedisDBHandle(BaseEngine):
         now = int(time.time())
         for key in keys:
             real_key = self._real_key(key)
-            if not self.db.exists(real_key):
-                self.db.hmset(real_key, {"r_count": 1, "r_entered": now,
-                                         "r_updated": now, "wl_count": 0,
-                                         "wl_entered": 0, "wl_updated": 0})
-            else:
-                self.db.hincrby(real_key, "r_count")
-                self.db.hset(real_key, "r_updated", now)
+            self.db.hincrby(real_key, "r_count")
+            self.db.hsetnx(real_key, "r_entered", now)
+            self.db.hset(real_key, "r_updated", now)
             if self.max_age:
                 self.db.expire(real_key, self.max_age)
 
@@ -154,13 +150,9 @@ class RedisDBHandle(BaseEngine):
         now = int(time.time())
         for key in keys:
             real_key = self._real_key(key)
-            if not self.db.exists(real_key):
-                self.db.hmset(real_key, {"r_count": 0, "r_entered": 0,
-                                         "r_updated": 0, "wl_count": 1,
-                                         "wl_entered": now, "wl_updated": now})
-            else:
-                self.db.hincrby(real_key, "wl_count")
-                self.db.hset(real_key, "wl_updated", now)
+            self.db.hincrby(real_key, "wl_count")
+            self.db.hsetnx(real_key, "wl_entered", now)
+            self.db.hset(real_key, "wl_updated", now)
             if self.max_age:
                 self.db.expire(real_key, self.max_age)
 
