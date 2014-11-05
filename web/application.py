@@ -29,6 +29,7 @@ except ImportError:
 
 import pyzor
 import pyzor.digest
+import pyzor.client
 
 MSG_TEMPLATE_TXT = """
 Whitelist request:
@@ -127,6 +128,7 @@ class MessageForm(Form):
         super(MessageForm, self).__init__(*args, **kwargs)
         self.msg = None
         self.raw_message = None
+        self.logger = app.logger
 
     def validate(self):
         if not Form.validate(self):
@@ -138,8 +140,19 @@ class MessageForm(Form):
             if digest != self.digest.data:
                 self.add_error("digest", "Digest does not match message.")
                 return False
+            client = pyzor.client.Client(timeout=20)
+            response = client.check(digest)
+            if not response.is_ok():
+                self.add_error("message", "Temporary error please try again.")
+                self.logger.warn("Invalid response from server: %s", response)
+                return False
+            if int(response["Count"]) == 0:
+                self.add_error("message", "Message not reported as spam.")
+                return False
+            if int(response["WL-Count"]) != 0:
+                self.add_error("message", "Message is already whitelisted.")
+                return False
         except AssertionError:
-            self
             self.add_error("message", "Invalid message.")
             return False
         return True
