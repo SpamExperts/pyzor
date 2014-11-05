@@ -83,12 +83,12 @@ class RedisDBHandle(BaseEngine):
     def _decode_record(r):
         if not r:
             return Record()
-        return Record(r_count=int(r.get("r_count", 0)),
-                      r_entered=decode_date(r.get("r_entered", 0)),
-                      r_updated=decode_date(r.get("r_updated", 0)),
-                      wl_count=int(r.get("wl_count", 0)),
-                      wl_entered=decode_date(r.get("wl_entered", 0)),
-                      wl_updated=decode_date(r.get("wl_updated", 0)))
+        return Record(r_count=int(r.get(b"r_count", 0)),
+                      r_entered=decode_date(r.get(b"r_entered", 0)),
+                      r_updated=decode_date(r.get(b"r_updated", 0)),
+                      wl_count=int(r.get(b"wl_count", 0)),
+                      wl_entered=decode_date(r.get(b"wl_entered", 0)),
+                      wl_updated=decode_date(r.get(b"wl_updated", 0)))
 
     def __iter__(self):
         for key in self.db.keys(self._real_key("*")):
