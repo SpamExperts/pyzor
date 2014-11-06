@@ -27,6 +27,9 @@ AccountsFile
 
 LogFile
     If this is empty then logging is done to stdout.
+    
+LocalWhitelist
+    Specify the local whitelist file name. 
 
 Timeout
     This options specifies the number of seconds that the pyzor client should 

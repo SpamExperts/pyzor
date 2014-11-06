@@ -18,6 +18,9 @@
 ## This option specifies the name of the log file.
 # LogFile = 
 
+## The `LocaWhitelist` file containing skipped digests. 
+# LocalWhitelist = whitelist
+
 ## This options specifies the number of seconds that the pyzor client should
 ## wait for a response from the server before timing out.
 # Timeout = 5

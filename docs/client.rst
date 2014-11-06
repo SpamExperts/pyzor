@@ -112,6 +112,23 @@ Based upon a secret passphrase gathered from the user and randomly gathered
 salt, prints to standard output a tuple of "salt,key". Used to put account 
 information into the accounts file.
 
+Local Whitelist
+^^^^^^^^^^^^^^^
+
+Add a message to the local whitelist file, and therefore ignoring the digest 
+and returning 0 reports for the digest without contacting the pyzor server:
+
+    $ pyzor local_whitelist < false_positive.eml
+    
+Local UnWhitelist
+^^^^^^^^^^^^^^^^^
+
+Remove a message from the local whitelist file:
+
+    $ pyzor local_unwhitelist < false_positive.eml
+   
+
+
 .. _client-server-file:
 
 Servers File

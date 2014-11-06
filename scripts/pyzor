@@ -55,7 +55,8 @@ def load_configuration():
     # Process any command line options.
     description = ("Read data from stdin and execute the requested command "
                    "(one of 'check', 'report', 'ping', 'pong', 'digest', "
-                   "'predigest', 'genkey').")
+                   "'predigest', 'genkey', 'local_whitelist', "
+                   "'local_unwhitelist').")
     opt = optparse.OptionParser(description=description)
     opt.add_option("-n", "--nice", dest="nice", type="int",
                    help="'nice' level", default=0)
