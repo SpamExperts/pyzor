@@ -101,6 +101,11 @@ CleanupAge
     The maximum age of a record before it gets removed (in seconds). To 
     disable this set to 0.
 
+PreFork
+    The number of workers the pyzor server should start. The server will
+    pre-fork itself and split handling the requests among all workers.
+    This is disabled by default.
+
 Threads
     If set to true, the pyzor server will use multi-threading to serve 
     requests.

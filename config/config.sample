@@ -85,10 +85,14 @@
 
 
 ## These setting define how and if the pyzord server should use concurrency
+## For pre-forking
+# PreFork = 0 # disabled
+
 ## For multi-threading:
 # Threads = False
 # MaxThreads = 0 # unlimited
 # DBConnections = 0 # new connection for each request
+
 ## For multi-processing:
 # Processes = False
 # MaxProcesses = 40
