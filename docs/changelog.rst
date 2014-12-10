@@ -1,6 +1,32 @@
 Changelog
 ===========
 
+Pyzor 1.0.0
+------------
+
+New features:
+
+    * New pyzor commands ``local_[un]whitelist`` are available for managing 
+      a local whitelist on the client side. (`#10 <https://github.com/SpamExperts/pyzor/issues/10>`_)
+    * New ``PreFork`` option for the pyzor server. This allows creating multiple
+      workers for handling pyzor requests. (`#26 <https://github.com/SpamExperts/pyzor/issues/26>`_)
+      
+Perfomance enhancements:
+
+    * Improve usage of the Redis engine by using Hashes instead of string for
+      storing digests. The migration tool can be used to update you current 
+      database. (`#29 <https://github.com/SpamExperts/pyzor/issues/29>`_)
+          
+      
+Others:
+
+    * PyPy3 compatibility verified and introduced into the Travis-CI system. (`#24 <https://github.com/SpamExperts/pyzor/issues/24>`_)
+    * Unification of the storage engines types. (`#30 <https://github.com/SpamExperts/pyzor/issues/30>`_)
+    * Improved check on the public whitelisting request service to skip sending 
+      requests to whitelist message that have not been reported to the public 
+      database or have been already whitelisted. (`#27 <https://github.com/SpamExperts/pyzor/issues/27>`_)     
+
+
 Pyzor 0.9.0
 ------------
 
@@ -19,7 +45,7 @@ New features:
 Perfomance enhancements:
 
 	* Do report and whitelist in a single step for MySQL Server Engine. 
-	  (`#5 <https://github.com/SpamExperts/pyzor/issues/23>`_)
+	  (`#5 <https://github.com/SpamExperts/pyzor/issues/5>`_)
 		  
       
 Others:
