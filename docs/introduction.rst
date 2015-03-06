@@ -69,5 +69,6 @@ version you are currently using::
 License
 -------
 
-The project is licensed under the 
-`GNU GPLv2 <http://www.gnu.org/licenses/gpl-2.0.html>`_ license.
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License `version 2 <http://www.gnu.org/licenses/gpl-2.0.html>`_
+only of the License.
