@@ -632,7 +632,7 @@ Content-Type: multipart/alternative; boundary=f46d040a62c49bb1c404f027e8ca
 --f46d040a62c49bb1c404f027e8ca
 Content-Type: text/plain; charset=ISO-8859-1
 
-This is a test ma iling
+This is a test ma\x00iling
 --f46d040a62c49bb1c804f027e8cc--"""
 
 
