@@ -118,6 +118,7 @@ class DataDigester(object):
 
     @classmethod
     def normalize(cls, s):
+        s = s.replace("\x00", "")
         repl = cls.unwanted_txt_repl
         s = cls.longstr_ptrn.sub(repl, s)
         s = cls.email_ptrn.sub(repl, s)
@@ -157,8 +158,6 @@ class DataDigester(object):
                     errors = "strict"
 
                 try:
-                    if "\00" in payload:
-                        payload = payload.replace("\x00", "")
                     payload = payload.decode(charset, errors)
                 except (LookupError, UnicodeError, AssertionError):
                     try:

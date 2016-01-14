@@ -190,7 +190,7 @@ class DigestTests(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_digest_w_null(self):
-        message = b"That's some good ham rig ht there"
+        message = b"That's some good ham rig\x00ht there"
         predigested = b"That'ssomegoodhamrightthere"
 
         digest = hashlib.sha1()
