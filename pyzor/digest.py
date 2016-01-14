@@ -158,7 +158,7 @@ class DataDigester(object):
 
                 try:
                     if "\00" in payload:
-                        payload = payload.replace("\00", "")
+                        payload = payload.replace("\x00", "")
                     payload = payload.decode(charset, errors)
                 except (LookupError, UnicodeError, AssertionError):
                     try:
