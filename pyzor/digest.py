@@ -158,11 +158,17 @@ class DataDigester(object):
 
                 try:
                     payload = payload.decode(charset, errors)
-                except (LookupError, UnicodeError, AssertionError):
+                except (LookupError, UnicodeError, AssertionError, TypeError):
                     try:
                         payload = payload.decode("ascii", "ignore")
                     except UnicodeError:
                         continue
+                    except TypeError:
+                        try:
+                            payload = payload.replace("\00", "")
+                            payload = payload.decode(charset, errors)
+                        except ValueError:
+                            pass  # No nulls were found, which is okay.
                 if part.get_content_subtype() == "html":
                     yield cls.normalize_html_part(payload)
                 else:
