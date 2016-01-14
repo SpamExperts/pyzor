@@ -189,6 +189,18 @@ class DigestTests(unittest.TestCase):
 
         self.assertEqual(result, expected)
 
+    def test_digest_w_null(self):
+        message = b"That's some good ham rig ht there"
+        predigested = b"That'ssomegoodhamrightthere"
+
+        digest = hashlib.sha1()
+        digest.update(predigested)
+
+        expected = digest.hexdigest()
+        result = DataDigester(message).value
+
+        self.assertEqual(result, expected)
+
 
 class MessageDigestTest(unittest.TestCase):
     def setUp(self):
