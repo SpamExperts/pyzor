@@ -105,7 +105,7 @@ class DataDigester(object):
     def handle_pieced(self, lines, spec):
         """Digest stuff according to the spec."""
         for offset, length in spec:
-            for i in xrange(length):
+            for i in range(length):
                 try:
                     line = lines[int(offset * len(lines) // 100) + i]
                 except IndexError:

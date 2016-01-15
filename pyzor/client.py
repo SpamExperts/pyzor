@@ -78,7 +78,7 @@ class Client(object):
         if accounts is None:
             accounts = {}
         self.accounts = dict(((host, int(port)), account)
-                             for (host, port), account in accounts.iteritems())
+                             for (host, port), account in accounts.items())
         if spec is None:
             spec = pyzor.digest.digest_spec
         self.spec = spec
@@ -227,12 +227,12 @@ class BatchClient(Client):
 
     def force(self):
         """Force send any remaining reports."""
-        for address, msg in self.r_requests.iteritems():
+        for address, msg in self.r_requests.items():
             try:
                 self.send(msg, address)
             except:
                 continue
-        for address, msg in self.w_requests.iteritems():
+        for address, msg in self.w_requests.items():
             try:
                 self.send(msg, address)
             except:

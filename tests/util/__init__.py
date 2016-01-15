@@ -117,7 +117,7 @@ class PyzorTestBase(unittest.TestCase):
         cls.write_homedir_file("dan", cls.accounts_dan)
 
         args = ["pyzord"]
-        for key, value in cls._args.iteritems():
+        for key, value in cls._args.items():
             option = getattr(cls, key, None)
             if option:
                 args.append(value)
@@ -163,7 +163,7 @@ class PyzorTestBase(unittest.TestCase):
         if user:
             args.append("--accounts-file")
             args.append(user)
-        for key, value in self.client_args.iteritems():
+        for key, value in self.client_args.items():
             if value:
                 args.append(key)
                 args.append(value)
@@ -204,7 +204,7 @@ class PyzorTestBase(unittest.TestCase):
         if user:
             args.append("--accounts-file")
             args.append(user)
-        for key, value in self.client_args.iteritems():
+        for key, value in self.client_args.items():
             if value:
                 args.append(key)
                 args.append(value)
@@ -284,7 +284,7 @@ class PyzorTest(object):
     def test_pong(self):
         input = "Test1 pong1 Test2"
         self.check_pyzor("pong", "bob", input=input, code=200, exit_code=0,
-                         counts=(sys.maxint, 0))
+                         counts=(sys.maxsize, 0))
 
     def test_check(self):
         input = "Test1 check1 Test2"

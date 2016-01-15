@@ -244,7 +244,7 @@ def load_configuration():
     config = ConfigParser.ConfigParser()
     # Set the defaults.
     config.add_section("server")
-    for key, value in defaults.iteritems():
+    for key, value in defaults.items():
         config.set("server", key, value)
     # Override with the configuration.
     config.read(os.path.join(options.homedir, "config"))

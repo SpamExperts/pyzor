@@ -75,7 +75,7 @@ class GdbmDBHandle(BaseEngine):
     def apply_method(self, method, varargs=(), kwargs=None):
         if kwargs is None:
             kwargs = {}
-        return apply(method, varargs, kwargs)
+        return method(*varargs, **kwargs)
 
     def __getitem__(self, key):
         return self.apply_method(self._really_getitem, (key,))

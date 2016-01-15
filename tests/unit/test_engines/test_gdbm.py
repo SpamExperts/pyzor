@@ -25,7 +25,7 @@ class MockGdbmDB(dict):
         if not self.keys():
             return None
         self.key_index = 1
-        return self.keys()[0]
+        return list(self.keys())[0]
 
     def nextkey(self, key):
         if len(self.keys()) <= self.key_index:

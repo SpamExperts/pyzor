@@ -31,7 +31,7 @@ class Record(object):
 
     def wl_increment(self):
         # overflow prevention
-        if self.wl_count < sys.maxint:
+        if self.wl_count < sys.maxsize:
             self.wl_count += 1
         if self.wl_entered is None:
             self.wl_entered = datetime.datetime.now()
@@ -39,7 +39,7 @@ class Record(object):
 
     def r_increment(self):
         # overflow prevention
-        if self.r_count < sys.maxint:
+        if self.r_count < sys.maxsize:
             self.r_count += 1
         if self.r_entered is None:
             self.r_entered = datetime.datetime.now()

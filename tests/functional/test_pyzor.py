@@ -70,7 +70,7 @@ class PyzorScriptTest(PyzorTestBase):
         input = "da39a3ee5e6b4b0d3255bfef95601890afd80700"
         self.client_args["-s"] = "digests"
         self.check_pyzor("pong", None, input=input, code=200, exit_code=0,
-                         counts=(sys.maxint, 0))
+                         counts=(sys.maxsize, 0))
         self.check_pyzor("check", None, input=input, code=200, exit_code=1,
                          counts=(0, 0))
         self.check_pyzor("report", None, input=input, code=200, exit_code=0)
@@ -92,9 +92,9 @@ class PyzorScriptTest(PyzorTestBase):
         self.client_args["-s"] = "digests"
         self.check_pyzor_multiple("pong", None, input=input3, exit_code=0,  
                                   code=[200, 200, 200],
-                                  counts=[(sys.maxint, 0), 
-                                          (sys.maxint, 0), 
-                                          (sys.maxint, 0)])
+                                  counts=[(sys.maxsize, 0),
+                                          (sys.maxsize, 0),
+                                          (sys.maxsize, 0)])
         self.check_pyzor_multiple("check", None, input=input3, exit_code=1,  
                                   code=[200, 200, 200],
                                   counts=[(0, 0), (0, 0), (0, 0)])
@@ -111,7 +111,7 @@ class PyzorScriptTest(PyzorTestBase):
         input = "From MAILER-DAEMON Mon Jan  6 15:13:33 2014\n\nTest1 message 0 Test2\n\n"
         self.client_args["-s"] = "mbox"
         self.check_pyzor("pong", None, input=input, code=200, exit_code=0,
-                         counts=(sys.maxint, 0))
+                         counts=(sys.maxsize, 0))
         self.check_pyzor("check", None, input=input, code=200, exit_code=1,
                          counts=(0, 0))
         self.check_pyzor("report", None, input=input, code=200, exit_code=0)
@@ -133,9 +133,9 @@ class PyzorScriptTest(PyzorTestBase):
         self.client_args["-s"] = "mbox"
         self.check_pyzor_multiple("pong", None, input=input3, exit_code=0,  
                                   code=[200, 200, 200],
-                                  counts=[(sys.maxint, 0), 
-                                          (sys.maxint, 0), 
-                                          (sys.maxint, 0)])
+                                  counts=[(sys.maxsize, 0),
+                                          (sys.maxsize, 0),
+                                          (sys.maxsize, 0)])
         self.check_pyzor_multiple("check", None, input=input3, exit_code=1, 
                                   code=[200, 200, 200],
                                   counts=[(0, 0), (0, 0), (0, 0)])
@@ -174,9 +174,9 @@ class MultipleServerPyzorScriptTest(PyzorTestBase):
         input = "Test1 multiple pong Test2"
         self.check_pyzor_multiple("pong", None, input=input, exit_code=0,
                                   code=[200, 200, 200],
-                                  counts=[(sys.maxint, 0),
-                                          (sys.maxint, 0),
-                                          (sys.maxint, 0)])
+                                  counts=[(sys.maxsize, 0),
+                                          (sys.maxsize, 0),
+                                          (sys.maxsize, 0)])
 
     def test_check(self):
         input = "Test1 multiple check Test2"

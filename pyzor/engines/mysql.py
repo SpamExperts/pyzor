@@ -294,7 +294,7 @@ class ThreadedMySQLDBHandle(MySQLDBHandle):
     def reconnect(self):
         if not self.bound:
             return
-        for _ in xrange(self.bound):
+        for _ in range(self.bound):
             self.db_queue.put(self._get_new_connection())
 
     def _reconnect(self, db):

@@ -74,9 +74,9 @@ def load_configuration():
         }
     }
     # Load in default values.
-    for section, values in defaults.iteritems():
+    for section, values in defaults.items():
         conf.add_section(section)
-        for option, value in values.iteritems():
+        for option, value in values.items():
             conf.set(section, option, value)
     if os.path.exists("/etc/pyzor/web.conf"):
         # Overwrite with local values.

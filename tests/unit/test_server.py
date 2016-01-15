@@ -5,7 +5,10 @@ import sys
 import time
 import logging
 import unittest
-import SocketServer
+try:
+    import socketserver as SocketServer
+except ImportError:
+    import SocketServer
 
 from datetime import datetime, timedelta
 
@@ -42,7 +45,7 @@ class MockDatagramRequestHandler():
         """
         self.rfile = io.BytesIO()
         self.wfile = io.BytesIO()
-        for i, j in headers.iteritems():
+        for i, j in headers.items():
             self.rfile.write(("%s: %s\n" % (i, j)).encode("utf8"))
         self.rfile.seek(0)
         self.packet = None
@@ -129,7 +132,7 @@ class RequestHandlerTest(unittest.TestCase):
         self.request["Op"] = "pong"
         self.request["Op-Digest"] = digest
         handler = pyzor.server.RequestHandler(self.request, database)
-        self.expected_response["Count"] = str(sys.maxint)
+        self.expected_response["Count"] = str(sys.maxsize)
         self.expected_response["WL-Count"] = "0"
 
         self.check_response(handler)

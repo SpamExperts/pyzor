@@ -1,7 +1,10 @@
 import os
 import logging
 import unittest
-import ConfigParser
+try:
+    import configparser as ConfigParser
+except ImportError:
+    import ConfigParser
 
 try:
     from unittest.mock import patch, Mock
@@ -260,7 +263,7 @@ class TestExpandHomeFiles(unittest.TestCase):
         section = "test"
         conf = ConfigParser.ConfigParser()
         conf.add_section(section)
-        for key, value in config.iteritems():
+        for key, value in config.items():
             conf.set(section, key, value)
         pyzor.config.expand_homefiles(homefiles, section, homedir, conf)
         result = dict(conf.items(section))

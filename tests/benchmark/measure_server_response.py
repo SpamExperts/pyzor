@@ -16,7 +16,7 @@ import string
 import random
 import hashlib
 import pyzor.client
-digest = "".join(random.choice(string.letters) for _ in xrange(50))
+digest = "".join(random.choice(string.letters) for _ in range(50))
 digest = hashlib.sha1(digest).hexdigest()
 client = pyzor.client.Client(timeout=%f)
 """
@@ -59,7 +59,7 @@ def measure_methods(methods, repeats, timeout, server, queue):
 
 def json_handler(res):
     fres = {}
-    for method, result in res.iteritems():
+    for method, result in res.items():
         fres[method] = {"runs": [],
                         "timeouts": result["timeouts"],
                         "totals": {}}
@@ -81,7 +81,7 @@ def json_handler(res):
 
 
 def print_handler(res):
-    for method, result in res.iteritems():
+    for method, result in res.items():
         print "=" * 80
         print "Method: %s" % method
         print "Timeouts: %s" % result["timeouts"]
@@ -121,7 +121,7 @@ def main():
     queue = Queue.Queue()
 
     threads = []
-    for dummy in xrange(options.threads):
+    for dummy in range(options.threads):
         thread = threading.Thread(target=measure_methods,
                                   args=(options.method, options.repeats,
                                         options.timeout, server, queue))

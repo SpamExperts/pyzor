@@ -110,7 +110,7 @@ def load_configuration():
     config = ConfigParser.ConfigParser()
     # Set the defaults.
     config.add_section("client")
-    for key, value in defaults.iteritems():
+    for key, value in defaults.items():
         config.set("client", key, value)
     # Override with the configuration.
     config.read(os.path.join(options.homedir, "config"))
@@ -372,7 +372,7 @@ def genkey(client, servers, config, hash_func=hashlib.sha1):
         return False
     # pylint: disable-msg=W0612
     salt = "".join([chr(random.randint(0, 255))
-                    for unused in xrange(hash_func(b"").digest_size)])
+                    for unused in range(hash_func(b"").digest_size)])
     if sys.version_info >= (3, 0):
         salt = salt.encode("utf8")
     salt_digest = hash_func(salt)

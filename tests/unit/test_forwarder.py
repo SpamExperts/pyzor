@@ -26,7 +26,7 @@ class ForwarderTest(unittest.TestCase):
         max_qsize = 10
         forwarder = pyzor.forwarder.Forwarder(client, servlist,
                                               max_queue_size=max_qsize)
-        for _ in xrange(max_qsize * 2):
+        for _ in range(max_qsize * 2):
             forwarder.queue_forward_request('975422c090e7a43ab7c9bf0065d5b661259e6d74')
             self.assertGreater(forwarder.forward_queue.qsize(), 0, 'queue insert failed')
             self.assertLessEqual(forwarder.forward_queue.qsize(), max_qsize, 'queue overload')

@@ -1,19 +1,18 @@
-"""Test the pyzor.account module
-"""
+"""Test the pyzor.account module"""
+
+import io
 import os
-import sys
 import time
 import email
 import hashlib
 import unittest
-import StringIO
 
 import pyzor
 import pyzor.config
 import pyzor.account
 
-class AccountTest(unittest.TestCase):            
-    
+
+class AccountTest(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.timestamp = 1381219396
@@ -91,7 +90,7 @@ class LoadAccountTest(unittest.TestCase):
         self.real_exists = os.path.exists
         os.path.exists = lambda p: True if p == self.filepath else \
             self.real_exists(p)
-        self.mock_file = StringIO.StringIO()
+        self.mock_file = io.StringIO()
         try:
             self.real_open = pyzor.account.__builtins__.open
         except AttributeError:
@@ -121,8 +120,8 @@ class LoadAccountTest(unittest.TestCase):
 
     def test_load_accounts(self):
         """Test loading the account file"""
-        self.mock_file.write("public.pyzor.org : 24441 : test : 123abc,cba321\n"
-                             "public2.pyzor.org : 24441 : test2 : 123abc,cba321")
+        self.mock_file.write(u"public.pyzor.org : 24441 : test : 123abc,cba321\n"
+                             u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
         result = pyzor.config.load_accounts(self.filepath)
         self.assertIn(("public.pyzor.org", 24441), result)
         self.assertIn(("public2.pyzor.org", 24441), result)
@@ -135,8 +134,8 @@ class LoadAccountTest(unittest.TestCase):
 
     def test_load_accounts_invalid_line(self):
         """Test loading the account file"""
-        self.mock_file.write("public.pyzor.org : 24441 ; test : 123abc,cba321\n"
-                             "public2.pyzor.org : 24441 : test2 : 123abc,cba321")
+        self.mock_file.write(u"public.pyzor.org : 24441 ; test : 123abc,cba321\n"
+                             u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
         result = pyzor.config.load_accounts(self.filepath)
         self.assertNotIn(("public.pyzor.org", 24441), result)
         self.assertEquals(len(result), 1)
@@ -147,8 +146,8 @@ class LoadAccountTest(unittest.TestCase):
 
     def test_load_accounts_invalid_port(self):
         """Test loading the account file"""
-        self.mock_file.write("public.pyzor.org : a4441 : test : 123abc,cba321\n"
-                             "public2.pyzor.org : 24441 : test2 : 123abc,cba321")
+        self.mock_file.write(u"public.pyzor.org : a4441 : test : 123abc,cba321\n"
+                             u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
         result = pyzor.config.load_accounts(self.filepath)
         self.assertNotIn(("public.pyzor.org", 24441), result)
         self.assertEquals(len(result), 1)
@@ -159,8 +158,8 @@ class LoadAccountTest(unittest.TestCase):
 
     def test_load_accounts_invalid_key(self):
         """Test loading the account file"""
-        self.mock_file.write("public.pyzor.org : 24441 : test : ,\n"
-                             "public2.pyzor.org : 24441 : test2 : 123abc,cba321")
+        self.mock_file.write(u"public.pyzor.org : 24441 : test : ,\n"
+                             u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
         result = pyzor.config.load_accounts(self.filepath)
         self.assertNotIn(("public.pyzor.org", 24441), result)
         self.assertEquals(len(result), 1)
@@ -171,8 +170,8 @@ class LoadAccountTest(unittest.TestCase):
 
     def test_load_accounts_invalid_missing_comma(self):
         """Test loading the account file"""
-        self.mock_file.write("public.pyzor.org : 24441 : test : 123abccba321\n"
-                             "public2.pyzor.org : 24441 : test2 : 123abc,cba321")
+        self.mock_file.write(u"public.pyzor.org : 24441 : test : 123abccba321\n"
+                             u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
         result = pyzor.config.load_accounts(self.filepath)
         self.assertNotIn(("public.pyzor.org", 24441), result)
         self.assertEquals(len(result), 1)
@@ -183,7 +182,7 @@ class LoadAccountTest(unittest.TestCase):
 
     def test_load_accounts_comment(self):
         """Test skipping commented lines"""
-        self.mock_file.write("#public1.pyzor.org : 24441 : test : 123abc,cba321")
+        self.mock_file.write(u"#public1.pyzor.org : 24441 : test : 123abc,cba321")
         result = pyzor.config.load_accounts(self.filepath)
         self.assertNotIn(("public.pyzor.org", 24441), result)
         self.assertFalse(result)       

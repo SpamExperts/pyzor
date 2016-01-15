@@ -137,7 +137,7 @@ class PreForkServer(Server):
     def serve_forever(self, poll_interval=0.5):
         """Fork the current process and wait for all children to finish."""
         pids = []
-        for dummy in xrange(self._prefork):
+        for dummy in range(self._prefork):
             database = self.database.next()
             pid = os.fork()
             if not pid:
@@ -312,7 +312,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         This command returns maxint for report counts and 0 whitelist.
         """
         self.server.log.debug("Request pong for %s", digests[0])
-        self.response["Count"] = "%d" % sys.maxint
+        self.response["Count"] = "%d" % sys.maxsize
         self.response["WL-Count"] = "%d" % 0
 
     def handle_check(self, digests):
