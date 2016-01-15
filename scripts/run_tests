@@ -1,20 +1,30 @@
 #!/bin/bash
 set -ev
 
-pip install pytest pytest-cov python-coveralls
+sudo apt-get update -qq
 
 if [ `python -c 'import sys; print(sys.version_info[0])'` = '3' ]
 then
-	pip install redis
-	python setup.py install
+    sudo apt-get install -y python3-dev
 	2to3 -w . ./scripts/pyzor ./scripts/pyzord ./scripts/pyzor-migrate
 else
-	sudo apt-get update -qq
-	sudo apt-get install -y build-essential python-dev libmysqlclient-dev
-	pip install -r requirements.txt
-	python setup.py install
-	mysql -e 'create database pyzor_test'
+    sudo apt-get install -y python-dev
 fi
+
+if [ ! `mysql --version | grep -qi maria` ]
+then
+    sudo apt-get install -y libmariadbclient-dev
+else
+    sudo apt-get install -y libmysqlclient-dev
+fi
+
+sudo apt-get install -y build-essential
+
+pip install pytest pytest-cov python-coveralls
+pip install -r requirements.txt
+python setup.py install
+mysql -e 'create database if not exists pyzor_test'
+
 
 if [ "$1" != "prepare" ]
 then

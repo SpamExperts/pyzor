@@ -4,7 +4,10 @@ import time
 import unittest
 import threading
 
-from mock import call, Mock
+try:
+    from unittest.mock import call, Mock
+except ImportError:
+    from mock import call, Mock
 
 import pyzor.forwarder
 
