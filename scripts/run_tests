@@ -1,31 +1,36 @@
 #!/bin/bash
-set -ev
+set -ex
 
-sudo apt-get update -qq
-
-if [ `python -c 'import sys; print(sys.version_info[0])'` = '3' ]
+if [ "$1" == "clean" ]
 then
-    sudo apt-get install -y python3-dev
-	2to3 -w . ./scripts/pyzor ./scripts/pyzord ./scripts/pyzor-migrate
+    rm -rf build .cache dist .coverage pyzor.egg-info
+    mysql -e 'drop database if exists pyzor_test'
+    git reset --hard HEAD
 else
-    sudo apt-get install -y python-dev
+    sudo apt-get update -qq
+
+    if [ `python -c 'import sys; print(sys.version_info[0])'` = '3' ]
+    then
+        sudo apt-get install -y python3-dev
+        2to3 -w . ./scripts/pyzor ./scripts/pyzord ./scripts/pyzor-migrate
+    else
+        sudo apt-get install -y python-dev
+    fi
+
+    mysql --version | grep -qi maria && sudo apt-get install -y libmariadbclient-dev
+    mysql --version | grep -qi maria || sudo apt-get install -y libmysqlclient-dev
+
+    sudo apt-get install -y build-essential
+
+    pip install pytest pytest-cov python-coveralls
+    pip install -r requirements.txt
+    python setup.py install
+    mysql -e 'create database if not exists pyzor_test'
+
+
+    if [ "$1" != "prepare" ]
+    then
+        py.test tests/unit/ --cov pyzor --cov-report term-missing
+        py.test tests/functional/
+    fi
 fi
-
-mysql --version | grep -qi maria && sudo apt-get install -y libmariadbclient-dev
-mysql --version | grep -qi maria || sudo apt-get install -y libmysqlclient-dev
-
-sudo apt-get install -y build-essential
-
-pip install pytest pytest-cov python-coveralls
-pip install -r requirements.txt
-python setup.py install
-mysql -e 'create database if not exists pyzor_test'
-
-
-if [ "$1" != "prepare" ]
-then
-	py.test tests/unit/ --cov pyzor --cov-report term-missing
-	py.test tests/functional/
-fi
-
-
