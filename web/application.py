@@ -7,10 +7,13 @@ import logging
 import smtplib
 import datetime
 import email.utils
-import ConfigParser
 import email.mime.base
 import email.mime.text
 import email.mime.multipart
+try:
+    import configparser as ConfigParser
+except ImportError:
+    import ConfigParser
 
 import flask
 

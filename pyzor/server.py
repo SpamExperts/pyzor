@@ -138,7 +138,7 @@ class PreForkServer(Server):
         """Fork the current process and wait for all children to finish."""
         pids = []
         for dummy in range(self._prefork):
-            database = self.database.next()
+            database = next(self.database)
             pid = os.fork()
             if not pid:
                 # Create the database in the child process, to prevent issues

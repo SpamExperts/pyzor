@@ -17,9 +17,9 @@ import tempfile
 import threading
 
 try:
-    import ConfigParser
-except ImportError:
     import configparser as ConfigParser
+except ImportError:
+    import ConfigParser
 
 import pyzor.digest
 import pyzor.client

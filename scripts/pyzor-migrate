@@ -31,7 +31,7 @@ def migrate(options):
     it = source_engine.iteritems()
     while True:
         try:
-            key, record = it.next()
+            key, record = next(it)
             destination_engine[key] = record
             if options.delete:
                 del source_engine[key]

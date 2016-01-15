@@ -1,5 +1,8 @@
 import unittest
-import ConfigParser
+try:
+    import configparser as ConfigParser
+except ImportError:
+    import ConfigParser
 
 from tests.util import *
 

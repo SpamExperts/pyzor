@@ -8,13 +8,17 @@ import os
 import sys
 import optparse
 import traceback
-import ConfigParser
+try:
+    import configparser as ConfigParser
+except ImportError:
+    import ConfigParser
 
 import pyzor.client
 import pyzor.config
 import pyzor.server
 import pyzor.engines
 import pyzor.forwarder
+import pyzor.hacks.py3
 
 
 def detach(stdout="/dev/null", stderr=None, stdin="/dev/null", pidfile=None):
@@ -260,7 +264,7 @@ def main():
     """Run the pyzor daemon."""
     # Set umask - this restricts this process from granting any world access
     # to files/directories created by this process.
-    os.umask(0077)
+    os.umask(0o0077)
 
     config, options = load_configuration()
 
@@ -338,7 +342,7 @@ def main():
         # Enssure that all modules are reloaded so they benefit from
         # the gevent library.
         for module in (os, sys, pyzor, pyzor.server, pyzor.engines):
-            reload(module)
+            pyzor.hacks.py3.reload(module)
 
     if options.detach:
         detach(stdout=options.detach, pidfile=pidfile_fn)

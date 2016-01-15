@@ -162,7 +162,7 @@ class MySQLDBHandle(BaseEngine):
                           "VALUES (%%s, 1, 0, NOW(), NOW(), NOW(), NOW()) ON "
                           "DUPLICATE KEY UPDATE r_count=r_count+1, "
                           "r_updated=NOW()" % self.table_name,
-                          itertools.imap(lambda key: (key,), keys))
+                          map(lambda key: (key,), keys))
         finally:
             c.close()
 
@@ -174,7 +174,7 @@ class MySQLDBHandle(BaseEngine):
                           "VALUES (%%s, 0, 1, NOW(), NOW(), NOW(), NOW()) ON "
                           "DUPLICATE KEY UPDATE wl_count=wl_count+1, "
                           "wl_updated=NOW()" % self.table_name,
-                          itertools.imap(lambda key: (key,), keys))
+                          map(lambda key: (key,), keys))
         finally:
             c.close()
 

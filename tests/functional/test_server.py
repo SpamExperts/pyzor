@@ -2,7 +2,10 @@ import sys
 import time
 import errno
 import unittest
-import ConfigParser
+try:
+    import configparser as ConfigParser
+except ImportError:
+    import ConfigParser
 
 import pyzor.client
 
