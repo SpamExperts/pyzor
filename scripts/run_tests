@@ -11,12 +11,8 @@ else
     sudo apt-get install -y python-dev
 fi
 
-if [ ! `mysql --version | grep -qi maria` ]
-then
-    sudo apt-get install -y libmariadbclient-dev
-else
-    sudo apt-get install -y libmysqlclient-dev
-fi
+mysql --version | grep -qi maria && sudo apt-get install -y libmariadbclient-dev
+mysql --version | grep -qi maria || sudo apt-get install -y libmysqlclient-dev
 
 sudo apt-get install -y build-essential
 
