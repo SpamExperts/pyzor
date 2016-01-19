@@ -148,8 +148,9 @@ class DataDigester(object):
         for part in msg.walk():
             if part.get_content_maintype() == "text":
                 payload = part.get_payload(decode=True)
-
                 charset = part.get_content_charset()
+                if charset:
+                    charset = charset.replace("\x00", "")
                 errors = "ignore"
                 if not charset:
                     charset = "ascii"
