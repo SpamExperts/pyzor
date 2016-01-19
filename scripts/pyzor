@@ -176,9 +176,30 @@ def _get_input_msg(digester):
     yield digested
 
 
+def _is_binary_reader(stream, default=False):
+    try:
+        return isinstance(stream.read(0), bytes)
+    except Exception:
+        return default
+
+
+def get_binary_stdin():
+    # sys.stdin might or might not be binary in some extra cases.  By
+    # default it's obviously non binary which is the core of the
+    # problem but the docs recommend changing it to binary for such
+    # cases so we need to deal with it.
+    is_binary = _is_binary_reader(sys.stdin, False)
+    if is_binary:
+        return sys.stdin
+    buf = getattr(sys.stdin, 'buffer', None)
+    if buf is not None and _is_binary_reader(buf, True):
+        return buf
+    raise RuntimeError('Did not manage to get binary stdin')
+
+
 def _get_input_mbox(digester):
     tfile = tempfile.NamedTemporaryFile()
-    tfile.write(sys.stdin.read().encode("utf8"))
+    tfile.write(get_binary_stdin().read())
     tfile.seek(0)
     mbox = mailbox.mbox(tfile.name)
     for msg in mbox:
