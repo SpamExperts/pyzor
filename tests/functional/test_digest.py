@@ -904,14 +904,14 @@ Content-Type: multipart/related;
 MIME-Version: 1.0
 
 This is a multi-part message in MIME format.
---===============0632694142025794937\x00\x00\x00==
+--===============0632694142025794937==
 Content-Type: text/plain; charset="iso-8859-1"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Thist is a t=E9st
 --===============0632694142025794937==
-MIME-Version: 1.0\x00\x00\x00
+MIME-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 
@@ -922,7 +922,7 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="cp1258"
 Content-Transfer-Encoding: base64
 
-VGhpcyBpcyBhIHTpc3Qg4qXG\x00\x00\x00
+VGhpcyBpcyBhIHTpc3Qg4qXG
 
 --===============0632694142025794937==--
 
@@ -931,7 +931,7 @@ VGhpcyBpcyBhIHTpc3Qg4qXG\x00\x00\x00
 BAD_ENCODING = """From nobody Tue Apr  1 13:18:54 2014
 Content-Type: multipart/related;
  boundary="===============0632694142025794937=="
-MIME-Version: 1.0
+MIME-Version: 1.0\x00\x00\x00
 
 This is a multi-part message in MIME format.
 --===============0632694142025794937==
@@ -939,7 +939,7 @@ Content-Type: text/plain; charset=ISO-8859-1Content-Transfer-Encoding: quoted-pr
 
 This is a test
 
---===============0632694142025794937==
+--===============0632694142025794937\x00\x00\x00==
 Content-Type: text/plain; charset=us-asciia
 Content-Transfer-Encoding: quoted-printable
 
