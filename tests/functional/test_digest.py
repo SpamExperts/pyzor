@@ -687,7 +687,7 @@ Content-Type: multipart/mixed; boundary=f46d040a62c49bb1c804f027e8cc
 Content-Type: multipart/alternative; boundary=f46d040a62c49bb1c404f027e8ca
 
 --f46d040a62c49bb1c404f027e8ca
-Content-Type: text/plain; charset="iso-8859-1^@^@^@
+Content-Type: text/plain; charset="iso-8859-1\x00\x00\x00"
 
 This is a test mailing
 --f46d040a62c49bb1c804f027e8cc--"""
@@ -904,14 +904,14 @@ Content-Type: multipart/related;
 MIME-Version: 1.0
 
 This is a multi-part message in MIME format.
---===============0632694142025794937==
+--===============0632694142025794937\x00\x00\x00==
 Content-Type: text/plain; charset="iso-8859-1"
 MIME-Version: 1.0
 Content-Transfer-Encoding: quoted-printable
 
 Thist is a t=E9st
 --===============0632694142025794937==
-MIME-Version: 1.0
+MIME-Version: 1.0\x00\x00\x00
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 
@@ -922,7 +922,7 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset="cp1258"
 Content-Transfer-Encoding: base64
 
-VGhpcyBpcyBhIHTpc3Qg4qXG
+VGhpcyBpcyBhIHTpc3Qg4qXG\x00\x00\x00
 
 --===============0632694142025794937==--
 
