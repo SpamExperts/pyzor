@@ -673,6 +673,24 @@ Content-Type: text/plain; charset=ISO-8859-1
 This is a test mailing
 --f46d040a62c49bb1c804f027e8cc--"""
 
+TEXT_ATTACHMENT_W_CONTENTTYPE_NULL = """MIME-Version: 1.0
+Received: by 10.76.127.40 with HTTP; Fri, 17 Jan 2014 02:21:43 -0800 (PST)
+Date: Fri, 17 Jan 2014 12:21:43 +0200
+Delivered-To: chirila.s.alexandru@gmail.com
+Message-ID: <CALTHOsuHFaaatiXJKU=LdDCo4NmD_h49yvG2RDsWw17D0-NXJg@mail.gmail.com>
+Subject: Test
+From: Alexandru Chirila <chirila.s.alexandru@gmail.com>
+To: Alexandru Chirila <chirila.s.alexandru@gmail.com>
+Content-Type: multipart/mixed; boundary=f46d040a62c49bb1c804f027e8cc
+
+--f46d040a62c49bb1c804f027e8cc
+Content-Type: multipart/alternative; boundary=f46d040a62c49bb1c404f027e8ca
+
+--f46d040a62c49bb1c404f027e8ca
+Content-Type: text/plain; charset="iso-8859-1^@^@^@
+
+This is a test mailing
+--f46d040a62c49bb1c804f027e8cc--"""
 
 class PyzorPreDigestTest(PyzorTestBase):
     # we don't need the pyzord server to test this
@@ -865,6 +883,18 @@ Emailspam.Emailspam,alsoknownasjunkemailorbulkemail,isasubsetofspaminvolvingnear
     def test_digest_attachment_w_multiple_nulls(self):
         expected = b"Thisisatestmailing"
         res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT_W_MULTIPLE_NULLS)
+        self.assertEqual(res.decode("utf8"),
+                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+
+    def test_digest_attachment_w_subject_null(self):
+        expected = b"Thisisatestmailing"
+        res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT_W_SUBJECT_NULL)
+        self.assertEqual(res.decode("utf8"),
+                     hashlib.sha1(expected).hexdigest().lower() + "\n")
+
+    def test_digest_attachment_w_contenttype_null(self):
+        expected = b"Thisisatestmailing"
+        res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT_W_CONTENTTYPE_NULL)
         self.assertEqual(res.decode("utf8"),
                          hashlib.sha1(expected).hexdigest().lower() + "\n")
 
