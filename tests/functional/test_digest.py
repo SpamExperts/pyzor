@@ -862,7 +862,7 @@ Emailspam.Emailspam,alsoknownasjunkemailorbulkemail,isasubsetofspaminvolvingnear
         self.assertEqual(res.decode("utf8"),
                          hashlib.sha1(expected).hexdigest().lower() + "\n")
 
-    def test_digest_attachment_w_null(self):
+    def test_digest_attachment_w_multiple_nulls(self):
         expected = b"Thisisatestmailing"
         res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT_W_MULTIPLE_NULLS)
         self.assertEqual(res.decode("utf8"),
