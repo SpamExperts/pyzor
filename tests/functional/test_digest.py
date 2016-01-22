@@ -935,7 +935,7 @@ MIME-Version: 1.0\x00\x00\x00
 
 This is a multi-part message in MIME format.
 --===============0632694142025794937==
-Content-Type: text/plain; charset=ISO-8859-1Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1\x00\x00\x00Content-Transfer-Encoding: quoted-printable
 
 This is a test
 
