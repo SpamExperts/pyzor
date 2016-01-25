@@ -1,0 +1,512 @@
+From newsletter@mail.deco.proteste.pt Fri Nov 13 12:18:18 2015
+Return-path: <emsg-179f-bc222-replies@mail.deco.proteste.pt>
+Envelope-to: SERGIO@SERJUX.COM
+Delivery-date: Fri, 13 Nov 2015 12:18:18 +0000
+Received: from mail.deco.proteste.pt ([192.86.55.215]:18947) by
+ host5.easyho.st with esmtp (Exim 4.86) (envelope-from
+ <emsg-179f-bc222-replies@mail.deco.proteste.pt>) id 1ZxDIz-0015rl-Kf for
+ SERGIO@SERJUX.COM; Fri, 13 Nov 2015 12:18:18 +0000
+DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; s=kb;
+ d=mail.deco.proteste.pt;
+ h=Date:From:Reply-To:Subject:To:Message-ID:List-Unsubscribe:Mime-Version:Content-Type:Content-Transfer-Encoding;
+ i=newsletter@mail.deco.proteste.pt; bh=E2o7K8OWhvOEksscYicrUf/G/9c=;
+ b=c6tgurCRqVin4/9ie/BlbUy6TJz6BW4O3I9u6ft6iFqPvXvcQtb5WOGnWblD7EznmZ3OIsVpoR7s
+ c80Rm9a5bjMLqRpmw9/lHjcc9Shs6pXNVDS7Yk8s18bSp8htescrJ9FXJDsyp44ih7XS3CfHr49u
+ EP4+1cxaEsnPVW/bfvM=
+Received: from ukmailout02.em.unica.net (10.140.36.17) by
+ mail.deco.proteste.pt id h8nage0u8qoe for <SERGIO@SERJUX.COM>; Fri, 13 Nov
+ 2015 12:17:34 +0000 (envelope-from
+ <emsg-179f-bc222-replies@mail.deco.proteste.pt>)
+DKIM-Signature: v=1; a=rsa-sha1; c=relaxed/relaxed; s=uk_rel_kb;
+ d=emsg.unica.net;
+ h=Date:From:Reply-To:Subject:To:Message-ID:List-Unsubscribe:Mime-Version:Content-Type:Content-Transfer-Encoding;
+ bh=E2o7K8OWhvOEksscYicrUf/G/9c=;
+ b=N1V5cIphR8FfKhLvHLTfKGyUgmGyRySLCVsqefSpmrMc3PJF5aoadp2XJ8IWvspLLs0j8tH0W5k8
+ f4B+v0x0WT2DtYEU8UnkDHOQwZuY3pRmiKCgeGAYdTZ0vNvqcXzGCt/d9m8yal5TpCbWGbKHnKk6
+ D01qQ/ulU6b3eprH4tY=
+Received: from ukmme02.em.unica.net (10.140.36.19) by
+ ukmailout02.em.unica.net id h8nads0u8qo1 for <SERGIO@SERJUX.COM>; Fri, 13
+ Nov 2015 12:17:29 +0000 (envelope-from
+ <emsg-179f-bc222-replies@mail.deco.proteste.pt>)
+Date: Fri, 13 Nov 2015 12:17:29 +0000
+From: "Newsletter DECO PROTESTE" <newsletter@mail.deco.proteste.pt>
+Reply-To: "mailbox6047x770594" <mailbox6047x770594@mail.deco.proteste.pt>
+Subject: =?UTF-8?Q?Black_Friday:_todos_os_nossos_c?=
+ =?UTF-8?Q?omparadores_dispon=C3=ADveis_para_si?=
+To: <SERGIO@SERJUX.COM>
+x-emsg-mtaselection: prod_6_mail.deco.proteste.pt
+Message-ID: <emsg.179f.bc222.15100c77299@ukmme02.em.unica.net>
+Feedback-ID: mail.deco.proteste.pt:10259-179f:emsg-x
+List-Unsubscribe:
+ <mailto:DSME-8DB69752967483729123CE2E0A5C070C08E3AB898DFC7FB0@mail.deco.proteste.pt>
+Mime-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+X-Spam-Status: No, score=1.0
+X-Spam-Score: 10
+X-Spam-Bar: +
+X-Ham-Report: Spam detection software, running on the system
+ "host5.easyho.st", has NOT identified this incoming email as spam.  The
+ original message has been attached to this so you can view it or label
+ similar future email.  If you have any questions, see root\@localhost for
+ details.  Content preview:  Comparadores abertos especialmente para si
+ visualizar versão on-line Olá, [...]   Content analysis details:   (1.0
+ points, 5.0 required)  pts rule name              description ----
+ ---------------------- --------------------------------------------------
+ 0.0 URIBL_BLOCKED          ADMINISTRATOR NOTICE: The query to URIBL was
+ blocked. See http://wiki.apache.org/spamassassin/DnsBlocklists#dnsbl-block
+ for more information. [URIs: proteste.pt] -0.0 RCVD_IN_MSPIKE_H2      RBL:
+ Average reputation (+2) [192.86.55.215 listed in wl.mailspike.net] -0.0
+ SPF_HELO_PASS          SPF: HELO matches SPF record -0.0 SPF_PASS          
+     SPF: sender matches SPF record -0.3 RP_MATCHES_RCVD        Envelope
+ sender domain matches handover relay domain 1.1 URI_HEX                URI:
+ URI hostname has long hexadecimal sequence 1.5 KAM_MXURI              URI:
+ URI begins with a mail exchange prefix, i.e. mx.[...] -1.9 BAYES_00        
+       BODY: Bayes spam probability is 0 to 1% [score: 0.0000] 0.0
+ HTML_MESSAGE           BODY: HTML included in message 0.7 MIME_HTML_ONLY   
+      BODY: Message only has text/html MIME parts -0.1 DKIM_VALID_AU        
+  Message has a valid DKIM or DK signature from author's domain 0.1
+ DKIM_SIGNED            Message has a DKIM or DK signature, not necessarily
+ valid -0.1 DKIM_VALID             Message has at least one valid DKIM or DK
+ signature 0.0 T_REMOTE_IMAGE         Message contains an external image
+X-Spam-Flag: NO
+X-From-Rewrite: unmodified, no actual sender determined from check mail
+ permissions
+X-Evolution-Source: 1303672545.7032.3@segulix
+Content-Transfer-Encoding: 8bit
+
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <title>Comparadores abertos especialmente para si</title>
+
+<style type="text/css">
+     #outlook a {
+        padding: 0;
+    }
+    .ExternalClass {
+        width: 100% !important;
+    }
+        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font,
+        .ExternalClass td, .ExternalClass div {
+            line-height: 100%;
+        }
+    img {
+        outline: none;
+        text-decoration: none;
+        -ms-interpolation-mode: bicubic;
+        max-width: 100%;
+    }
+    a img {
+        border: none;
+    }
+    .applelinks a {
+        color: #222222;
+        text-decoration: none;
+    }
+    .ExternalClass img[class^=Emoji] {
+        width: 10px !important;
+        height: 10px !important;
+        display: inline !important;
+    }
+    a {
+        font-size: 14px;
+        font-family: Verdana, Helvetica, sans-serif;
+        color: #a9a9a9;
+    }
+        a.linkview {
+            font-size: 12px;
+            font-family: Verdana, Helvetica, sans-serif;
+            color: #24869c;
+        }
+    #unsub, #unsub2 {
+        font-size: 12px;
+        font-family: Verdana, Helvetica, sans-serif;
+        color: #424242;
+    }
+    a.lnkBT {
+        margin-top: 5px;
+        display: inline-block;
+        padding: 10px;
+        background-color: #24869c;
+        color: white;
+        text-decoration: none;
+    }
+        a.lnkBT:hover {
+            background-color: #0b98b7;
+        }
+    .emailaltmob {
+        display: none;
+    }
+
+    .col-b-right {
+        text-align: right;
+    }
+
+    .emailbodytext3 {
+        margin-left: 5px;
+    }
+
+    @media screen and (max-width: 660px) {
+        .emailaltmob {
+            display: table;
+        }
+        table[class=emailwrapto100pc] {
+            width: 100% !important;
+            height: auto !important;
+        }
+        img[class=emailwrapto100pcno] {
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        img[class=emailwrapto100pc] {
+            height: auto !important;
+            width:189px;
+            display:block;
+            margin-right:auto;
+            margin-left:auto;
+        }
+
+        img[class=emailwrapto100pc1] {
+            height: auto !important;
+            width:290px;
+            display:block;
+            margin-right:auto;
+            margin-left:auto;
+        }
+
+        img[class=emailwrapto100pc2] {
+            height: auto !important;
+            width:183px;
+            display:block;
+            margin-right:auto;
+            margin-left:auto;
+        }
+
+        #hdr-img1-1, #ctn-img4-1 {
+        }
+
+        #hdr-img2-1, #hdr-img3-1, #ctn-img1-1, #ctn-img2-1, #ctn-img3-1 {
+            padding-right:10px;
+        }
+
+        #hdr-img3-2, #ctn-img3-2, #ftr-img1-1 {
+            padding-left:0px;
+        }
+
+        #hdr-img2-2, #hdr-img3-3, #ctn-img1-2, #ctn-img1-3, #ctn-img2-2, #ctn-img3-3 {
+            padding-left:10px;
+        }
+
+        .col-b-right {
+            text-align: center;
+        }
+
+        .emailbodytext3 {
+            margin-left:5px;
+        }
+
+        table[class=emailnomob], td[class=emailnomob], img[class=emailnomob], span[class=emailnomob], div.emailnomob, tr.emailnomob {
+            display: none !important;
+        }
+        td[class=emailcolsplit] {
+            width: 100%!important;
+            float: left!important;
+            box-sizing: border-box;
+        }
+        td[class=emailwrapto100pc1] {
+            width: 100%!important;
+            float: left!important;
+            box-sizing: border-box;
+        }
+
+		td[class=fixPadding] {
+            padding: 0px !important;
+        }
+        a[class=emailmobbutton] {
+            display: block !important;
+            font-size: 14px !important;
+            padding: 6px 4px 8px 4px !important;
+            line-height: 18px !important;
+            background: #303030 !important;
+            border-radius: 5px !important;
+            margin: 10px auto;
+            width: auto;
+            text-align: center;
+            color: white !important;
+            text-decoration: none;
+        }
+        span[class=emailbodytext], a[class=emailbodytext] {
+            font-size: 14px !important;
+            line-height: 21px !important;
+        }
+        span[class=emailh2], a[class=emailh2] {
+            font-size: 22px !important;
+            line-height: 26px !important;
+        }
+        table[class=tableSupport] {
+            margin-top: 30px;
+        }
+        .allpadding {
+            padding: 10px;
+    }
+        .text {
+            padding-top: 5px !important;
+            padding-right: 10px !important;
+            padding-bottom: 10px !important;
+            padding-left: 10px !important;
+        }
+        .headers {
+            padding-top: 10px !important;
+            padding-right: 10px !important;
+            padding-left: 10px !important;
+        }
+        .imgH {
+            padding-right: 10px !important;
+            padding-left: 10px !important;
+        }
+        .lnkBT {
+            margin-bottom: 20px !important;
+        }
+        .on_mobile {
+            display: none;
+        }
+            .emailaltmob {
+                display: table;
+            }
+
+    }
+    @media screen and (min-width: 640px) and (max-width: 1024px) {
+        table[class=emailnomob], td[class=emailnomob], img[class=emailnomob], span[class=emailnomob], div.emailnomob {
+            display: none !important;
+        }
+        span[class=emailbodytext], a[class=emailbodytext] {
+            font-size: 14px !important;
+            line-height: 21px !important;
+        }
+        span[class=emailh2], a[class=emailh2] {
+            font-size: 22px !important;
+            line-height: 26px !important;
+        }
+        a[class=emailmobbutton] {
+            display: inline-block !important;
+            font-size: 14px !important;
+            padding: 6px 4px 8px 4px !important;
+            line-height: 18px !important;
+            background: #303030 !important;
+            border-radius: 5px !important;
+            margin: 5px auto;
+            width: 50%;
+            text-align: center;
+            color: white !important;
+            text-decoration: none;
+        }
+        .allpadding {
+            padding: 15px;
+    }
+        .text {
+            padding-top: 5px !important;
+            padding-right: 15px !important;
+            padding-bottom: 15px !important;
+            padding-left: 15px !important;
+        }
+        .headers {
+            padding-top: 15px !important;
+            padding-right: 15px !important;
+            padding-left: 15px !important;
+        }
+        .imgH {
+            padding-right: 15px !important;
+            padding-left: 15px !important;
+        }
+    }
+
+    @media screen and (max-width: 400px) {
+        #ctn-img3-1, #ctn-img3-2, #ctn-img3-3 {
+            float:left;
+        }
+
+        .emailbodytext2 {
+            clear:both;
+        }
+
+        .emailbodytext3, .emailbodytext4 {
+            clear:both;
+            margin-left:10px;
+        }
+
+        #hdr-img1-1 {
+            padding-left:0px;
+        }
+
+        #hdr-img2-1, #hdr-img3-1, #ctn-img1-1, #ctn-img2-1, #ctn-img3-1 {
+            padding-right:20px;
+        }
+
+        #hdr-img3-2 {
+            padding-right:10px;
+        }
+
+        #ctn-img3-2, #ctn-img3-3 {
+            padding-left:10px;
+        }
+
+        #hdr-img2-2, #hdr-img3-3, #ctn-img1-2, #ctn-img1-3, #ctn-img2-2 {
+            padding-left:0px;
+        }
+
+        #ctn-img4-1, #ftr-img1-1 {
+           margin-left:0px;
+        }
+    }
+    
+</style>
+    </head>
+
+<body style="padding: 0; margin: 0; -webkit-text-size-adjust: none; -ms-text-size-adjust: 100%; background-color: #dddddd;" bgcolor="#dddddd" background="#dddddd">
+    
+    <table border="0" cellspacing="0" cellpadding="0" width="100%" height="100%" bgcolor="#dddddd" style="background-color: #dddddd;">
+        <tbody>
+            <tr>
+                <td align="center" valign="top">
+				
+					<!-- versï¿½o online -->
+                    <table width="640" border="0" cellspacing="0" cellpadding="0" class="emailwrapto100pc" style="text-align:center;">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <p id="mail_web" class="emailbodytext" style="text-align:center;"><a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=1&e=2&x=2457431.0" target="_blank" style="color:#464646; font-size: 12px; font-family: Verdana, Helvetica, sans-serif; line-height:15px; text-decoration:none;">visualizar vers&atilde;o on-line</a></p>
+                                </td>
+                            </tr>
+                       </tbody>
+                    </table>					
+			
+
+                    <!-- imagem do header -->
+                    <table width="640" border="0" cellspacing="0" cellpadding="0" class="emailwrapto100pc" bgcolor="white" background="white">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <img src="http://mcs.deco.proteste.pt/newsletter_especial/blackfriday/header.jpg" style="display: block; width:100%;" />
+                                </td>
+                            </tr>
+                       </tbody>
+                    </table>
+
+
+                    <!-- modelo base + lista <ul> <li> -->
+                    <table width="640" border="0" cellspacing="0" cellpadding="0" class="emailwrapto100pc" bgcolor="white" style="background-color: white;">
+                        <tbody>
+                            <tr>
+                                <td class="allpadding" style="padding-top: 10px; padding-right: 20px; padding-bottom: 10px; padding-left: 20px; width: 100%; color: #464646; text-align: left;">
+                                <p class="emailbodytext" style="font-size: 14px; font-family: Verdana, Helvetica, sans-serif;line-height:17px; margin-bottom:30px;">Ol&aacute;, <span id="member"> </span></p>
+                                    <p class="emailbodytext" style="font-size: 14px; font-family: Verdana, Helvetica, sans-serif;line-height:17px; margin-bottom:30px;">Queremos que tenha uma sexta-feira 13 cheia de poupan&#231;a!</p>
+                                    <p class="emailbodytext" style="font-size: 14px; font-family: Verdana, Helvetica, sans-serif;line-height:17px; margin-bottom:30px;">Por isso, abrimos as portas dos nossos comparadores online a associados e n&#227;o associados, sem exce&#231;&#227;o. Veja livremente os resultados dos testes, descubra os produtos com a melhor rela&#231;&#227;o qualidade/pre&#231;o e conhe&#231;a as lojas mais baratas.</p>								
+                                </td>
+                            </tr>
+							
+							<!-- product list -->
+							<tr>
+                                <td class="allpadding" style="padding-top: 10px; padding-right: 20px; padding-bottom: 50px; padding-left: 20px; width: 100%; color: #464646; text-align: left;">
+									<table style="padding-top:0px; padding-bottom:0px; padding-right:0px; padding-left:0px; margin: 0px;" cellspacing="0" cellpadding="0" align="center">
+										<tr>
+											<td class="allpadding" style="vertical-align:top; padding-top: 0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; width: 295px; color: #464646; text-align: left;">
+												<a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=2&e=2&x=2457431.0" target="_blank"><img src="http://mcs.deco.proteste.pt/newsletter_especial/blackfriday/all_01.jpg"></a>
+											</td>
+											<td>
+												<table style="padding-top:0px; padding-bottom:0px; padding-right:0px; padding-left:0px; margin: 0px;" cellspacing="0" cellpadding="0" align="center">
+													<tr>
+														<td class="allpadding" style="vertical-align:top; padding-top:0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; width: 295px; color: #464646; text-align: left;">
+															<a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=3&e=2&x=2457431.0" target="_blank"><img src="http://mcs.deco.proteste.pt/newsletter_especial/blackfriday/all_02.jpg"></a>
+														</td>
+													</tr>
+													<tr>
+														<td class="allpadding" style="vertical-align:top; padding-top:0px; padding-right: 0px; padding-bottom: 0px; padding-left: 0px; width: 295px; color: #464646; text-align: left;">
+															<a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=4&e=2&x=2457431.0" target="_blank"><img src="http://mcs.deco.proteste.pt/newsletter_especial/blackfriday/all_03.jpg"></a>
+														</td>
+													</tr>
+												</table>
+											</td>
+										</tr>
+									</table>
+                                </td>
+                            </tr>
+							
+							<tr>
+								<td align="center">
+									<table style="padding-top:10px; padding-bottom:15px; padding-right:0px; padding-left:0px; margin: 0px;" cellspacing="0" cellpadding="0" align="center">
+										<tbody>
+											<tr style="padding: 0px; margin: 0px;" cellspacing="0" cellpadding="0">
+												<td style="padding-bottom: 15px; padding-left: 50px; padding-right: 50px; padding-top: 15px; background-color: #f24026; border-top:1px; border-right:1px; border-left:1px; border-bottom:3px; border-bottom-color:#da191a; border-top-color:#da191a; border-right-color:#da191a; border-left-color:#911114; border-bottom-style:solid; border-top-style:solid; border-right-style:solid; border-left-style:solid; ">
+													<a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=5&e=2&x=2457431.0" style="display: inline-block; color: #ffffff; font-size: 16px; text-decoration: none; font-weight:700;" target="_blank">Consultar todos os comparadores </a>
+												</td>
+											</tr>
+										</tbody>
+									</table>
+									
+									<p class="emailbodytext" style="font-size: 14px; font-family: Verdana, Helvetica, sans-serif;line-height:17px; padding-bottom:20px;">&nbsp;</p>                                       
+								</td>
+							</tr>
+                        </tbody>
+                    </table>
+					
+                    <!-- footer -->
+
+
+                    <table width="640" border="0" cellspacing="0" cellpadding="0" class="emailwrapto100pc" bgcolor="#575757" background="#575757" style="background-color: #575757;">
+                        <tbody>
+                            <tr>
+                                <td style="padding-top: 10px; padding-right: 40px; padding-bottom: 0px; padding-left: 40px;color:#a1a1a1;"><a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=6&e=2&x=2457431.0" title="entrar em DECO PROTESTE" target="_blank"><img src="http://mcs.deco.proteste.pt/GpfImages/PT/logo-deco.png"></a></td>
+                                <td style="padding-top: 10px; padding-right: 40px; padding-bottom: 0px; padding-left: 40px;color:#a1a1a1;" align="right">
+                                    <p style="font-size: 12px; font-family: Verdana, Helvetica, sans-serif;line-height:15px;text-transform: uppercase;">Partilhe com os seus amigos</p>
+                                    <a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=7&e=2&x=2457431.0" title="siga-nos no facebook" target="_blank"><img src="http://mcs.deco.proteste.pt/GpfImages/General/social-face.jpg"></a>&nbsp;<a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=8&e=2&x=2457431.0" title="siga-nos no google+" target="_blank"><img src="http://mcs.deco.proteste.pt/GpfImages/General/social-google.jpg"></a>&nbsp;<a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=9&e=2&x=2457431.0" title="siga-nos no twitter" target="_blank"><img src="http://mcs.deco.proteste.pt/GpfImages/General/social-twitter.jpg"></a>&nbsp;<a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=10&e=2&x=2457431.0" title="siga-nos no linkedin" target="_blank"><img src="http://mcs.deco.proteste.pt/GpfImages/General/social-in.jpg"></a>
+                                </td>
+                            </tr>
+                       </tbody>
+                    </table>
+                    <table width="640" border="0" cellspacing="0" cellpadding="0" class="emailwrapto100pc" bgcolor="#575757" background="#575757" style="background-color: #575757;">
+                        <tbody>
+                            <tr>
+                                <td style="padding-top: 10px; padding-right: 40px; padding-bottom: 20px; padding-left: 40px; color:white" align="center">
+                                    <p class="emailbodytext" style="font-size: 14px; font-family: Verdana, Helvetica, sans-serif;line-height:15px;">2015 &copy; DECO PROTESTE, todos os direitos reservados.</p>
+                                    <a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=11&e=2&x=2457431.0" class="emailmobbutton" style="font-size: 14px;font-family: Verdana, Helvetica, sans-serif;color: #a9a9a9;" target="_blank">Pol&iacute;tica de Privacidade</a><span class="emailnomob"> | </span>
+                                    <a href="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=12&e=2&x=2457431.0" class="emailmobbutton" style="font-size: 14px;font-family: Verdana, Helvetica, sans-serif;color: #a9a9a9;" target="_blank">Pol&iacute;tica de Cookies</a>
+                                </td>
+                            </tr>
+                       </tbody>
+                    </table>
+					
+					<!-- unsubscribe -->
+                    <table width="640" border="0" cellspacing="0" cellpadding="0" class="emailwrapto100pc" bgcolor="white" style="background-color:#BDBDBD;">
+                        <tbody>
+                            <tr>
+                                <td align="center" style="padding-top: 10px; padding-right: 20px; padding-bottom: 10px; padding-left: 20px; color:#575757;">
+                                    <p style="font-size: 10px; font-family: Verdana, Helvetica, sans-serif; line-height:15px; margin-bottom:0px;" id="unsub">Se n&#227;o quiser receber e-mails ou outras informa&#231;&#245;es sobre esta campanha, por favor <a  href='http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSL?v=5&a=10259&r=6047&m=770594&l=13&p=t032E7F4895D73BC2CFED7B8BC194ECC5450BB7E467D898E0ACC645C24FB2687FC0C3E22F056D0B0D0B4A7AFFB92B0E1E&e=2&x=2457431.0' class="" style="font-size: 10px; font-family: Verdana, Helvetica, sans-serif; color:#2574a6; text-decoration:underline;" target="_blank">clique aqui</a></p>
+                                </td>
+                            </tr>
+                       </tbody>
+                    </table>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+<IMG width="1" height="1" src="http://content.mail.deco.proteste.pt/emessageIRS/servlet/IRSO?v=5&a=10259&r=6047&m=770594&l=-1&e=2">
+
+<IMG width="1" height="1" src="http://miq-p4-qa-em.unicaondemand.com/C250R308A.gif?pvci=805_1910_6047" /></body>
+</html>
+
+<script type="text/javascript" language="javascript">
+
+    if (document.getElementById) {
+        document.getElementById("mail_web").style.visibility = 'hidden';
+        document.getElementById("unsub").style.visibility = 'hidden';
+        document.getElementById("mail_web").style.display = 'none';
+        document.getElementById("unsub").style.display = 'none';
+    }
+
+</script>
+

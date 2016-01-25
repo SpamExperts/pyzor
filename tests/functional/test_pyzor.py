@@ -4,6 +4,9 @@ import unittest
 
 from tests.util import *
 
+MBOX_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "test_data", "test.mbx")
+
+
 class PyzorScriptTest(PyzorTestBase):
     password_file = None
     access = """ALL : anonymous : allow
@@ -121,6 +124,24 @@ class PyzorScriptTest(PyzorTestBase):
         self.check_pyzor("check", None, input=input, code=200, exit_code=1,
                          counts=(1, 1))
         r = self.get_record(input, None)
+        self.assertEqual(r["Count"], "1")
+        self.assertEqual(r["WL-Count"], "1")
+
+    def test_mbox_real(self):
+        with open(MBOX_FILE_PATH) as mbox_file:
+            input = mbox_file.read()
+            self.client_args["-s"] = "mbox"
+            self.check_pyzor("pong", None, input=input, code=200, exit_code=0,
+                             counts=(sys.maxsize, 0))
+            self.check_pyzor("check", None, input=input, code=200, exit_code=1,
+                             counts=(0, 0))
+            self.check_pyzor("report", None, input=input, code=200, exit_code=0)
+            self.check_pyzor("check", None, input=input, code=200, exit_code=0,
+                             counts=(1, 0))
+            self.check_pyzor("whitelist", None, input=input, code=200, exit_code=0)
+            self.check_pyzor("check", None, input=input, code=200, exit_code=1,
+                             counts=(1, 1))
+            r = self.get_record(input, None)
         self.assertEqual(r["Count"], "1")
         self.assertEqual(r["WL-Count"], "1")
         
