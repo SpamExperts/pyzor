@@ -129,7 +129,7 @@ class PyzorScriptTest(PyzorTestBase):
 
     def test_mbox_real(self):
         with open(MBOX_FILE_PATH) as mbox_file:
-            input = mbox_file.read()
+            input = mbox_file.read().decode("latin-1")
             self.client_args["-s"] = "mbox"
             self.check_pyzor("pong", None, input=input, code=200, exit_code=0,
                              counts=(sys.maxsize, 0))

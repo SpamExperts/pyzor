@@ -173,7 +173,7 @@ class PyzorTestBase(unittest.TestCase):
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
         if input:
-            stdout, stderr = pyzor.communicate(input)
+            stdout, stderr = pyzor.communicate(input.encode("utf8"))
         else:
             stdout, stderr = pyzor.communicate()
 
