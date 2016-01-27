@@ -1,3 +1,4 @@
+import io
 import sys
 import redis
 import unittest
@@ -128,8 +129,8 @@ class PyzorScriptTest(PyzorTestBase):
         self.assertEqual(r["WL-Count"], "1")
 
     def test_mbox_real(self):
-        with open(MBOX_FILE_PATH) as mbox_file:
-            input = mbox_file.read().decode("latin-1")
+        with io.open(MBOX_FILE_PATH, 'rt', encoding='latin-1') as mbox_file:
+            input = mbox_file.read()
             self.client_args["-s"] = "mbox"
             self.check_pyzor("pong", None, input=input, code=200, exit_code=0,
                              counts=(sys.maxsize, 0))
