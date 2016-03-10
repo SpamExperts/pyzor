@@ -15,6 +15,7 @@ engines:
 ratings:
   paths:
   - "**.py"
+  - "scripts/*"
 exclude_paths:
 - tests/
 - docs/
