@@ -13,3 +13,7 @@ script:
   - "py.test tests/functional/"
 after_success:
   - coveralls
+notifications:
+  slack:
+    secure: cjCoL6zEvbUGejQ39Xu4MNZHipxPux0+DG450js8S5L4+hSsch0FlHY1CP/Eeie0ko9QELhdWG1dB7Ndb7HQ5WVJsOhOA9mFYM5rBam4LZS1rv0Ggf0ASnfk0HDHiL0+f03ssneDNP4D8FhCdZl4FPgBPIUv2l+mTcWxHeoY4zM=
+    
