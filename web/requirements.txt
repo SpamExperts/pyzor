@@ -1,4 +1,4 @@
 flask==0.12
-flask-wtf==0.14
+flask-wtf==0.14.1
 raven==5.32.0
 pyzor==1.0.0
