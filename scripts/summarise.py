@@ -98,20 +98,6 @@ def summarise(config, hook):
     db.close()
 
 
-TEXT = u"""Pyzor summary for _%(table)s_:
-
-• There are %(total)s digests; the most common spam digest has %(max_spam)s reports, and the most common whitelisted digest has %(max_white)s whitelists.
-
-• The oldest spam digest is from %(oldest_spam)s, and the oldest update is from %(oldest_spam_update)s.
-• The oldest whitelisted digest is from %(oldest_white)s, and the oldest update is from %(oldest_white_update)s.
-
-• The latest spam digest is from %(newest_spam)s, and the latest update is from %(newest_spam_update)s.
-• The latest whitelisted digest is from %(newest_white)s, and the latest update is from %(newest_white_update)s.
-"""
-
-ticks = u" ▁▂▃▄▅▆▇█"
-
-
 # Borrowed from https://raw.githubusercontent.com/kennethreitz/spark.py/master/spark.py
 def spark_string(ints, fit_min=False):
     """Returns a spark string from given iterable of ints.
@@ -121,6 +107,7 @@ def spark_string(ints, fit_min=False):
              rather than the default of zero. Useful for large numbers with
              relatively small differences between the positions
     """
+    ticks = u" ▁▂▃▄▅▆▇█"
     min_range = min(ints) if fit_min else 0
     step_range = max(ints) - min_range
     step = (step_range / float(len(ticks) - 1)) or 1
@@ -129,23 +116,102 @@ def spark_string(ints, fit_min=False):
 
 def notify_slack(hook, data):
     """Send a notification containing a summary of a Pyzor database to a Slack channel."""
-    text = TEXT % data
+    text = "Pyzor summary for _%(table)s_ (%(total)s digests)" % data
+    format = "%d %b %Y"
+    if data["max_spam"] < 100:
+        spam_colour = "danger"
+    else:
+        spam_colour = "good"
+    if data["max_white"] < 100:
+        white_colour = "danger"
+    else:
+        white_colour = "good"
+    if (datetime.datetime.now() - data["oldest_spam_update"]).days > 2:
+        spam_age_colour = "danger"
+    else:
+        spam_age_colour = "good"
+    if (datetime.datetime.now() - data["oldest_white_update"]).days > 2:
+        white_age_colour = "danger"
+    else:
+        white_age_colour = "good"
     attachments = [
         {
             "title": "Spam Reports",
             "text": spark_string(data["r_count"], fit_min=True),
+            "fields": [
+                {
+                    "title": "Most common count",
+                    "value": data["max_spam"],
+                    "short": True,
+                },
+            ],
+            "color": spam_colour,
         },
         {
             "title": "Whitelist Reports",
             "text": spark_string(data["wl_count"], fit_min=True),
+            "fields": [
+                {
+                    "title": "Most common count",
+                    "value": data["max_white"],
+                    "short": True,
+                },
+            ],
+            "color": white_colour,
         },
         {
             "title": "Spam Age",
             "text": spark_string(data["r_updated"], fit_min=True),
+            "fields": [
+                {
+                    "title": "Oldest",
+                    "value": data["oldest_spam"].strftime(format),
+                    "short": True,
+                },
+                {
+                    "title": "Oldest Update",
+                    "value": data["oldest_spam_update"].strftime(format),
+                    "short": True,
+                },
+                {
+                    "title": "Latest",
+                    "value": data["newest_spam"].strftime(format),
+                    "short": True,
+                },
+                {
+                    "title": "Latest Update",
+                    "value": data["newest_spam_update"].strftime(format),
+                    "short": True,
+                },
+            ],
+            "color": spam_age_colour,
         },
         {
             "title": "Whitelist Age",
             "text": spark_string(data["wl_updated"], fit_min=True),
+            "fields": [
+                {
+                    "title": "Oldest",
+                    "value": data["oldest_white"].strftime(format),
+                    "short": True,
+                },
+                {
+                    "title": "Oldest Update",
+                    "value": data["oldest_white_update"].strftime(format),
+                    "short": True,
+                },
+                {
+                    "title": "Latest",
+                    "value": data["newest_white"].strftime(format),
+                    "short": True,
+                },
+                {
+                    "title": "Latest Update",
+                    "value": data["newest_white_update"].strftime(format),
+                    "short": True,
+                },
+            ],
+            "color": white_age_colour,
         },
     ]
     response = requests.post(
