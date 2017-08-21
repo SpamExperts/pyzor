@@ -126,11 +126,11 @@ def notify_slack(hook, data):
         white_colour = "danger"
     else:
         white_colour = "good"
-    if (datetime.datetime.now() - data["oldest_spam_update"]).days > 2:
+    if (datetime.datetime.now() - data["newest_spam_update"]).days > 2:
         spam_age_colour = "danger"
     else:
         spam_age_colour = "good"
-    if (datetime.datetime.now() - data["oldest_white_update"]).days > 2:
+    if (datetime.datetime.now() - data["newest_white_update"]).days > 2:
         white_age_colour = "danger"
     else:
         white_age_colour = "good"
