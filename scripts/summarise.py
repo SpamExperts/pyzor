@@ -43,7 +43,7 @@ def summarise(config, hook):
         passwd=password,
         )
     c = db.cursor()
-    
+
     # TODO: With a newer Python, this could use f-strings.
     data = {}
     c.execute(
@@ -82,8 +82,9 @@ def summarise(config, hook):
     for column in ("r_updated", "wl_updated"):
         buckets = []
         for bucket in range(10):
-            low = datetime.datetime.now() - datetime.timedelta(days=(bucket + 1) * 7)
-            high = datetime.datetime.now() - datetime.timedelta(days=bucket * 7)
+            now = datetime.datetime.now()
+            low = now - datetime.timedelta(days=(bucket + 1) * 7)
+            high = now - datetime.timedelta(days=bucket * 7)
             c.execute(
                 "SELECT COUNT(*) FROM `%s` WHERE %s BETWEEN %%s AND %%s" %
                 (table, column), (low, high)
@@ -101,7 +102,7 @@ def summarise(config, hook):
 # Borrowed from https://raw.githubusercontent.com/kennethreitz/spark.py/master/spark.py
 def spark_string(ints, fit_min=False):
     """Returns a spark string from given iterable of ints.
-    
+
     Keyword Arguments:
     fit_min: Matches the range of the sparkline to the input integers
              rather than the default of zero. Useful for large numbers with
@@ -115,7 +116,8 @@ def spark_string(ints, fit_min=False):
 
 
 def notify_slack(hook, data):
-    """Send a notification containing a summary of a Pyzor database to a Slack channel."""
+    """Send a notification containing a summary of a Pyzor database to a
+    Slack channel."""
     text = "Pyzor summary for _%(table)s_ (%(total)s digests)" % data
     format = "%d %b %Y"
     if data["max_spam"] < 100:
