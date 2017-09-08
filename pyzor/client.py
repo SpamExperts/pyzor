@@ -19,7 +19,7 @@ To create a client, using the anonymous user:
 
 To get a digest (of an email.message.Message object, or similar):
 
->>> digest = pyzor.digest.get_digest(msg)
+>>> digest = pyzor.digest.DataDigester(msg).value
 
 To query a server (where address is a (host, port) pair):
 
