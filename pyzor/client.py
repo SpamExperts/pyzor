@@ -117,9 +117,9 @@ class Client(object):
         return self.read_response(sock, msg.get_thread())
 
     def _mock_check(self, digests, address=None):
-        msg = (b"Code: %s\nDiag: OK\nPV: %s\nThread: 1024\nCount: 0\n"
-               b"WL-Count: 0" % (pyzor.message.Response.ok_code,
-                                 pyzor.proto_version))
+        msg = (u"Code: %s\nDiag: OK\nPV: %s\nThread: 1024\nCount: 0\n"
+               u"WL-Count: 0" % (pyzor.message.Response.ok_code,
+                                 pyzor.proto_version)).encode('ascii')
         return email.message_from_bytes(msg, _class=pyzor.message.Response)
 
     def send(self, msg, address=("public.pyzor.org", 24441)):
