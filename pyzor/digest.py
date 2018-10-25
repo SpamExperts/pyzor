@@ -3,6 +3,8 @@
 from __future__ import print_function
 
 import re
+import sys
+import codecs
 import hashlib
 
 try:
@@ -15,6 +17,8 @@ digest_spec = ([(20, 3), (60, 3)])
 
 HASH = hashlib.sha1
 HASH_SIZE = len(HASH(b"").hexdigest())
+
+sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
 
 class HTMLStripper(HTMLParser.HTMLParser):
