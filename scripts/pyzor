@@ -104,7 +104,11 @@ def load_configuration():
 
     # Create the configuration directory if it doesn't already exist.
     if not os.path.exists(options.homedir):
-        os.mkdir(options.homedir)
+        try:
+            os.mkdir(options.homedir)
+        except OSError as e:
+            print("ERROR %s." % e)
+            sys.exit()
 
     # Load the configuration.
     config = ConfigParser.ConfigParser()
