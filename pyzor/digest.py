@@ -18,7 +18,9 @@ digest_spec = ([(20, 3), (60, 3)])
 HASH = hashlib.sha1
 HASH_SIZE = len(HASH(b"").hexdigest())
 
-sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+
+if sys.version_info[0] == 2:
+    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
 
 class HTMLStripper(HTMLParser.HTMLParser):
