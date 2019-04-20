@@ -26,8 +26,8 @@ from flask_wtf.recaptcha.fields import RecaptchaField
 from wtforms.validators import required, length
 
 try:
-    from raven.contrib.flask import Sentry
-    from raven.handlers.logging import SentryHandler
+    import sentry_sdk
+    from sentry_sdk.integrations.flask import FlaskIntegration
 except ImportError:
     pass
 
@@ -95,26 +95,22 @@ def setup_logging():
     log_level = getattr(logging, CONF.get("logging", "level"))
     logger.setLevel(log_level)
     logger.addHandler(file_handler)
-    raven_dsn = CONF.get("logging", "sentry")
 
-    if raven_dsn:
-        raven_log_level = getattr(logging, CONF.get("logging", "sentry_level"))
-        sentry_handler = SentryHandler(raven_dsn)
-        sentry_handler.setLevel(raven_log_level)
-        logger.addHandler(sentry_handler)
 
-app = flask.Flask(__name__)
 CONF = load_configuration()
 SENTRY_DSN = CONF.get("logging", "sentry")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn="https://b23e6ec6b4e14bdfb44dcfa5e9a8ba16@sentry.io/1207622",
+        integrations=[FlaskIntegration()]
+    )
 setup_logging()
+app = flask.Flask(__name__)
 app.config.update({
     "RECAPTCHA_USE_SSL": CONF.get("captcha", "ssl").lower() == "true",
     "RECAPTCHA_PUBLIC_KEY": CONF.get("captcha", "public_key"),
     "RECAPTCHA_PRIVATE_KEY": CONF.get("captcha", "private_key"),
 })
-
-if SENTRY_DSN:
-    sentry = Sentry(app, dsn=SENTRY_DSN)
 
 
 class MessageForm(Form):

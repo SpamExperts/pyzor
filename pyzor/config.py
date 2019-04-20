@@ -6,10 +6,10 @@ import logging
 import collections
 
 try:
-    from raven.handlers.logging import SentryHandler
-    _has_raven = True
+    import sentry_sdk
+    _has_sentry = True
 except ImportError:
-    _has_raven = False
+    _has_sentry = False
 
 import pyzor.account
 
@@ -238,11 +238,8 @@ def setup_logging(log_name, filepath, debug, sentry_dsn=None,
         file_handler.setFormatter(fmt)
         logger.addHandler(file_handler)
 
-    if sentry_dsn and _has_raven:
-        sentry_level = getattr(logging, sentry_lvl)
-        sentry_handler = SentryHandler(sentry_dsn)
-        sentry_handler.setLevel(sentry_level)
-        logger.addHandler(sentry_handler)
+    if sentry_dsn and _has_sentry:
+        sentry_sdk.init("https://8cb95c088d04414e885879898a952d05@sentry.io/1443213")
 
     return logger
 
