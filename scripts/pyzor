@@ -175,7 +175,10 @@ def _get_input_digests(dummy):
 
 
 def _get_input_msg(digester):
-    msg = email.message_from_file(sys.stdin)
+    # Read and process stdin as bytes because we don't know its
+    # encoding. Python-3.x will try to guess -- and can sometimes
+    # guess wrong -- leading to decoding errors in read().
+    msg = email.message_from_bytes(get_binary_stdin().read())
     digested = digester(msg).value
     yield digested
 
