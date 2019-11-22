@@ -1,6 +1,6 @@
 # Depending on what engine type you want to use
 # you will need one of the following
-mysqlclient==1.4.5
+mysqlclient==1.4.6
 redis==3.3.11
 # python-gdbm # not available via pip
 
