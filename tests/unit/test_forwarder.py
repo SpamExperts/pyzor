@@ -37,7 +37,7 @@ class ForwarderTest(unittest.TestCase):
         self.assertEqual(forwarder.forward_queue.qsize(), 0, 'queue should be empty')
         forwarder.stop_forwarding()
         t.join(5)
-        self.assertFalse(t.isAlive(), 'forward thread did not end')
+        self.assertFalse(t.is_alive(), 'forward thread did not end')
 
     def test_remote_servers(self):
         client = Mock()
