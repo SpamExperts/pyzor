@@ -4,7 +4,7 @@ Changelog
 Pyzor 1.0.1
 -----------
 
-Changed whitelist URL to app.pyzor.org/whitelist/
+Changed whitelist URL to https://app.pyzor.org/whitelist/
 
 Pyzor 1.0.0
 -----------
