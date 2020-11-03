@@ -1,8 +1,13 @@
 Changelog
-===========
+=========
+
+Pyzor 1.0.1
+-----------
+
+Changed whitelist URL to app.pyzor.org/whitelist/
 
 Pyzor 1.0.0
-------------
+-----------
 
 New features:
 
@@ -16,8 +21,7 @@ Perfomance enhancements:
     * Improve usage of the Redis engine by using Hashes instead of string for
       storing digests. The migration tool can be used to update you current 
       database. (`#29 <https://github.com/SpamExperts/pyzor/issues/29>`_)
-          
-      
+
 Others:
 
     * PyPy3 compatibility verified and introduced into the Travis-CI system. (`#24 <https://github.com/SpamExperts/pyzor/issues/24>`_)
