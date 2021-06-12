@@ -4,7 +4,7 @@ Description=pyzord-daemon
 [Service]
 Type=simple
 WorkingDirectory=/run/pyzor
-Environment=/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+Environment=PATH=/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 ExecCondition=test -x /home/pyzor/env/bin/pyzord
 PIDFile=/home/pyzor/.pyzor/pyzord.pid
 User=pyzor
