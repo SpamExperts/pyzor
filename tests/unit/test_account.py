@@ -138,7 +138,7 @@ class LoadAccountTest(unittest.TestCase):
                              u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
         result = pyzor.config.load_accounts(self.filepath)
         self.assertNotIn(("public.pyzor.org", 24441), result)
-        self.assertEquals(len(result), 1)
+        self.assertEqual(len(result), 1)
         self.assertIn(("public2.pyzor.org", 24441), result)
         account = result[("public2.pyzor.org", 24441)]
         self.assertEqual((account.username, account.salt, account.key),
@@ -150,7 +150,7 @@ class LoadAccountTest(unittest.TestCase):
                              u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
         result = pyzor.config.load_accounts(self.filepath)
         self.assertNotIn(("public.pyzor.org", 24441), result)
-        self.assertEquals(len(result), 1)
+        self.assertEqual(len(result), 1)
         self.assertIn(("public2.pyzor.org", 24441), result)
         account = result[("public2.pyzor.org", 24441)]
         self.assertEqual((account.username, account.salt, account.key),
@@ -162,7 +162,7 @@ class LoadAccountTest(unittest.TestCase):
                              u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
         result = pyzor.config.load_accounts(self.filepath)
         self.assertNotIn(("public.pyzor.org", 24441), result)
-        self.assertEquals(len(result), 1)
+        self.assertEqual(len(result), 1)
         self.assertIn(("public2.pyzor.org", 24441), result)
         account = result[("public2.pyzor.org", 24441)]
         self.assertEqual((account.username, account.salt, account.key),
@@ -174,7 +174,7 @@ class LoadAccountTest(unittest.TestCase):
                              u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
         result = pyzor.config.load_accounts(self.filepath)
         self.assertNotIn(("public.pyzor.org", 24441), result)
-        self.assertEquals(len(result), 1)
+        self.assertEqual(len(result), 1)
         self.assertIn(("public2.pyzor.org", 24441), result)
         account = result[("public2.pyzor.org", 24441)]
         self.assertEqual((account.username, account.salt, account.key),
