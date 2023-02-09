@@ -1,7 +1,7 @@
 # Depending on what engine type you want to use
 # you will need one of the following
 #mysqlclient==1.4.6
-redis==4.0.2
+redis==4.5.1
 # python-gdbm # not available via pip
 
 # If you want to use gevent you will also require 
