@@ -184,10 +184,10 @@ class Client(object):
                     raise pyzor.ProtocolError(
                         "received unexpected thread id %d (expected %d)" %
                         (thread_id, expected_id))
-                self.log.warn("received error thread id %d (expected %d)",
-                              thread_id, expected_id)
+                self.log.warning("received error thread id %d (expected %d)",
+                                 thread_id, expected_id)
         except KeyError:
-            self.log.warn("no thread id received")
+            self.log.warning("no thread id received")
         return msg
 
 

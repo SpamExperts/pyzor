@@ -233,7 +233,7 @@ class MySQLDBHandle(BaseEngine):
             c.execute("DELETE FROM %s WHERE r_updated<%%s" %
                       self.table_name, (breakpoint,))
         except (MySQLdb.Error, AttributeError) as e:
-            self.log.warn("Unable to reorganise: %s", e)
+            self.log.warning("Unable to reorganise: %s", e)
         finally:
             c.close()
             db.close()

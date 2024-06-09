@@ -47,8 +47,8 @@ class Forwarder(object):
                     else:
                         self.forwarding_client.report(digest, server)
                 except Exception as ex:
-                    self.log.warn('Forwarding digest %s to %s failed: %s',
-                                  digest, server, ex)
+                    self.log.warning('Forwarding digest %s to %s failed: %s',
+                                     digest, server, ex)
 
     def queue_forward_request(self, digest, whitelist=False):
         """If forwarding is enabled, insert a digest into the forwarding queue

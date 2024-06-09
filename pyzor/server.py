@@ -272,7 +272,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
             if int(float(request["PV"])) != int(pyzor.proto_version):
                 raise pyzor.UnsupportedVersionError()
         except ValueError:
-            self.server.log.warn("Invalid PV: %s", request["PV"])
+            self.server.log.warning("Invalid PV: %s", request["PV"])
             raise pyzor.ProtocolError("Invalid Protocol Version")
 
         # Check that the user has permission to execute the requested

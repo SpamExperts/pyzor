@@ -145,15 +145,16 @@ class MessageForm(Form):
                 response = client.check(digest)
             except pyzor.TimeoutError as e:
                 self.add_error("message", "Temporary error please try again.")
-                self.logger.warn("Timeout: %s", e)
+                self.logger.warning("Timeout: %s", e)
                 return False
             except pyzor.CommError as e:
                 self.add_error("message", "Temporary error please try again.")
-                self.logger.warn("Error: %s", e)
+                self.logger.warning("Error: %s", e)
                 return False
             if not response.is_ok():
                 self.add_error("message", "Temporary error please try again.")
-                self.logger.warn("Invalid response from server: %s", response)
+                self.logger.warning("Invalid response from server: %s",
+                                    response)
                 return False
             if int(response["Count"]) == 0:
                 self.add_error("message", "Message not reported as spam.")
