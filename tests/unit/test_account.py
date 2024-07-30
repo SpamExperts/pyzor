@@ -115,7 +115,14 @@ class LoadAccountTest(unittest.TestCase):
             pyzor.account.__builtins__["open"] = self.real_open
 
     def test_load_accounts_nothing(self):
-        result = pyzor.config.load_accounts("foobar")
+        try:
+            with self.assertLogs("pyzor", level='WARNING') as logs:
+                result = pyzor.config.load_accounts("foobar")
+                self.assertEqual(["WARNING:pyzor:No accounts are setup.  All commands will be executed by the anonymous user."], logs.output)
+        except AttributeError as e:
+            # Python 2 backwards compatibility.
+            self.assertEqual(e.message, "'LoadAccountTest' object has no attribute 'assertLogs'")
+            result = pyzor.config.load_accounts("foobar")
         self.assertEqual(result, {})
 
     def test_load_accounts(self):
@@ -136,7 +143,15 @@ class LoadAccountTest(unittest.TestCase):
         """Test loading the account file"""
         self.mock_file.write(u"public.pyzor.org : 24441 ; test : 123abc,cba321\n"
                              u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
-        result = pyzor.config.load_accounts(self.filepath)
+        try:
+            with self.assertLogs("pyzor", level='WARNING') as logs:
+                result = pyzor.config.load_accounts(self.filepath)
+                self.assertEqual(["WARNING:pyzor:account file: invalid line 0: wrong number of parts"], logs.output)
+        except AttributeError as e:
+            # Python 2 backwards compatibility.
+            self.assertEqual(e.message, "'LoadAccountTest' object has no attribute 'assertLogs'")
+            result = pyzor.config.load_accounts(self.filepath)
+
         self.assertNotIn(("public.pyzor.org", 24441), result)
         self.assertEqual(len(result), 1)
         self.assertIn(("public2.pyzor.org", 24441), result)
@@ -148,7 +163,15 @@ class LoadAccountTest(unittest.TestCase):
         """Test loading the account file"""
         self.mock_file.write(u"public.pyzor.org : a4441 : test : 123abc,cba321\n"
                              u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
-        result = pyzor.config.load_accounts(self.filepath)
+        try:
+            with self.assertLogs("pyzor", level='WARNING') as logs:
+                result = pyzor.config.load_accounts(self.filepath)
+                self.assertEqual(["WARNING:pyzor:account file: invalid line 0: invalid literal for int() with base 10: 'a4441'"], logs.output)
+        except AttributeError as e:
+            # Python 2 backwards compatibility.
+            self.assertEqual(e.message, "'LoadAccountTest' object has no attribute 'assertLogs'")
+            result = pyzor.config.load_accounts(self.filepath)
+
         self.assertNotIn(("public.pyzor.org", 24441), result)
         self.assertEqual(len(result), 1)
         self.assertIn(("public2.pyzor.org", 24441), result)
@@ -160,7 +183,14 @@ class LoadAccountTest(unittest.TestCase):
         """Test loading the account file"""
         self.mock_file.write(u"public.pyzor.org : 24441 : test : ,\n"
                              u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
-        result = pyzor.config.load_accounts(self.filepath)
+        try:
+            with self.assertLogs("pyzor", level='WARNING') as logs:
+                result = pyzor.config.load_accounts(self.filepath)
+                self.assertEqual(["WARNING:pyzor:account file: invalid line 0: keystuff can't be all None's"], logs.output)
+        except AttributeError as e:
+            # Python 2 backwards compatibility.
+            self.assertEqual(e.message, "'LoadAccountTest' object has no attribute 'assertLogs'")
+            result = pyzor.config.load_accounts(self.filepath)
         self.assertNotIn(("public.pyzor.org", 24441), result)
         self.assertEqual(len(result), 1)
         self.assertIn(("public2.pyzor.org", 24441), result)
@@ -172,7 +202,16 @@ class LoadAccountTest(unittest.TestCase):
         """Test loading the account file"""
         self.mock_file.write(u"public.pyzor.org : 24441 : test : 123abccba321\n"
                              u"public2.pyzor.org : 24441 : test2 : 123abc,cba321")
-        result = pyzor.config.load_accounts(self.filepath)
+        try:
+            with self.assertLogs("pyzor", level='WARNING') as logs:
+                result = pyzor.config.load_accounts(self.filepath)
+                self.assertEqual(["WARNING:pyzor:account file: invalid line 0: Invalid number of parts for key; perhaps you forgot the comma at the beginning for the salt divider?"],
+logs.output)
+        except AttributeError as e:
+            # Python 2 backwards compatibility.
+            self.assertEqual(e.message, "'LoadAccountTest' object has no attribute 'assertLogs'")
+            result = pyzor.config.load_accounts(self.filepath)
+
         self.assertNotIn(("public.pyzor.org", 24441), result)
         self.assertEqual(len(result), 1)
         self.assertIn(("public2.pyzor.org", 24441), result)

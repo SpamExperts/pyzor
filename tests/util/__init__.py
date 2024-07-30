@@ -246,7 +246,6 @@ class PyzorTestBase(unittest.TestCase):
 
     def check_digest(self, digest, address, counts=(0, 0)):
         result = self.client.check(digest, address)
-
         self.assertEqual((int(result["Count"]), int(result["WL-Count"])),
                           counts)
         return result

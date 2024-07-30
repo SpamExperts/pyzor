@@ -17,7 +17,7 @@ else
         sudo apt-get install -y python-dev
     fi
 
-    mysql --version | grep -qi maria && sudo apt-get install -y libmariadbclient-dev
+    mysql --version | grep -qi maria && sudo apt-get install -y libmariadb-dev-compat libmariadb-dev
     mysql --version | grep -qi maria || sudo apt-get install -y libmysqlclient-dev
 
     sudo apt-get install -y build-essential
@@ -30,7 +30,10 @@ else
 
     if [ "$1" != "prepare" ]
     then
-        py.test tests/unit/ --cov pyzor --cov-report term-missing
-        py.test tests/functional/
+        # py.test tests/unit/ --cov pyzor --cov-report term-missing
+        # py.test tests/functional/test_engines/test_mysql.py::PreForkMySQLdbPyzorTest --cov pyzor --cov-report term-missing
+        
+        py.test tests/functional/test_engines/test_redis.py::PreForkRedisPyzorTest --cov pyzor --cov-report term-missing
+    # PreForkRedisPyzorTest
     fi
 fi

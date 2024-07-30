@@ -89,32 +89,44 @@ class Client(object):
     def ping(self, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.PingRequest()
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def pong(self, digest, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.PongRequest(digest)
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def info(self, digest, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.InfoRequest(digest)
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def report(self, digest, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.ReportRequest(digest, self.spec)
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def whitelist(self, digest, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.WhitelistRequest(digest, self.spec)
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def check(self, digest, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.CheckRequest(digest)
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def _mock_check(self, digests, address=None):
         msg = (u"Code: %s\nDiag: OK\nPV: %s\nThread: 1024\nCount: 0\n"
@@ -202,10 +214,14 @@ class BatchClient(Client):
         self.flush()
 
     def report(self, digest, address=("public.pyzor.org", 24441)):
-        self._add_digest(digest, address, self.r_requests)
+        socket = self._add_digest(digest, address, self.r_requests)
+        if socket:
+            socket.close()
 
     def whitelist(self, digest, address=("public.pyzor.org", 24441)):
-        self._add_digest(digest, address, self.w_requests)
+        socket = self._add_digest(digest, address, self.w_requests)
+        if socket:
+            socket.close()
 
     def _add_digest(self, digest, address, requests):
         address = (address[0], int(address[1]))
@@ -229,12 +245,14 @@ class BatchClient(Client):
         """Force send any remaining reports."""
         for address, msg in self.r_requests.items():
             try:
-                self.send(msg, address)
+                ret = self.send(msg, address)
+                ret.close()
             except:
                 continue
         for address, msg in self.w_requests.items():
             try:
-                self.send(msg, address)
+                ret = self.send(msg, address)
+                ret.close()
             except:
                 continue
 

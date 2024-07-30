@@ -63,12 +63,12 @@ def load_access_file(access_fn, accounts):
             operations, users, allowed = [part.lower().strip()
                                           for part in line.split(":")]
         except ValueError:
-            log.warn("Invalid ACL line: %r", line)
+            log.warning("Invalid ACL line: %r", line)
             continue
         try:
             allowed = {"allow": True, "deny": False}[allowed]
         except KeyError:
-            log.warn("Invalid ACL line: %r", line)
+            log.warning("Invalid ACL line: %r", line)
             continue
         if operations == "all":
             operations = ("check", "report", "ping", "pong", "info",
@@ -118,7 +118,7 @@ def load_passwd_file(passwd_fn):
         try:
             user, key = line.split(":")
         except ValueError:
-            log.warn("Invalid accounts line: %r", line)
+            log.warning("Invalid accounts line: %r", line)
             continue
         user = user.strip()
         key = key.strip()
@@ -145,29 +145,29 @@ def load_accounts(filepath):
                 host, port, username, key = [x.strip()
                                              for x in line.split(":")]
             except ValueError:
-                log.warn("account file: invalid line %d: wrong number of "
+                log.warning("account file: invalid line %d: wrong number of "
                          "parts", lineno)
                 continue
             try:
                 port = int(port)
             except ValueError as ex:
-                log.warn("account file: invalid line %d: %s", lineno, ex)
+                log.warning("account file: invalid line %d: %s", lineno, ex)
                 continue
             address = (host, port)
             try:
                 salt, key = pyzor.account.key_from_hexstr(key)
             except ValueError as ex:
-                log.warn("account file: invalid line %d: %s", lineno, ex)
+                log.warning("account file: invalid line %d: %s", lineno, ex)
                 continue
             if not salt and not key:
-                log.warn("account file: invalid line %d: keystuff can't be "
+                log.warning("account file: invalid line %d: keystuff can't be "
                          "all None's", lineno)
                 continue
             accounts[address] = pyzor.account.Account(username, salt, key)
         accountsf.close()
 
     else:
-        log.warn("No accounts are setup.  All commands will be executed by "
+        log.warning("No accounts are setup.  All commands will be executed by "
                  "the anonymous user.")
     return accounts
 
