@@ -347,7 +347,7 @@ def main():
         # Enssure that all modules are reloaded so they benefit from
         # the gevent library.
         for module in (os, sys, pyzor, pyzor.server, pyzor.engines):
-            pyzor.hacks.py3.reload(module)
+            pyzor.hacks.py3._reload(module)
 
     if options.detach:
         detach(stdout=options.detach, pidfile=pidfile_fn)

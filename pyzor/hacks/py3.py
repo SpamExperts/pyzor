@@ -3,7 +3,7 @@
 import sys
 
 
-def reload(module):
+def _reload(module):
     """Reload the module.
 
     This is handled differently according to the
