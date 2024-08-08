@@ -83,6 +83,9 @@ class Server(SocketServer.UDPServer):
         self.log.debug("Listening on %s", address)
         SocketServer.UDPServer.__init__(self, address, RequestHandler,
                                         bind_and_activate=False)
+
+        # Make sure the socket is not blocking or this will not run asynchronously.
+        self.socket.setblocking(False)
         try:
             self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
         except (AttributeError, socket.error) as e:
@@ -137,13 +140,16 @@ class PreForkServer(Server):
     def serve_forever(self, poll_interval=0.5):
         """Fork the current process and wait for all children to finish."""
         pids = []
-        for dummy in range(self._prefork):
+        for _ in range(self._prefork):
             database = next(self.database)
             pid = os.fork()
             if not pid:
                 # Create the database in the child process, to prevent issues
                 self.database = database()
+                self.is_worker = True
+                self.log.info("Worker process started.")
                 Server.serve_forever(self, poll_interval=poll_interval)
+                self.log.info("Clean-up done for worker process.")
                 os._exit(0)
             else:
                 pids.append(pid)
@@ -272,7 +278,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
             if int(float(request["PV"])) != int(pyzor.proto_version):
                 raise pyzor.UnsupportedVersionError()
         except ValueError:
-            self.server.log.warn("Invalid PV: %s", request["PV"])
+            self.server.log.warning("Invalid PV: %s", request["PV"])
             raise pyzor.ProtocolError("Invalid Protocol Version")
 
         # Check that the user has permission to execute the requested

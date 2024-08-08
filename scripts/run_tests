@@ -22,18 +22,14 @@ else
 
     sudo apt-get install -y build-essential
 
-    pip install pytest pytest-cov python-coveralls
-    pip install -r requirements.txt
-    python setup.py install
+    python -m pip install pytest pytest-cov python-coveralls
+    python -m pip install -r requirements.txt
+    python -m pip install .
     mysql -e 'create database if not exists pyzor_test'
 
 
     if [ "$1" != "prepare" ]
     then
-        # py.test tests/unit/ --cov pyzor --cov-report term-missing
-        # py.test tests/functional/test_engines/test_mysql.py::PreForkMySQLdbPyzorTest --cov pyzor --cov-report term-missing
-        
-        py.test tests/functional/test_engines/test_redis.py::PreForkRedisPyzorTest --cov pyzor --cov-report term-missing
-    # PreForkRedisPyzorTest
+        py.test tests/unit/ --cov pyzor --cov-report term-missing        
     fi
 fi
