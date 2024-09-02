@@ -30,6 +30,7 @@ else
 
     if [ "$1" != "prepare" ]
     then
-        py.test tests/unit/ --cov pyzor --cov-report term-missing        
+        py.test tests/unit/ --cov pyzor --cov-report term-missing
+        py.test tests/functional/
     fi
 fi

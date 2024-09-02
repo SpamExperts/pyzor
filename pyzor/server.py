@@ -146,10 +146,9 @@ class PreForkServer(Server):
             if not pid:
                 # Create the database in the child process, to prevent issues
                 self.database = database()
-                self.is_worker = True
-                self.log.info("Worker process started.")
+                self.log.debug("Worker process started.")
                 Server.serve_forever(self, poll_interval=poll_interval)
-                self.log.info("Clean-up done for worker process.")
+                self.log.debug("Clean-up done for worker process.")
                 os._exit(0)
             else:
                 pids.append(pid)
