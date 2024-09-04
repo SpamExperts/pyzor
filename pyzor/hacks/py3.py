@@ -3,8 +3,8 @@
 import sys
 
 
-def reload(module):
-    """Reload the modeule.
+def _reload(module):
+    """Reload the module.
 
     This is handled differently according to the
     python version. This even varies across Python3

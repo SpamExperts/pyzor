@@ -92,7 +92,7 @@ def initialize_forwarding(client_config_dir, debug):
     }
     config = ConfigParser.ConfigParser()
     config.add_section("client")
-    for key, value in forward_defaults.iteritems():
+    for key, value in forward_defaults.items():
         config.set("client", key, value)
 
     config.read(os.path.join(client_config_dir, "config"))
@@ -127,6 +127,7 @@ def load_configuration():
         homedir = os.path.join(userhome, '.pyzor')
     else:
         homedir = os.path.join("/etc", "pyzor")
+
 
     # Configuration defaults.  The configuration file overrides these, and
     # then the command-line options override those.
@@ -346,7 +347,7 @@ def main():
         # Enssure that all modules are reloaded so they benefit from
         # the gevent library.
         for module in (os, sys, pyzor, pyzor.server, pyzor.engines):
-            pyzor.hacks.py3.reload(module)
+            pyzor.hacks.py3._reload(module)
 
     if options.detach:
         detach(stdout=options.detach, pidfile=pidfile_fn)

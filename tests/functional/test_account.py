@@ -3,7 +3,7 @@ import unittest
 from tests.util import *
 
 class AccountPyzorTest(PyzorTestBase):
-    
+
     # test bob which has access to everything
     def test_ping(self):
         self.check_pyzor("ping", "bob", code=200, exit_code=0)
@@ -132,7 +132,6 @@ def suite():
     test_suite.addTest(unittest.makeSuite(AccountPyzorTest))
     test_suite.addTest(unittest.makeSuite(AnonymousPyzorTest))
     return test_suite
-        
+
 if __name__ == '__main__':
     unittest.main()
-            
