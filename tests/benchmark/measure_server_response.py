@@ -47,9 +47,9 @@ def measure_methods(methods, repeats, timeout, server, queue):
 
     threads = []
     for method in methods:
-        thread = threading.Thread(target=measure_method,
-                                  args=(method, repeats, timeout, server,
-                                        queue))
+        thread = threading.Thread(
+            target=measure_method, args=(method, repeats, timeout, server, queue)
+        )
         threads.append(thread)
         thread.start()
 
@@ -60,9 +60,7 @@ def measure_methods(methods, repeats, timeout, server, queue):
 def json_handler(res):
     fres = {}
     for method, result in res.items():
-        fres[method] = {"runs": [],
-                        "timeouts": result["timeouts"],
-                        "totals": {}}
+        fres[method] = {"runs": [], "timeouts": result["timeouts"], "totals": {}}
         total = 0
         best_all = []
         for i, results in enumerate(result["results"]):
@@ -73,19 +71,18 @@ def json_handler(res):
             total += average
             best_all.extend(best)
 
-            fres[method]["runs"].append({"average": average,
-                                         "best": best})
+            fres[method]["runs"].append({"average": average, "best": best})
         fres[method]["totals"]["average"] = total / len(result["results"])
         fres[method]["totals"]["best"] = best_all[:3]
-    print json.dumps(fres, indent=4)
+    print(json.dumps(fres, indent=4))
 
 
 def print_handler(res):
     for method, result in res.items():
-        print "=" * 80
-        print "Method: %s" % method
-        print "Timeouts: %s" % result["timeouts"]
-        print "=" * 80
+        print("=" * 80)
+        print("Method: %s" % method)
+        print("Timeouts: %s" % result["timeouts"])
+        print("=" * 80)
 
         total = 0
         best_all = []
@@ -97,16 +94,17 @@ def print_handler(res):
             total += average
             best_all.extend(best)
 
-            print "\t(%s) %s %s" % (i, average, best)
-        print "=" * 80
-        print "Total: %s %s" % (total / len(result["results"]), best_all[:3])
-        print "\n"
+            print("\t(%s) %s %s" % (i, average, best))
+        print("=" * 80)
+        print("Total: %s %s" % (total / len(result["results"]), best_all[:3]))
+        print("\n")
 
 
 def main():
     opt = optparse.OptionParser()
-    opt.add_option("-n", "--nice", dest="nice", type="int",
-                   help="'nice' level", default=0)
+    opt.add_option(
+        "-n", "--nice", dest="nice", type="int", help="'nice' level", default=0
+    )
     opt.add_option("-s", "--server", dest="server", default="127.0.0.1:24441")
     opt.add_option("-m", "--method", dest="method", default="all")
     opt.add_option("-f", "--format", dest="format", default="print")
@@ -122,9 +120,10 @@ def main():
 
     threads = []
     for dummy in range(options.threads):
-        thread = threading.Thread(target=measure_methods,
-                                  args=(options.method, options.repeats,
-                                        options.timeout, server, queue))
+        thread = threading.Thread(
+            target=measure_methods,
+            args=(options.method, options.repeats, options.timeout, server, queue),
+        )
         threads.append(thread)
         thread.start()
 
@@ -132,8 +131,7 @@ def main():
         thread.join()
 
     def get_new_info():
-        return {"results": [],
-                "timeouts": 0}
+        return {"results": [], "timeouts": 0}
 
     res = collections.defaultdict(get_new_info)
     while True:
@@ -147,5 +145,5 @@ def main():
     globals()["%s_handler" % options.format](res)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

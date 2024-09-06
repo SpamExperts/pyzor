@@ -9,48 +9,64 @@ import pyzor.engines
 import pyzor.engines.mysql
 import pyzor.engines.common
 
-class MockTimer():
+
+class MockTimer:
     def __init__(self, *args, **kwargs):
         pass
+
     def start(self):
         pass
+
     def setDaemon(self, daemon):
         pass
 
+
 def make_MockMySQL(result, queries):
-    class MockCursor():
+    class MockCursor:
         def __init__(self):
             self.done = False
+
         def fetchone(self):
             if not self.done:
                 self.done = True
                 return result
             else:
                 return None
+
         def fetchall(self):
             return [result]
+
         def execute(self, query, args=None):
             queries.append((query, args))
+
         def close(self):
             pass
-    class MockDB():
+
+    class MockDB:
         def cursor(self, *args, **kwargs):
             return MockCursor()
+
         def close(self):
             pass
+
         def commit(self):
             pass
+
         def autocommit(self, value):
             pass
-    class MockMysql():
+
+    class MockMysql:
         @staticmethod
         def connect(*args, **kwargs):
             return MockDB()
+
         class Error(Exception):
             pass
+
         class cursors:
             class SSCursor:
                 pass
+
     return MockMysql
 
 
@@ -71,9 +87,14 @@ class MySQLTest(unittest.TestCase):
         self.real_timer = threading.Timer
         threading.Timer = MockTimer
 
-        self.record = pyzor.engines.common.Record(self.r_count, self.wl_count,
-                                                  self.entered, self.updated,
-                                                  self.wl_entered, self.wl_updated)
+        self.record = pyzor.engines.common.Record(
+            self.r_count,
+            self.wl_count,
+            self.entered,
+            self.updated,
+            self.wl_entered,
+            self.wl_updated,
+        )
 
         self.response = self.record_unpack()
         self.queries = []
@@ -85,7 +106,6 @@ class MySQLTest(unittest.TestCase):
             self.real_mysql = None
         setattr(pyzor.engines.mysql, "MySQLdb", mock_MySQL)
 
-
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         threading.Timer = self.real_timer
@@ -94,39 +114,58 @@ class MySQLTest(unittest.TestCase):
     def record_unpack(self, record=None):
         if not record:
             record = self.record
-        return (record.r_count, record.wl_count,
-                record.r_entered, record.r_updated,
-                record.wl_entered, record.wl_updated)
+        return (
+            record.r_count,
+            record.wl_count,
+            record.r_entered,
+            record.r_updated,
+            record.wl_entered,
+            record.wl_updated,
+        )
 
     def test_reconnect(self):
         """Test MySQLDBHandle.__init__"""
         expected = "DELETE FROM testtable WHERE r_updated<%s"
 
-        self.handler("testhost,testuser,testpass,testdb,testtable", None,
-                     max_age=self.max_age)
+        self.handler(
+            "testhost,testuser,testpass,testdb,testtable", None, max_age=self.max_age
+        )
 
         self.assertEqual(self.queries[0][0], expected)
 
     def test_no_reorganize(self):
-        self.handler("testhost,testuser,testpass,testdb,testtable", None,
-                     max_age=None)
+        self.handler("testhost,testuser,testpass,testdb,testtable", None, max_age=None)
         self.assertFalse(self.queries)
 
     def test_set_item(self):
         """Test MySQLDBHandle.__setitem__"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        expected = ("INSERT INTO testtable (digest, r_count, wl_count, "
-                    "r_entered, r_updated, wl_entered, wl_updated) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s) ON "
-                    "DUPLICATE KEY UPDATE r_count=%s, wl_count=%s, "
-                    "r_entered=%s, r_updated=%s, wl_entered=%s, "
-                    "wl_updated=%s",
-                    (digest, self.r_count, self.wl_count, self.entered,
-                     self.updated, self.wl_entered, self.wl_updated,
-                     self.r_count, self.wl_count, self.entered,
-                     self.updated, self.wl_entered, self.wl_updated))
-        handle = self.handler("testhost,testuser,testpass,testdb,testtable",
-                              None, max_age=self.max_age)
+        expected = (
+            "INSERT INTO testtable (digest, r_count, wl_count, "
+            "r_entered, r_updated, wl_entered, wl_updated) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s) ON "
+            "DUPLICATE KEY UPDATE r_count=%s, wl_count=%s, "
+            "r_entered=%s, r_updated=%s, wl_entered=%s, "
+            "wl_updated=%s",
+            (
+                digest,
+                self.r_count,
+                self.wl_count,
+                self.entered,
+                self.updated,
+                self.wl_entered,
+                self.wl_updated,
+                self.r_count,
+                self.wl_count,
+                self.entered,
+                self.updated,
+                self.wl_entered,
+                self.wl_updated,
+            ),
+        )
+        handle = self.handler(
+            "testhost,testuser,testpass,testdb,testtable", None, max_age=self.max_age
+        )
 
         handle[digest] = self.record
         self.assertEqual(self.queries[1], expected)
@@ -134,11 +173,14 @@ class MySQLTest(unittest.TestCase):
     def test_get_item(self):
         """Test MySQLDBHandle.__getitem__"""
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        expected = ("SELECT r_count, wl_count, r_entered, r_updated, "
-                    "wl_entered, wl_updated FROM testtable WHERE digest=%s",
-                    (digest,))
-        handle = self.handler("testhost,testuser,testpass,testdb,testtable",
-                              None, max_age=self.max_age)
+        expected = (
+            "SELECT r_count, wl_count, r_entered, r_updated, "
+            "wl_entered, wl_updated FROM testtable WHERE digest=%s",
+            (digest,),
+        )
+        handle = self.handler(
+            "testhost,testuser,testpass,testdb,testtable", None, max_age=self.max_age
+        )
 
         result = handle[digest]
         self.assertEqual(self.queries[1], expected)
@@ -149,18 +191,23 @@ class MySQLTest(unittest.TestCase):
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
         expected = ("DELETE FROM testtable WHERE digest=%s", (digest,))
 
-        handle = self.handler("testhost,testuser,testpass,testdb,testtable",
-                              None, max_age=self.max_age)
+        handle = self.handler(
+            "testhost,testuser,testpass,testdb,testtable", None, max_age=self.max_age
+        )
         del handle[digest]
         self.assertEqual(self.queries[1], expected)
 
     def test_items(self):
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        expected = ("SELECT digest, r_count, wl_count, r_entered, r_updated, "
-                    "wl_entered, wl_updated FROM testtable", None)
+        expected = (
+            "SELECT digest, r_count, wl_count, r_entered, r_updated, "
+            "wl_entered, wl_updated FROM testtable",
+            None,
+        )
         self.response = (digest, self.response)
-        handle = self.handler("testhost,testuser,testpass,testdb,testtable",
-                              None, max_age=self.max_age)
+        handle = self.handler(
+            "testhost,testuser,testpass,testdb,testtable", None, max_age=self.max_age
+        )
         handle.items()
         self.assertEqual(self.queries[1], expected)
 
@@ -169,8 +216,9 @@ class MySQLTest(unittest.TestCase):
         expected = ("SELECT digest FROM testtable", None)
         self.response = (digest,)
 
-        handle = self.handler("testhost,testuser,testpass,testdb,testtable",
-                              None, max_age=self.max_age)
+        handle = self.handler(
+            "testhost,testuser,testpass,testdb,testtable", None, max_age=self.max_age
+        )
         for d in handle:
             pass
 
@@ -179,11 +227,13 @@ class MySQLTest(unittest.TestCase):
 
 class ThreadedMySQLTest(MySQLTest):
     """Test the GdbmDBHandle class"""
+
     handler = pyzor.engines.mysql.ThreadedMySQLDBHandle
 
 
 class ProcessesMySQLTest(MySQLTest):
     """Test the GdbmDBHandle class"""
+
     handler = pyzor.engines.mysql.ProcessMySQLDBHandle
 
 
@@ -195,6 +245,6 @@ def suite():
     test_suite.addTest(unittest.makeSuite(ProcessesMySQLTest))
     return test_suite
 
-if __name__ == '__main__':
-    unittest.main()
 
+if __name__ == "__main__":
+    unittest.main()

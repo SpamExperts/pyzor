@@ -20,9 +20,11 @@ email</a>. Clicking on <a href="/wiki/Html_email#Security_vulnerabilities" title
 links in spam email</a> may send users to <a href="/wiki/Phishing" title="Phishing">phishing</a> 
 web sites or sites that are hosting <a href="/wiki/Malware" title="Malware">malware</a>.</body></html>"""
 
-HTML_TEXT_STRIPED = 'Email spam Email spam , also known as junk email or unsolicited bulk email ( UBE ),' \
-                    ' is a subset of electronic spam involving nearly identical messages sent to numerous recipients by email' \
-                    ' . Clicking on links in spam email may send users to phishing web sites or sites that are hosting malware .'
+HTML_TEXT_STRIPED = (
+    "Email spam Email spam , also known as junk email or unsolicited bulk email ( UBE ),"
+    " is a subset of electronic spam involving nearly identical messages sent to numerous recipients by email"
+    " . Clicking on links in spam email may send users to phishing web sites or sites that are hosting malware ."
+)
 
 
 HTML_STYLE = """<html><head></head><sTyle>Some random style</stylE>
@@ -82,16 +84,17 @@ class PreDigestTests(unittest.TestCase):
         DataDigester.digest_payloads = self.real_digest_payloads
         DataDigester.handle_line = self.real_handle_line
 
-
     def test_predigest_emails(self):
         """Test email removal in the predigest process"""
         real_longstr = DataDigester.longstr_ptrn
-        DataDigester.longstr_ptrn = re.compile(r'\S{100,}')
-        emails = ["test@example.com",
-                  "test123@example.com",
-                  "test+abc@example.com",
-                  "test.test2@example.com",
-                  "test.test2+abc@example.com", ]
+        DataDigester.longstr_ptrn = re.compile(r"\S{100,}")
+        emails = [
+            "test@example.com",
+            "test123@example.com",
+            "test+abc@example.com",
+            "test.test2@example.com",
+            "test.test2+abc@example.com",
+        ]
         message = "Test %s Test2"
         expected = "TestTest2"
         try:
@@ -105,13 +108,14 @@ class PreDigestTests(unittest.TestCase):
     def test_predigest_urls(self):
         """Test url removal in the predigest process"""
         real_longstr = DataDigester.longstr_ptrn
-        DataDigester.longstr_ptrn = re.compile(r'\S{100,}')
-        urls = ["http://www.example.com",
-                # "www.example.com", # XXX This also fail
-                "http://example.com",
-                # "example.com", # XXX This also fails
-                "http://www.example.com/test/"
-                "http://www.example.com/test/test2", ]
+        DataDigester.longstr_ptrn = re.compile(r"\S{100,}")
+        urls = [
+            "http://www.example.com",
+            # "www.example.com", # XXX This also fail
+            "http://example.com",
+            # "example.com", # XXX This also fails
+            "http://www.example.com/test/" "http://www.example.com/test/test2",
+        ]
         message = "Test %s Test2"
         expected = "TestTest2"
         try:
@@ -124,9 +128,7 @@ class PreDigestTests(unittest.TestCase):
 
     def test_predigest_long(self):
         """Test long "words" removal in the predigest process"""
-        strings = ["0A2D3f%a#S",
-                   "3sddkf9jdkd9",
-                   "@@#@@@@@@@@@"]
+        strings = ["0A2D3f%a#S", "3sddkf9jdkd9", "@@#@@@@@@@@@"]
         message = "Test %s Test2"
         expected = "TestTest2"
         for string in strings:
@@ -136,9 +138,7 @@ class PreDigestTests(unittest.TestCase):
 
     def test_predigest_min_line_lenght(self):
         """Test small lines removal in the predigest process"""
-        message = "This line is included\n" \
-                  "not this\n" \
-                  "This also"
+        message = "This line is included\n" "not this\n" "This also"
         expected = ["Thislineisincluded", "Thisalso"]
         DataDigester(message.encode("utf8"))
         self.assertEqual(self.lines, expected)
@@ -205,13 +205,14 @@ class DigestTests(unittest.TestCase):
 class MessageDigestTest(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
-        patch("pyzor.digest.DataDigester.normalize_html_part",
-              return_value="normalized").start()
+        patch(
+            "pyzor.digest.DataDigester.normalize_html_part", return_value="normalized"
+        ).start()
         self.config = {
             "get_content_maintype.return_value": "text",
             "get_content_charset.return_value": "utf8",
             "get_payload.return_value": Mock(),
-            "get_payload.return_value.decode.return_value": "decoded"
+            "get_payload.return_value.decode.return_value": "decoded",
         }
 
     def tearDown(self):
@@ -228,7 +229,7 @@ class MessageDigestTest(unittest.TestCase):
         mock_part, mock_msg, result = self.check_msg()
         self.assertEqual(result, ["decoded"])
 
-        expected = [call.decode('utf8', 'ignore')]
+        expected = [call.decode("utf8", "ignore")]
         payload = mock_part.get_payload.return_value
         payload.assert_has_calls(expected, True)
 
@@ -237,7 +238,7 @@ class MessageDigestTest(unittest.TestCase):
         mock_part, mock_msg, result = self.check_msg()
         self.assertEqual(result, ["decoded"])
 
-        expected = [call.decode('ascii', 'ignore')]
+        expected = [call.decode("ascii", "ignore")]
         payload = mock_part.get_payload.return_value
         payload.assert_has_calls(expected)
 
@@ -246,7 +247,7 @@ class MessageDigestTest(unittest.TestCase):
         mock_part, mock_msg, result = self.check_msg()
         self.assertEqual(result, ["decoded"])
 
-        expected = [call.decode('quopri', 'strict')]
+        expected = [call.decode("quopri", "strict")]
         payload = mock_part.get_payload.return_value
         payload.assert_has_calls(expected)
 
@@ -255,12 +256,12 @@ class MessageDigestTest(unittest.TestCase):
             if encoding not in ("ascii",):
                 raise LookupError()
             return "decoded"
+
         self.config["get_payload.return_value.decode.side_effect"] = _decode
         mock_part, mock_msg, result = self.check_msg()
         self.assertEqual(result, ["decoded"])
 
-        expected = [call.decode('utf8', 'ignore'),
-                    call.decode('ascii', 'ignore')]
+        expected = [call.decode("utf8", "ignore"), call.decode("ascii", "ignore")]
         payload = mock_part.get_payload.return_value
         payload.assert_has_calls(expected)
 
@@ -269,8 +270,7 @@ class MessageDigestTest(unittest.TestCase):
         mock_part, mock_msg, result = self.check_msg()
         self.assertEqual(result, [])
 
-        expected = [call.decode('utf8', 'ignore'),
-                    call.decode('ascii', 'ignore')]
+        expected = [call.decode("utf8", "ignore"), call.decode("ascii", "ignore")]
         payload = mock_part.get_payload.return_value
         payload.assert_has_calls(expected)
 
@@ -302,6 +302,5 @@ def suite():
     return test_suite
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-

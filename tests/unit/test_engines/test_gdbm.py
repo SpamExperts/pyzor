@@ -10,13 +10,17 @@ from datetime import datetime, timedelta
 import pyzor.engines.gdbm_
 import pyzor.engines.common
 
-class MockTimer():
+
+class MockTimer:
     def __init__(self, *args, **kwargs):
         pass
+
     def start(self):
         pass
+
     def setDaemon(self, daemon):
         pass
+
 
 class MockGdbmDB(dict):
     """Mock a gdbm database"""
@@ -36,8 +40,10 @@ class MockGdbmDB(dict):
 
     def sync(self):
         pass
+
     def reorganize(self):
         pass
+
 
 class GdbmTest(unittest.TestCase):
     """Test the GdbmDBHandle class"""
@@ -58,7 +64,8 @@ class GdbmTest(unittest.TestCase):
         threading.Timer = MockTimer
 
         self.db = MockGdbmDB()
-        class MockGdbm():
+
+        class MockGdbm:
             @staticmethod
             def open(fn, mode):
                 return self.db
@@ -69,9 +76,14 @@ class GdbmTest(unittest.TestCase):
             self.real_gdbm = None
         setattr(pyzor.engines.gdbm_, "gdbm", MockGdbm())
 
-        self.record = pyzor.engines.common.Record(self.r_count, self.wl_count,
-                                                  self.entered, self.updated,
-                                                  self.wl_entered, self.wl_updated)
+        self.record = pyzor.engines.common.Record(
+            self.r_count,
+            self.wl_count,
+            self.entered,
+            self.updated,
+            self.wl_entered,
+            self.wl_updated,
+        )
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
@@ -81,9 +93,17 @@ class GdbmTest(unittest.TestCase):
     def record_as_str(self, record=None):
         if not record:
             record = self.record
-        return ("1,%s,%s,%s,%s,%s,%s" % (record.r_count, record.r_entered,
-                                         record.r_updated, record.wl_count,
-                                         record.wl_entered, record.wl_updated)).encode("utf8")
+        return (
+            "1,%s,%s,%s,%s,%s,%s"
+            % (
+                record.r_count,
+                record.r_entered,
+                record.r_updated,
+                record.wl_count,
+                record.wl_entered,
+                record.wl_updated,
+            )
+        ).encode("utf8")
 
     def test_set_item(self):
         """Test GdbmDBHandle.__setitem__"""
@@ -155,8 +175,10 @@ class GdbmTest(unittest.TestCase):
 
         self.assertEqual(self.db[digest], self.record_as_str())
 
+
 class ThreadingGdbmTest(GdbmTest):
     """Test the GdbmDBHandle class"""
+
     handler = pyzor.engines.gdbm_.ThreadedGdbmDBHandle
 
 
@@ -167,5 +189,6 @@ def suite():
     test_suite.addTest(unittest.makeSuite(ThreadingGdbmTest))
     return test_suite
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

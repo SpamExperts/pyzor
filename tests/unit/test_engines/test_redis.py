@@ -26,20 +26,29 @@ class EncodingRedisTest(unittest.TestCase):
 
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self.record = pyzor.engines.common.Record(self.r_count, self.wl_count,
-                                                  self.entered, self.updated,
-                                                  self.wl_entered,
-                                                  self.wl_updated)
+        self.record = pyzor.engines.common.Record(
+            self.r_count,
+            self.wl_count,
+            self.entered,
+            self.updated,
+            self.wl_entered,
+            self.wl_updated,
+        )
         self.entered_st = int(time.mktime(self.entered.timetuple()))
         self.updated_st = int(time.mktime(self.updated.timetuple()))
         self.wl_entered_st = int(time.mktime(self.wl_entered.timetuple()))
         self.wl_updated_st = int(time.mktime(self.wl_updated.timetuple()))
 
     def compare_records(self, r1, r2):
-        attrs = ("r_count", "r_entered", "r_updated",
-                 "wl_count", "wl_entered", "wl_updated")
-        self.assertTrue(all(getattr(r1, attr) == getattr(r2, attr)
-                            for attr in attrs))
+        attrs = (
+            "r_count",
+            "r_entered",
+            "r_updated",
+            "wl_count",
+            "wl_entered",
+            "wl_updated",
+        )
+        self.assertTrue(all(getattr(r1, attr) == getattr(r2, attr) for attr in attrs))
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
@@ -51,7 +60,7 @@ class EncodingRedisTest(unittest.TestCase):
             "r_updated": self.updated_st,
             "wl_count": 42,
             "wl_entered": self.wl_entered_st,
-            "wl_updated": self.wl_updated_st
+            "wl_updated": self.wl_updated_st,
         }
         result = pyzor.engines.redis_.RedisDBHandle._encode_record(self.record)
         self.assertEqual(result, expected)
@@ -63,7 +72,7 @@ class EncodingRedisTest(unittest.TestCase):
             "r_updated": 0,
             "wl_count": 42,
             "wl_entered": self.wl_entered_st,
-            "wl_updated": self.wl_updated_st
+            "wl_updated": self.wl_updated_st,
         }
         self.record.r_updated = None
         result = pyzor.engines.redis_.RedisDBHandle._encode_record(self.record)
@@ -76,7 +85,7 @@ class EncodingRedisTest(unittest.TestCase):
             "r_updated": self.updated_st,
             "wl_count": 0,
             "wl_entered": 0,
-            "wl_updated": 0
+            "wl_updated": 0,
         }
         self.record.wl_count = 0
         self.record.wl_entered = None
@@ -91,7 +100,7 @@ class EncodingRedisTest(unittest.TestCase):
             b"r_updated": self.updated_st,
             b"wl_count": 42,
             b"wl_entered": self.wl_entered_st,
-            b"wl_updated": self.wl_updated_st
+            b"wl_updated": self.wl_updated_st,
         }
         result = pyzor.engines.redis_.RedisDBHandle._decode_record(encoded)
         self.compare_records(result, self.record)
@@ -103,7 +112,7 @@ class EncodingRedisTest(unittest.TestCase):
             b"r_updated": 0,
             b"wl_count": 42,
             b"wl_entered": self.wl_entered_st,
-            b"wl_updated": self.wl_updated_st
+            b"wl_updated": self.wl_updated_st,
         }
         result = pyzor.engines.redis_.RedisDBHandle._decode_record(encoded)
         self.record.r_updated = None
@@ -116,7 +125,7 @@ class EncodingRedisTest(unittest.TestCase):
             b"r_updated": self.updated_st,
             b"wl_count": 0,
             b"wl_entered": 0,
-            b"wl_updated": 0
+            b"wl_updated": 0,
         }
         result = pyzor.engines.redis_.RedisDBHandle._decode_record(encoded)
         self.record.wl_count = 0
@@ -126,7 +135,6 @@ class EncodingRedisTest(unittest.TestCase):
 
 
 class RedisTest(unittest.TestCase):
-
     max_age = 60 * 60
 
     def setUp(self):
@@ -134,31 +142,34 @@ class RedisTest(unittest.TestCase):
         logger = logging.getLogger("pyzord")
         logger.addHandler(logging.NullHandler())
         self.mredis = patch("pyzor.engines.redis_.redis", create=True).start()
-        patch("pyzor.engines.redis_.RedisDBHandle._encode_record",
-              side_effect=lambda x: x).start()
-        patch("pyzor.engines.redis_.RedisDBHandle._decode_record",
-              side_effect=lambda x: x).start()
+        patch(
+            "pyzor.engines.redis_.RedisDBHandle._encode_record", side_effect=lambda x: x
+        ).start()
+        patch(
+            "pyzor.engines.redis_.RedisDBHandle._decode_record", side_effect=lambda x: x
+        ).start()
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
         patch.stopall()
 
     def test_init(self):
-        expected = {"host": "example.com",
-                    "port": 6387,
-                    "password": "passwd",
-                    "db": 5,
-                    }
-        db = pyzor.engines.redis_.RedisDBHandle("example.com,6387,passwd,5",
-                                                None)
+        expected = {
+            "host": "example.com",
+            "port": 6387,
+            "password": "passwd",
+            "db": 5,
+        }
+        db = pyzor.engines.redis_.RedisDBHandle("example.com,6387,passwd,5", None)
         self.mredis.StrictRedis.assert_called_with(**expected)
 
     def test_init_defaults(self):
-        expected = {"host": "localhost",
-                    "port": 6379,
-                    "password": None,
-                    "db": 0,
-                    }
+        expected = {
+            "host": "localhost",
+            "port": 6379,
+            "password": None,
+            "db": 0,
+        }
         db = pyzor.engines.redis_.RedisDBHandle(",,,", None)
         self.mredis.StrictRedis.assert_called_with(**expected)
 
@@ -176,8 +187,7 @@ class RedisTest(unittest.TestCase):
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
         value = "record test"
 
-        db = pyzor.engines.redis_.RedisDBHandle(",,,", None,
-                                                max_age=self.max_age)
+        db = pyzor.engines.redis_.RedisDBHandle(",,,", None, max_age=self.max_age)
         db[digest] = value
 
         expected1 = ("pyzord.digest_v1.%s" % digest, value)
@@ -195,15 +205,19 @@ class RedisTest(unittest.TestCase):
         self.mredis.StrictRedis.return_value.hgetall.assert_called_with(*expected)
 
     def test_items(self):
-        patch("pyzor.engines.redis_.redis.StrictRedis.return_value.keys",
-              return_value=["2aedaac999d71421c9ee49b9d81f627a7bc570aa"]).start()
+        patch(
+            "pyzor.engines.redis_.redis.StrictRedis.return_value.keys",
+            return_value=["2aedaac999d71421c9ee49b9d81f627a7bc570aa"],
+        ).start()
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
 
         db = pyzor.engines.redis_.RedisDBHandle(",,,", None)
         db.items()[0]
 
         expected = ("pyzord.digest_v1.%s" % digest,)
-        self.mredis.StrictRedis.return_value.keys.assert_called_with("pyzord.digest_v1.*")
+        self.mredis.StrictRedis.return_value.keys.assert_called_with(
+            "pyzord.digest_v1.*"
+        )
         self.mredis.StrictRedis.return_value.hgetall.assert_called_with(*expected)
 
     def test_delete(self):
@@ -215,6 +229,7 @@ class RedisTest(unittest.TestCase):
         expected = ("pyzord.digest_v1.%s" % digest,)
         self.mredis.StrictRedis.return_value.delete.assert_called_with(*expected)
 
+
 def suite():
     """Gather all the tests from this module in a test suite."""
     test_suite = unittest.TestSuite()
@@ -222,5 +237,6 @@ def suite():
     test_suite.addTest(unittest.makeSuite(RedisTest))
     return test_suite
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

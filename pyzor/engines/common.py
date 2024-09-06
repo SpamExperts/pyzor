@@ -7,8 +7,9 @@ from collections import namedtuple
 
 __all__ = ["DBHandle", "DatabaseError", "Record", "BaseEngine"]
 
-DBHandle = namedtuple("DBHandle", ["single_threaded", "multi_threaded",
-                                   "multi_processing", "prefork"])
+DBHandle = namedtuple(
+    "DBHandle", ["single_threaded", "multi_threaded", "multi_processing", "prefork"]
+)
 
 
 class DatabaseError(Exception):
@@ -20,8 +21,16 @@ class Record(object):
     r = report (spam)
     wl = whitelist
     """
-    def __init__(self, r_count=0, wl_count=0, r_entered=None,
-                 r_updated=None, wl_entered=None, wl_updated=None):
+
+    def __init__(
+        self,
+        r_count=0,
+        wl_count=0,
+        r_entered=None,
+        r_updated=None,
+        wl_entered=None,
+        wl_updated=None,
+    ):
         self.r_count = r_count
         self.wl_count = wl_count
         self.r_entered = r_entered
@@ -54,6 +63,7 @@ class Record(object):
 
 class BaseEngine(object):
     """Base class for Pyzor engines."""
+
     absolute_source = True
     handles_one_step = False
 

@@ -2,6 +2,7 @@ import sys
 import time
 import errno
 import unittest
+
 try:
     import configparser as ConfigParser
 except ImportError:
@@ -13,25 +14,27 @@ from tests.util import *
 
 try:
     import MySQLdb
+
     has_mysql = True
 except ImportError:
     has_mysql = False
 
 try:
     import redis
+
     has_redis = True
 except ImportError:
     has_redis = False
 
 try:
     import gdbm
+
     has_gdbm = True
 except ImportError:
     has_gdbm = False
 
 
 class BatchedDigestsTest(object):
-
     def setUp(self):
         PyzorTestBase.setUp(self)
         self.client = pyzor.client.BatchClient()
@@ -133,11 +136,11 @@ schema = """
 """
 
 
-@unittest.skipIf(not os.path.exists("./test.conf"),
-                 "test.conf is not available")
+@unittest.skipIf(not os.path.exists("./test.conf"), "test.conf is not available")
 @unittest.skipIf(not has_mysql, "MySQLdb library not available")
 class MySQLdbBatchedPyzorTest(BatchedDigestsTest, PyzorTestBase):
     """Test the mysql engine."""
+
     dsn = None
     engine = "mysql"
     password_file = None
@@ -152,19 +155,23 @@ class MySQLdbBatchedPyzorTest(BatchedDigestsTest, PyzorTestBase):
         conf = ConfigParser.ConfigParser()
         conf.read("./test.conf")
         table = conf.get("test", "table")
-        db = MySQLdb.Connect(host=conf.get("test", "host"),
-                             user=conf.get("test", "user"),
-                             passwd=conf.get("test", "passwd"),
-                             db=conf.get("test", "db"))
+        db = MySQLdb.Connect(
+            host=conf.get("test", "host"),
+            user=conf.get("test", "user"),
+            passwd=conf.get("test", "passwd"),
+            db=conf.get("test", "db"),
+        )
         c = db.cursor()
         c.execute(schema % table)
         c.close()
         db.close()
-        cls.dsn = "%s,%s,%s,%s,%s" % (conf.get("test", "host"),
-                                      conf.get("test", "user"),
-                                      conf.get("test", "passwd"),
-                                      conf.get("test", "db"),
-                                      conf.get("test", "table"))
+        cls.dsn = "%s,%s,%s,%s,%s" % (
+            conf.get("test", "host"),
+            conf.get("test", "user"),
+            conf.get("test", "passwd"),
+            conf.get("test", "db"),
+            conf.get("test", "table"),
+        )
         super(MySQLdbBatchedPyzorTest, cls).setUpClass()
 
     @classmethod
@@ -174,10 +181,12 @@ class MySQLdbBatchedPyzorTest(BatchedDigestsTest, PyzorTestBase):
             conf = ConfigParser.ConfigParser()
             conf.read("./test.conf")
             table = conf.get("test", "table")
-            db = MySQLdb.Connect(host=conf.get("test", "host"),
-                                 user=conf.get("test", "user"),
-                                 passwd=conf.get("test", "passwd"),
-                                 db=conf.get("test", "db"))
+            db = MySQLdb.Connect(
+                host=conf.get("test", "host"),
+                user=conf.get("test", "user"),
+                passwd=conf.get("test", "passwd"),
+                db=conf.get("test", "db"),
+            )
             c = db.cursor()
             c.execute("DROP TABLE %s" % table)
             c.close()
@@ -189,6 +198,7 @@ class MySQLdbBatchedPyzorTest(BatchedDigestsTest, PyzorTestBase):
 @unittest.skipIf(not has_redis, "redis library not available")
 class RedisBatchedPyzorTest(BatchedDigestsTest, PyzorTestBase):
     """Test the redis engine"""
+
     dsn = "localhost,,,10"
     engine = "redis"
     password_file = None
@@ -209,8 +219,8 @@ class DetachPyzorTest(PyzorTestBase):
     homedir = os.path.join(os.getcwd(), "pyzor-test")
 
     def test_pid(self):
-        self.assertTrue(os.path.exists(os.path.join(self.homedir,
-                                                    "pyzord.pid")))
+        self.assertTrue(os.path.exists(os.path.join(self.homedir, "pyzord.pid")))
+
     @staticmethod
     def is_running(pid):
         try:
@@ -239,5 +249,6 @@ def suite():
     test_suite.addTest(unittest.makeSuite(DetachPyzorTest))
     return test_suite
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

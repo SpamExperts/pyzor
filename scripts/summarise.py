@@ -34,35 +34,35 @@ def summarise(config, hook):
         config = os.path.expanduser("~/.pyzor/config")
     conf = ConfigParser.ConfigParser()
     conf.read(config)
-    (host, user, password, db_name,
-     table) = conf.get("server", "DigestDB").split(",")
+    (host, user, password, db_name, table) = conf.get("server", "DigestDB").split(",")
     db = MySQLdb.connect(
         host=host,
         user=user,
         db=db_name,
         passwd=password,
-        )
+    )
     c = db.cursor()
 
     # TODO: With a newer Python, this could use f-strings.
     data = {}
-    c.execute(
-        "SELECT COUNT(*) FROM `%s`" % table
-        )
+    c.execute("SELECT COUNT(*) FROM `%s`" % table)
     data["total"] = c.fetchone()[0]
     c.execute(
         "SELECT MIN(wl_entered), MIN(wl_updated), "
         "MIN(r_entered), MIN(r_updated), MAX(wl_entered), MAX(wl_updated), "
         "MAX(r_entered), MAX(r_updated) from `%s`" % table
-        )
-    (data["oldest_white"], data["oldest_white_update"],
-     data["oldest_spam"], data["oldest_spam_update"],
-     data["newest_white"], data["newest_white_update"],
-     data["newest_spam"], data["newest_spam_update"]
-     ) = c.fetchone()
-    c.execute(
-        "SELECT MAX(r_count), MAX(wl_count) FROM `%s`" % table
-        )
+    )
+    (
+        data["oldest_white"],
+        data["oldest_white_update"],
+        data["oldest_spam"],
+        data["oldest_spam_update"],
+        data["newest_white"],
+        data["newest_white_update"],
+        data["newest_spam"],
+        data["newest_spam_update"],
+    ) = c.fetchone()
+    c.execute("SELECT MAX(r_count), MAX(wl_count) FROM `%s`" % table)
     data["max_spam"], data["max_white"] = c.fetchone()
 
     # Frequency table for counts.
@@ -72,9 +72,10 @@ def summarise(config, hook):
             low = bucket * 100
             high = (bucket + 1) * 100
             c.execute(
-                "SELECT COUNT(*) FROM `%s` WHERE %s BETWEEN %%s AND %%s" %
-                (table, column), (low, high)
-                )
+                "SELECT COUNT(*) FROM `%s` WHERE %s BETWEEN %%s AND %%s"
+                % (table, column),
+                (low, high),
+            )
             buckets.append(c.fetchone()[0])
         data[column] = buckets
 
@@ -86,9 +87,10 @@ def summarise(config, hook):
             low = now - datetime.timedelta(days=(bucket + 1) * 7)
             high = now - datetime.timedelta(days=bucket * 7)
             c.execute(
-                "SELECT COUNT(*) FROM `%s` WHERE %s BETWEEN %%s AND %%s" %
-                (table, column), (low, high)
-                )
+                "SELECT COUNT(*) FROM `%s` WHERE %s BETWEEN %%s AND %%s"
+                % (table, column),
+                (low, high),
+            )
             buckets.append(c.fetchone()[0])
         data[column] = buckets
 
@@ -108,11 +110,11 @@ def spark_string(ints, fit_min=False):
              rather than the default of zero. Useful for large numbers with
              relatively small differences between the positions
     """
-    ticks = u" ▁▂▃▄▅▆▇█"
+    ticks = " ▁▂▃▄▅▆▇█"
     min_range = min(ints) if fit_min else 0
     step_range = max(ints) - min_range
     step = (step_range / float(len(ticks) - 1)) or 1
-    return u''.join(ticks[int(round((i - min_range) / step))] for i in ints)
+    return "".join(ticks[int(round((i - min_range) / step))] for i in ints)
 
 
 def notify_slack(hook, data):
@@ -216,10 +218,7 @@ def notify_slack(hook, data):
             "color": white_age_colour,
         },
     ]
-    response = requests.post(
-        hook,
-        json={"text": text, "attachments": attachments}
-        )
+    response = requests.post(hook, json={"text": text, "attachments": attachments})
 
 
 if __name__ == "__main__":

@@ -20,8 +20,9 @@ from pyzor.engines import redis_v0
 
 __all__ = ["database_classes"]
 
-database_classes = {"gdbm": gdbm_.handle,
-                    "mysql": mysql.handle,
-                    "redis_v0": redis_v0.handle,
-                    "redis": redis_.handle,
-                    }
+database_classes = {
+    "gdbm": gdbm_.handle,
+    "mysql": mysql.handle,
+    "redis_v0": redis_v0.handle,
+    "redis": redis_.handle,
+}

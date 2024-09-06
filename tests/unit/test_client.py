@@ -24,21 +24,23 @@ class TestBase(unittest.TestCase):
         patch("pyzor.account.hash_key").start()
 
         # the response the mock socket will send
-        self.response = {"Code": "200",
-                         "Diag": "OK",
-                         "PV": "2.1",
-                         "Thread": "33715",
-                         "Time": self.time
+        self.response = {
+            "Code": "200",
+            "Diag": "OK",
+            "PV": "2.1",
+            "Thread": "33715",
+            "Time": self.time,
         }
         self.mresponse = None
         self.mock_socket = None
 
         # the expected request that the client should send
-        self.expected = {"Thread": str(self.thread),
-                         "PV": str(pyzor.proto_version),
-                         "User": "anonymous",
-                         "Time": self.time,
-                         "Sig": "TestSig"
+        self.expected = {
+            "Thread": str(self.thread),
+            "PV": str(pyzor.proto_version),
+            "User": "anonymous",
+            "Time": self.time,
+            "Sig": "TestSig",
         }
 
     def tearDown(self):
@@ -57,7 +59,7 @@ class TestBase(unittest.TestCase):
         """
         req = {}
         for args, _ in self.get_requests():
-            self.assertEqual(args[2], ('127.0.0.1', 24441))
+            self.assertEqual(args[2], ("127.0.0.1", 24441))
             req = dict(email.message_from_string(args[0].decode()))
         self.assertEqual(req, self.expected)
 
@@ -65,20 +67,25 @@ class TestBase(unittest.TestCase):
         if conf is None:
             conf = {}
 
-        patch("pyzor.message.ThreadId.generate",
-              return_value=self.thread).start()
+        patch("pyzor.message.ThreadId.generate", return_value=self.thread).start()
 
         if self.response:
-            response = "\n".join("%s: %s" % (key, value)
-                                 for key, value in self.response.items()) + "\n\n"
+            response = (
+                "\n".join(
+                    "%s: %s" % (key, value) for key, value in self.response.items()
+                )
+                + "\n\n"
+            )
             self.mresponse = response.encode(), ("127.0.0.1", 24441)
         else:
             self.mresponse = None
-        addrinfo = [(2, 2, 17, '', ('127.0.0.1', 24441))]
+        addrinfo = [(2, 2, 17, "", ("127.0.0.1", 24441))]
 
-        config = {"socket.return_value": Mock(),
-                  "socket.return_value.recvfrom.return_value": self.mresponse,
-                  "getaddrinfo.return_value": addrinfo}
+        config = {
+            "socket.return_value": Mock(),
+            "socket.return_value.recvfrom.return_value": self.mresponse,
+            "getaddrinfo.return_value": addrinfo,
+        }
         config.update(conf)
 
         self.mock_socket = patch("pyzor.client.socket", **config).start()
@@ -87,8 +94,7 @@ class TestBase(unittest.TestCase):
         """Tests if the request and response are sent
         and read correctly by the client.
         """
-        client = pyzor.client.Client(accounts=accounts,
-                                     timeout=self.timeout)
+        client = pyzor.client.Client(accounts=accounts, timeout=self.timeout)
         got_response = getattr(client, method)(*args, **kwargs)
 
         self.assertEqual(str(got_response), self.mresponse[0].decode())
@@ -167,7 +173,9 @@ class ClientTest(TestBase):
         self.timeout = 10
         self.check_client(None, "ping")
 
-        calls = [call.socket().settimeout(10), ]
+        calls = [
+            call.socket().settimeout(10),
+        ]
         self.mock_socket.assert_has_calls(calls)
 
 
@@ -270,7 +278,6 @@ class BatchClientTest(TestBase):
 
 
 class ClientRunnerTest(unittest.TestCase):
-
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.server = "test.example.com", 24441
@@ -295,7 +302,9 @@ class ClientRunnerTest(unittest.TestCase):
         response["Diag"] = "OK"
         response["Code"] = "200"
         server = "%s:%s\t" % self.server
-        results = ["%s%s\n" % (server, response.head_tuple()), ]
+        results = [
+            "%s%s\n" % (server, response.head_tuple()),
+        ]
 
         self.check_runner(pyzor.client.ClientRunner, response, results)
 
@@ -306,8 +315,7 @@ class ClientRunnerTest(unittest.TestCase):
         response["Count"] = "2"
         response["WL-Count"] = "1"
         server = "%s:%s\t" % self.server
-        results = ["%s%s\t%s\t%s\n" % (server, response.head_tuple(), "2",
-                   "1")]
+        results = ["%s%s\t%s\t%s\n" % (server, response.head_tuple(), "2", "1")]
 
         self.check_runner(pyzor.client.CheckClientRunner, response, results)
 
@@ -324,18 +332,24 @@ Count: 4
 WL-Count: 0
 
 """
-        response = email.message_from_string(response,
-                                             _class=pyzor.message.Response)
+        response = email.message_from_string(response, _class=pyzor.message.Response)
         server = "%s:%s" % self.server
-        result = ("%s\t(200, 'OK')\n"
-                  "\tCount: 4\n"
-                  "\tEntered: %s\n"
-                  "\tUpdated: %s\n"
-                  "\tWL-Count: 0\n"
-                  "\tWL-Entered: %s\n"
-                  "\tWL-Updated: %s\n\n" %
-                  (server, time.ctime(1400221786), time.ctime(1400221794),
-                   time.ctime(0), time.ctime(0)))
+        result = (
+            "%s\t(200, 'OK')\n"
+            "\tCount: 4\n"
+            "\tEntered: %s\n"
+            "\tUpdated: %s\n"
+            "\tWL-Count: 0\n"
+            "\tWL-Entered: %s\n"
+            "\tWL-Updated: %s\n\n"
+            % (
+                server,
+                time.ctime(1400221786),
+                time.ctime(1400221794),
+                time.ctime(0),
+                time.ctime(0),
+            )
+        )
         self.maxDiff = None
         self.check_runner(pyzor.client.InfoClientRunner, response, [result])
 
@@ -352,17 +366,18 @@ Count: 4
 WL-Count: 0
 
 """
-        response = email.message_from_string(response,
-                                             _class=pyzor.message.Response)
+        response = email.message_from_string(response, _class=pyzor.message.Response)
         server = "%s:%s" % self.server
-        result = ("%s\t(200, 'OK')\n"
-                  "\tCount: 4\n"
-                  "\tEntered: %s\n"
-                  "\tUpdated: %s\n"
-                  "\tWL-Count: 0\n"
-                  "\tWL-Entered: Never\n"
-                  "\tWL-Updated: Never\n\n" %
-                  (server, time.ctime(1400221786), time.ctime(1400221794)))
+        result = (
+            "%s\t(200, 'OK')\n"
+            "\tCount: 4\n"
+            "\tEntered: %s\n"
+            "\tUpdated: %s\n"
+            "\tWL-Count: 0\n"
+            "\tWL-Entered: Never\n"
+            "\tWL-Updated: Never\n\n"
+            % (server, time.ctime(1400221786), time.ctime(1400221794))
+        )
         self.maxDiff = None
         self.check_runner(pyzor.client.InfoClientRunner, response, [result])
 
@@ -376,5 +391,6 @@ def suite():
 
     return test_suite
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

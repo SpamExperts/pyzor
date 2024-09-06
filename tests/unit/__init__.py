@@ -6,6 +6,7 @@ Note these tests the source of pyzor, not the version currently installed.
 
 import unittest
 
+
 def suite():
     """Gather all the tests from this package in a test suite."""
     import test_client
@@ -27,6 +28,6 @@ def suite():
     test_suite.addTest(test_forwarder.suite())
     return test_suite
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
 
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

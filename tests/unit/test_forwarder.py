@@ -13,7 +13,6 @@ import pyzor.forwarder
 
 
 class ForwarderTest(unittest.TestCase):
-
     def setUp(self):
         unittest.TestCase.setUp(self)
 
@@ -24,26 +23,34 @@ class ForwarderTest(unittest.TestCase):
         client = Mock()
         servlist = []
         max_qsize = 10
-        forwarder = pyzor.forwarder.Forwarder(client, servlist,
-                                              max_queue_size=max_qsize)
+        forwarder = pyzor.forwarder.Forwarder(
+            client, servlist, max_queue_size=max_qsize
+        )
         for _ in range(max_qsize * 2):
-            forwarder.queue_forward_request('975422c090e7a43ab7c9bf0065d5b661259e6d74')
-            self.assertGreater(forwarder.forward_queue.qsize(), 0, 'queue insert failed')
-            self.assertLessEqual(forwarder.forward_queue.qsize(), max_qsize, 'queue overload')
-        self.assertEqual(forwarder.forward_queue.qsize(), max_qsize, 'queue should be full at this point')
+            forwarder.queue_forward_request("975422c090e7a43ab7c9bf0065d5b661259e6d74")
+            self.assertGreater(
+                forwarder.forward_queue.qsize(), 0, "queue insert failed"
+            )
+            self.assertLessEqual(
+                forwarder.forward_queue.qsize(), max_qsize, "queue overload"
+            )
+        self.assertEqual(
+            forwarder.forward_queue.qsize(),
+            max_qsize,
+            "queue should be full at this point",
+        )
         t = threading.Thread(target=forwarder._forward_loop)
         t.start()
         time.sleep(1)
-        self.assertEqual(forwarder.forward_queue.qsize(), 0, 'queue should be empty')
+        self.assertEqual(forwarder.forward_queue.qsize(), 0, "queue should be empty")
         forwarder.stop_forwarding()
         t.join(5)
-        self.assertFalse(t.is_alive(), 'forward thread did not end')
+        self.assertFalse(t.is_alive(), "forward thread did not end")
 
     def test_remote_servers(self):
         client = Mock()
-        digest = '975422c090e7a43ab7c9bf0065d5b661259e6d74'
-        servlist = [("test1.example.com", 24441),
-                    ("test2.example.com", 24442)]
+        digest = "975422c090e7a43ab7c9bf0065d5b661259e6d74"
+        servlist = [("test1.example.com", 24441), ("test2.example.com", 24442)]
         forwarder = pyzor.forwarder.Forwarder(client, servlist)
 
         forwarder.queue_forward_request(digest)
@@ -53,10 +60,12 @@ class ForwarderTest(unittest.TestCase):
         time.sleep(2)
         forwarder.stop_forwarding()
 
-        client.report.assert_has_calls([call(digest, servlist[0]),
-                                        call(digest, servlist[1])])
-        client.whitelist.assert_has_calls([call(digest, servlist[0]),
-                                           call(digest, servlist[1])])
+        client.report.assert_has_calls(
+            [call(digest, servlist[0]), call(digest, servlist[1])]
+        )
+        client.whitelist.assert_has_calls(
+            [call(digest, servlist[0]), call(digest, servlist[1])]
+        )
 
 
 def suite():
@@ -65,5 +74,6 @@ def suite():
     test_suite.addTest(unittest.makeSuite(ForwarderTest))
     return test_suite
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

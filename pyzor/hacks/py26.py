@@ -18,6 +18,7 @@ def hack_email():
     So switch to using only message_from_bytes.
     """
     import email
+
     if not hasattr(email, "message_from_bytes"):
         email.message_from_bytes = email.message_from_string
 
@@ -27,6 +28,7 @@ def hack_select():
     from signals. Patch the select call if necessary.
     """
     import sys
+
     if sys.version_info[0] == 2 and sys.version_info[1] == 6:
         import select
         import errno
@@ -41,4 +43,5 @@ def hack_select():
                 except (OSError, select.error) as ex:
                     if ex.args[0] != errno.EINTR:
                         raise
+
         select.select = _eintr_retry

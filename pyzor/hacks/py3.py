@@ -15,7 +15,9 @@ def _reload(module):
         return reload(module)
     elif sys.version_info[0] == 3 and sys.version_info[1] <= 3:
         import imp
+
         return imp.reload(module)
     else:
         import importlib
+
         return importlib.reload(module)
