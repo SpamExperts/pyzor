@@ -15,8 +15,8 @@ Performance enhancements:
 		graceful shutdown of the server.
 
 Others:
-		* Read stdin for pyzor in binary mode (fixes `#64 <https://github.com/SpamExperts/pyzor/issues/64>)
-		* Catch an unhandled exception when running pyzor as a user with no home directory (fixes <#86 https://github.com/SpamExperts/pyzor/issues/68>)
+		* Read stdin for pyzor in binary mode (fixes `#64 <https://github.com/SpamExperts/pyzor/issues/64>_)
+		* Catch an unhandled exception when running pyzor as a user with no home directory (fixes <#86 https://github.com/SpamExperts/pyzor/issues/68>_)
 		* Miscellaneous changes related to Python 3 support (up to Python 3.12) that remove deprecated methods/syntax.
 
 
