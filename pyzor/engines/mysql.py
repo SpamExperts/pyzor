@@ -15,6 +15,7 @@ except ImportError:
 try:
     import MySQLdb
     import MySQLdb.cursors
+
     _has_mysql = True
 except ImportError:
     _has_mysql = False
@@ -49,8 +50,7 @@ class MySQLDBHandle(BaseEngine):
         # The 'fn' is host,user,password,db,table.  We ignore mode.
         # We store the authentication details so that we can reconnect if
         # necessary.
-        self.host, self.user, self.passwd, self.db_name, \
-            self.table_name = fn.split(",")
+        self.host, self.user, self.passwd, self.db_name, self.table_name = fn.split(",")
         self.last_connect_attempt = 0  # We have never connected.
         self.reorganize_timer = None
         self.reconnect()
@@ -58,17 +58,19 @@ class MySQLDBHandle(BaseEngine):
 
     def _get_new_connection(self):
         """Returns a new db connection."""
-        db = MySQLdb.connect(host=self.host, user=self.user,
-                             db=self.db_name, passwd=self.passwd)
+        db = MySQLdb.connect(
+            host=self.host, user=self.user, db=self.db_name, passwd=self.passwd
+        )
         db.autocommit(True)
         return db
 
     def _check_reconnect_time(self):
         if time.time() - self.last_connect_attempt < self.reconnect_period:
             # Too soon to reconnect.
-            self.log.debug("Can't reconnect until %s",
-                           (time.ctime(self.last_connect_attempt +
-                                       self.reconnect_period)))
+            self.log.debug(
+                "Can't reconnect until %s",
+                (time.ctime(self.last_connect_attempt + self.reconnect_period)),
+            )
             return False
         return True
 
@@ -103,8 +105,10 @@ class MySQLDBHandle(BaseEngine):
 
     def _iteritems(self, db):
         c = db.cursor(cursorclass=MySQLdb.cursors.SSCursor)
-        c.execute("SELECT digest, r_count, wl_count, r_entered, r_updated, "
-                  "wl_entered, wl_updated FROM %s" % self.table_name)
+        c.execute(
+            "SELECT digest, r_count, wl_count, r_entered, r_updated, "
+            "wl_entered, wl_updated FROM %s" % self.table_name
+        )
         while True:
             row = c.fetchone()
             if not row:
@@ -148,8 +152,7 @@ class MySQLDBHandle(BaseEngine):
         return self._safe_call("getitem", self._really__getitem__, (key,))
 
     def __setitem__(self, key, value):
-        return self._safe_call("setitem", self._really__setitem__,
-                               (key, value))
+        return self._safe_call("setitem", self._really__setitem__, (key, value))
 
     def __delitem__(self, key):
         return self._safe_call("delitem", self._really__delitem__, (key,))
@@ -157,24 +160,28 @@ class MySQLDBHandle(BaseEngine):
     def _report(self, keys, db=None):
         c = db.cursor()
         try:
-            c.executemany("INSERT INTO %s (digest, r_count, wl_count, "
-                          "r_entered, r_updated, wl_entered, wl_updated) "
-                          "VALUES (%%s, 1, 0, NOW(), NOW(), NOW(), NOW()) ON "
-                          "DUPLICATE KEY UPDATE r_count=r_count+1, "
-                          "r_updated=NOW()" % self.table_name,
-                          map(lambda key: (key,), keys))
+            c.executemany(
+                "INSERT INTO %s (digest, r_count, wl_count, "
+                "r_entered, r_updated, wl_entered, wl_updated) "
+                "VALUES (%%s, 1, 0, NOW(), NOW(), NOW(), NOW()) ON "
+                "DUPLICATE KEY UPDATE r_count=r_count+1, "
+                "r_updated=NOW()" % self.table_name,
+                map(lambda key: (key,), keys),
+            )
         finally:
             c.close()
 
     def _whitelist(self, keys, db=None):
         c = db.cursor()
         try:
-            c.executemany("INSERT INTO %s (digest, r_count, wl_count, "
-                          "r_entered, r_updated, wl_entered, wl_updated) "
-                          "VALUES (%%s, 0, 1, NOW(), NOW(), NOW(), NOW()) ON "
-                          "DUPLICATE KEY UPDATE wl_count=wl_count+1, "
-                          "wl_updated=NOW()" % self.table_name,
-                          map(lambda key: (key,), keys))
+            c.executemany(
+                "INSERT INTO %s (digest, r_count, wl_count, "
+                "r_entered, r_updated, wl_entered, wl_updated) "
+                "VALUES (%%s, 0, 1, NOW(), NOW(), NOW(), NOW()) ON "
+                "DUPLICATE KEY UPDATE wl_count=wl_count+1, "
+                "wl_updated=NOW()" % self.table_name,
+                map(lambda key: (key,), keys),
+            )
         finally:
             c.close()
 
@@ -183,9 +190,11 @@ class MySQLDBHandle(BaseEngine):
         c = db.cursor()
         # The order here must match the order of the arguments to the
         # Record constructor.
-        c.execute("SELECT r_count, wl_count, r_entered, r_updated, "
-                  "wl_entered, wl_updated FROM %s WHERE digest=%%s" %
-                  self.table_name, (key,))
+        c.execute(
+            "SELECT r_count, wl_count, r_entered, r_updated, "
+            "wl_entered, wl_updated FROM %s WHERE digest=%%s" % self.table_name,
+            (key,),
+        )
         try:
             try:
                 return Record(*c.fetchone())
@@ -199,16 +208,29 @@ class MySQLDBHandle(BaseEngine):
         """__setitem__ without the exception handling."""
         c = db.cursor()
         try:
-            c.execute("INSERT INTO %s (digest, r_count, wl_count, "
-                      "r_entered, r_updated, wl_entered, wl_updated) "
-                      "VALUES (%%s, %%s, %%s, %%s, %%s, %%s, %%s) ON "
-                      "DUPLICATE KEY UPDATE r_count=%%s, wl_count=%%s, "
-                      "r_entered=%%s, r_updated=%%s, wl_entered=%%s, "
-                      "wl_updated=%%s" % self.table_name,
-                      (key, value.r_count, value.wl_count, value.r_entered,
-                       value.r_updated, value.wl_entered, value.wl_updated,
-                       value.r_count, value.wl_count, value.r_entered,
-                       value.r_updated, value.wl_entered, value.wl_updated))
+            c.execute(
+                "INSERT INTO %s (digest, r_count, wl_count, "
+                "r_entered, r_updated, wl_entered, wl_updated) "
+                "VALUES (%%s, %%s, %%s, %%s, %%s, %%s, %%s) ON "
+                "DUPLICATE KEY UPDATE r_count=%%s, wl_count=%%s, "
+                "r_entered=%%s, r_updated=%%s, wl_entered=%%s, "
+                "wl_updated=%%s" % self.table_name,
+                (
+                    key,
+                    value.r_count,
+                    value.wl_count,
+                    value.r_entered,
+                    value.r_updated,
+                    value.wl_entered,
+                    value.wl_updated,
+                    value.r_count,
+                    value.wl_count,
+                    value.r_entered,
+                    value.r_updated,
+                    value.wl_entered,
+                    value.wl_updated,
+                ),
+            )
         finally:
             c.close()
 
@@ -216,8 +238,7 @@ class MySQLDBHandle(BaseEngine):
         """__delitem__ without the exception handling."""
         c = db.cursor()
         try:
-            c.execute("DELETE FROM %s WHERE digest=%%s" % self.table_name,
-                      (key,))
+            c.execute("DELETE FROM %s WHERE digest=%%s" % self.table_name, (key,))
         finally:
             c.close()
 
@@ -225,20 +246,21 @@ class MySQLDBHandle(BaseEngine):
         if not self.max_age:
             return
         self.log.debug("reorganizing the database")
-        breakpoint = (datetime.datetime.now() -
-                      datetime.timedelta(seconds=self.max_age))
+        breakpoint = datetime.datetime.now() - datetime.timedelta(seconds=self.max_age)
         db = self._get_new_connection()
         c = db.cursor()
         try:
-            c.execute("DELETE FROM %s WHERE r_updated<%%s" %
-                      self.table_name, (breakpoint,))
+            c.execute(
+                "DELETE FROM %s WHERE r_updated<%%s" % self.table_name, (breakpoint,)
+            )
         except (MySQLdb.Error, AttributeError) as e:
             self.log.warn("Unable to reorganise: %s", e)
         finally:
             c.close()
             db.close()
-        self.reorganize_timer = threading.Timer(self.reorganize_period,
-                                                self.start_reorganizing)
+        self.reorganize_timer = threading.Timer(
+            self.reorganize_period, self.start_reorganizing
+        )
         self.reorganize_timer.setDaemon(True)
         self.reorganize_timer.start()
 
@@ -338,13 +360,15 @@ class ProcessMySQLDBHandle(MySQLDBHandle):
             if db is not None:
                 db.close()
 
+
 if not _has_mysql:
-    handle = DBHandle(single_threaded=None,
-                      multi_threaded=None,
-                      multi_processing=None,
-                      prefork=None)
+    handle = DBHandle(
+        single_threaded=None, multi_threaded=None, multi_processing=None, prefork=None
+    )
 else:
-    handle = DBHandle(single_threaded=MySQLDBHandle,
-                      multi_threaded=ThreadedMySQLDBHandle,
-                      multi_processing=ProcessMySQLDBHandle,
-                      prefork=MySQLDBHandle)
+    handle = DBHandle(
+        single_threaded=MySQLDBHandle,
+        multi_threaded=ThreadedMySQLDBHandle,
+        multi_processing=ProcessMySQLDBHandle,
+        prefork=MySQLDBHandle,
+    )

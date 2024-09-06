@@ -1,6 +1,7 @@
 import os
 import logging
 import unittest
+
 try:
     import configparser as ConfigParser
 except ImportError:
@@ -32,8 +33,7 @@ class TestPasswdLoad(unittest.TestCase):
         self.data = MockData()
         self.exists = True
         real_exists = os.path.exists
-        patch("pyzor.config.open", return_value=self.data,
-              create=True).start()
+        patch("pyzor.config.open", return_value=self.data, create=True).start()
         _exists = lambda fp: True if fp == self.fp else real_exists(fp)
         patch("pyzor.config.os.path.exists", side_effect=_exists).start()
 
@@ -58,8 +58,7 @@ class TestPasswdLoad(unittest.TestCase):
         self.data.append("alice : %s\n" % self.alice_key)
         self.data.append("bob : %s\n" % self.bob_key)
         result = self.get_passwd()
-        self.assertEqual(result, {"alice": self.alice_key,
-                                  "bob": self.bob_key})
+        self.assertEqual(result, {"alice": self.alice_key, "bob": self.bob_key})
 
     def test_invalid_line(self):
         self.data.append("alice ; %s\n" % self.alice_key)
@@ -77,16 +76,15 @@ class TestPasswdLoad(unittest.TestCase):
 class TestAccessLoad(unittest.TestCase):
     fp = "pyzord.access"
     accounts = ["alice", "bob"]
-    all = {'report', 'info', 'pong', 'ping', 'check', 'whitelist'}
-    anonymous_privileges = {'report', 'info', 'pong', 'ping', 'check'}
+    all = {"report", "info", "pong", "ping", "check", "whitelist"}
+    anonymous_privileges = {"report", "info", "pong", "ping", "check"}
 
     def setUp(self):
         super(TestAccessLoad, self).setUp()
         self.data = MockData()
         self.exists = True
         real_exists = os.path.exists
-        patch("pyzor.config.open", return_value=self.data,
-              create=True).start()
+        patch("pyzor.config.open", return_value=self.data, create=True).start()
         _exists = lambda fp: True if fp == self.fp else real_exists(fp)
         patch("pyzor.config.os.path.exists", side_effect=_exists).start()
 
@@ -108,54 +106,51 @@ class TestAccessLoad(unittest.TestCase):
 
     def test_default(self):
         result = self.get_access(fp="foobar")
-        self.assertEqual(result, {'anonymous': self.anonymous_privileges})
+        self.assertEqual(result, {"anonymous": self.anonymous_privileges})
 
     def test_invalid_line(self):
         self.data.append("all : allice ; allow\n")
         self.data.append("ping : bob : allow\n")
         result = self.get_access()
-        self.assertEqual(result, {'bob': {'ping'}})
+        self.assertEqual(result, {"bob": {"ping"}})
 
     def test_invalid_action(self):
         self.data.append("all : allice : don't allow\n")
         self.data.append("ping : bob : allow\n")
         result = self.get_access()
-        self.assertEqual(result, {'bob': {'ping'}})
+        self.assertEqual(result, {"bob": {"ping"}})
 
     def test_all_privilege(self):
         self.data.append("all : bob : allow\n")
         result = self.get_access()
-        self.assertEqual(result, {'bob': self.all})
+        self.assertEqual(result, {"bob": self.all})
 
     def test_all_accounts(self):
         self.data.append("all : all : allow\n")
         result = self.get_access()
-        self.assertEqual(result, {'alice': self.all,
-                                  'bob': self.all})
+        self.assertEqual(result, {"alice": self.all, "bob": self.all})
 
     def test_deny_action(self):
         self.data.append("all : all : allow\n")
         self.data.append("ping : bob : deny\n")
         result = self.get_access()
-        self.assertEqual(result, {'alice': self.all,
-                                  'bob': self.all - {'ping'}})
+        self.assertEqual(result, {"alice": self.all, "bob": self.all - {"ping"}})
 
     def test_multiple_users(self):
         self.data.append("all : alice bob: allow\n")
         result = self.get_access()
-        self.assertEqual(result, {'alice': self.all,
-                                  'bob': self.all})
+        self.assertEqual(result, {"alice": self.all, "bob": self.all})
 
     def test_multiple_privileges(self):
         self.data.append("ping pong : alice: allow\n")
         result = self.get_access()
-        self.assertEqual(result, {'alice': {'ping', 'pong'}})
+        self.assertEqual(result, {"alice": {"ping", "pong"}})
 
     def test_ignore_comments(self):
         self.data.append("all: alice: allow\n")
         self.data.append("# all: bob : allow\n")
         result = self.get_access()
-        self.assertEqual(result, {'alice': self.all})
+        self.assertEqual(result, {"alice": self.all})
 
 
 class TestServersLoad(unittest.TestCase):
@@ -176,8 +171,7 @@ class TestServersLoad(unittest.TestCase):
         if not fp:
             fp = self.fp
         name = "pyzor.config.open"
-        with patch(name, mock_open(read_data=''.join(self.data)),
-                   create=True) as m:
+        with patch(name, mock_open(read_data="".join(self.data)), create=True) as m:
             return pyzor.config.load_servers(fp)
 
     def tearDown(self):
@@ -196,8 +190,7 @@ class TestServersLoad(unittest.TestCase):
         self.data.append("%s:%s\n" % self.random_server1)
         self.data.append("%s:%s\n" % self.random_server2)
         result = self.get_servers()
-        self.assertEqual(result, [self.random_server1,
-                                  self.random_server2])
+        self.assertEqual(result, [self.random_server1, self.random_server2])
 
     def test_ignore_comment(self):
         self.data.append("#%s:%s\n" % self.random_server1)
@@ -304,6 +297,5 @@ def suite():
     return test_suite
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
-

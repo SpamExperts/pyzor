@@ -57,11 +57,11 @@ def _eintr_retry(func, *args):
 class Server(SocketServer.UDPServer):
     """The pyzord server.  Handles incoming UDP connections in a single
     thread and single process."""
+
     max_packet_size = 8192
     time_diff_allowance = 180
 
-    def __init__(self, address, database, passwd_fn, access_fn,
-                 forwarder=None):
+    def __init__(self, address, database, passwd_fn, access_fn, forwarder=None):
         if ":" in address[0]:
             Server.address_family = socket.AF_INET6
         else:
@@ -81,8 +81,9 @@ class Server(SocketServer.UDPServer):
         self.forwarder = forwarder
 
         self.log.debug("Listening on %s", address)
-        SocketServer.UDPServer.__init__(self, address, RequestHandler,
-                                        bind_and_activate=False)
+        SocketServer.UDPServer.__init__(
+            self, address, RequestHandler, bind_and_activate=False
+        )
 
         # Make sure the socket is not blocking or this will not run asynchronously.
         self.socket.setblocking(False)
@@ -119,8 +120,9 @@ class Server(SocketServer.UDPServer):
         t.start()
 
     def handle_error(self, request, client_address):
-        self.log.error("Error while processing request from: %s",
-                       client_address, exc_info=True)
+        self.log.error(
+            "Error while processing request from: %s", client_address, exc_info=True
+        )
 
 
 class PreForkServer(Server):
@@ -129,6 +131,7 @@ class PreForkServer(Server):
 
     The parent process will then wait for all his child process to complete.
     """
+
     def __init__(self, address, database, passwd_fn, access_fn, prefork=4):
         """The same as Server.__init__ but requires a list of databases
         instead of a single database connection.
@@ -178,6 +181,7 @@ class PreForkServer(Server):
 class ThreadingServer(SocketServer.ThreadingMixIn, Server):
     """A threaded version of the pyzord server.  Each connection is served
     in a new thread.  This may not be suitable for all database types."""
+
     pass
 
 
@@ -186,10 +190,18 @@ class BoundedThreadingServer(ThreadingServer):
     concurrent threads.
     """
 
-    def __init__(self, address, database, passwd_fn, access_fn, max_threads,
-                 forwarding_server=None):
-        ThreadingServer.__init__(self, address, database, passwd_fn, access_fn,
-                                 forwarder=forwarding_server)
+    def __init__(
+        self,
+        address,
+        database,
+        passwd_fn,
+        access_fn,
+        max_threads,
+        forwarding_server=None,
+    ):
+        ThreadingServer.__init__(
+            self, address, database, passwd_fn, access_fn, forwarder=forwarding_server
+        )
         self.semaphore = threading.Semaphore(max_threads)
 
     def process_request(self, request, client_address):
@@ -206,11 +218,19 @@ class ProcessServer(SocketServer.ForkingMixIn, Server):
     served in a new process. This may not be suitable for all database types.
     """
 
-    def __init__(self, address, database, passwd_fn, access_fn,
-                 max_children=40, forwarding_server=None):
+    def __init__(
+        self,
+        address,
+        database,
+        passwd_fn,
+        access_fn,
+        max_children=40,
+        forwarding_server=None,
+    ):
         ProcessServer.max_children = max_children
-        Server.__init__(self, address, database, passwd_fn, access_fn,
-                        forwarder=forwarding_server)
+        Server.__init__(
+            self, address, database, passwd_fn, access_fn, forwarder=forwarding_server
+        )
 
 
 class RequestHandler(SocketServer.DatagramRequestHandler):
@@ -252,7 +272,8 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # which screws up the RFC5321 format.  Specifically handle that
         # here - this could be removed in time.
         request = email.message_from_bytes(
-            self.rfile.read().replace(b"\n\n", b"\n") + b"\n")
+            self.rfile.read().replace(b"\n\n", b"\n") + b"\n"
+        )
 
         # Ensure that the response can be paired with the request.
         self.response["Thread"] = request["Thread"]
@@ -262,14 +283,12 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         user = request["User"] or pyzor.anonymous_user
         if user != pyzor.anonymous_user:
             try:
-                pyzor.account.verify_signature(request,
-                                               self.server.accounts[user])
+                pyzor.account.verify_signature(request, self.server.accounts[user])
             except KeyError:
                 raise pyzor.SignatureError("Unknown user.")
 
         if "PV" not in request:
-            raise pyzor.ProtocolError("Protocol Version not specified in "
-                                      "request")
+            raise pyzor.ProtocolError("Protocol Version not specified in " "request")
 
         # The protocol version is compatible if the major number is
         # identical (changes in the minor number are unimportant).
@@ -285,15 +304,16 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         opcode = request["Op"]
         if opcode not in self.server.acl[user]:
             raise pyzor.AuthorizationError(
-                "User is not authorized to request the operation.")
-        self.server.log.debug("Got a %s command from %s", opcode,
-                              self.client_address[0])
+                "User is not authorized to request the operation."
+            )
+        self.server.log.debug(
+            "Got a %s command from %s", opcode, self.client_address[0]
+        )
         # Get a handle to the appropriate method to execute this operation.
         try:
             dispatch = self.dispatches[opcode]
         except KeyError:
-            raise NotImplementedError("Requested operation is not "
-                                      "implemented.")
+            raise NotImplementedError("Requested operation is not " "implemented.")
         # Get the existing record from the database (or a blank one if
         # there is no matching record).
         digests = request.get_all("Op-Digest")
@@ -301,9 +321,14 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         # Do the requested operation, log what we have done, and return.
         if dispatch and digests:
             dispatch(self, digests)
-        self.server.usage_log.info("%s,%s,%s,%r,%s", user,
-                                   self.client_address[0], opcode, digests,
-                                   self.response["Code"])
+        self.server.usage_log.info(
+            "%s,%s,%s,%r,%s",
+            user,
+            self.client_address[0],
+            opcode,
+            digests,
+            self.response["Code"],
+        )
 
     def handle_error(self, code, message):
         """Create an appropriate response for an error."""
@@ -384,8 +409,7 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
             record = self.server.database[digest]
         except KeyError:
             record = pyzor.engines.common.Record()
-        self.server.log.debug("Request for information about digest %s",
-                              digest)
+        self.server.log.debug("Request for information about digest %s", digest)
 
         def time_output(time_obj):
             """Convert a datetime object to a POSIX timestamp.
@@ -404,10 +428,10 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         self.response["WL-Count"] = "%d" % record.wl_count
 
     dispatches = {
-        'ping': None,
-        'pong': handle_pong,
-        'info': handle_info,
-        'check': handle_check,
-        'report': handle_report,
-        'whitelist': handle_whitelist,
+        "ping": None,
+        "pong": handle_pong,
+        "info": handle_info,
+        "check": handle_check,
+        "report": handle_report,
+        "whitelist": handle_whitelist,
     }

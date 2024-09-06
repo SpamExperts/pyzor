@@ -1,5 +1,24 @@
 Changelog
 =========
+Pyzor 1.1.2
+-----------
+Run black on the entire repository for linting.
+Update documentation/release notes.
+
+Pyzor 1.1.1
+-----------
+New features:
+		* This release adds support for Python 3 mainly.
+
+Performance enhancements:
+		* Use a non blocking socket for the pyzor server, allowing asynchronous running and
+		graceful shutdown of the server.
+
+Others:
+		* Read stdin for pyzor in binary mode (fixes `#64 <https://github.com/SpamExperts/pyzor/issues/64>)
+		* Catch an unhandled exception when running pyzor as a user with no home directory (fixes <#86 https://github.com/SpamExperts/pyzor/issues/68>)
+		* Miscellaneous changes related to Python 3 support (up to Python 3.12) that remove deprecated methods/syntax.
+
 
 Pyzor 1.0.1
 -----------

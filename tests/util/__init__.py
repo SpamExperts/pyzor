@@ -17,10 +17,12 @@ except ImportError:
 
 import pyzor.client
 
+
 def mock_open(mock=None, read_data=""):
     mock = _mock_open(mock, read_data)
     mock.return_value.__iter__ = lambda x: iter(read_data.splitlines())
     return mock
+
 
 msg = """Newsgroups:
 Date: Wed, 10 Apr 2002 22:23:51 -0400 (EDT)
@@ -37,31 +39,36 @@ Test Email
 
 digest = "7421216f915a87e02da034cc483f5c876e1a1338"
 
-_dt_decode = lambda x: None if x == 'None' else datetime.strptime(x, "%a %b %d %H:%M:%S %Y")
+_dt_decode = (
+    lambda x: None if x == "None" else datetime.strptime(x, "%a %b %d %H:%M:%S %Y")
+)
+
 
 class PyzorTestBase(unittest.TestCase):
     """Test base that starts the pyzord daemon in setUpClass with specified
     arguments. The daemon is killed in tearDownClass. This also create the
     necessary files and the homedir.
     """
+
     pyzord = None
-    _args = {"homedir": "--homedir",
-             "engine": "-e",
-             "dsn": "--dsn",
-             "address": "-a",
-             "port": "-p",
-             "threads": "--threads",
-             "max_threads": "--max-threads",
-             "processes": "--processes",
-             "max_processes": "--max-processes",
-             "db_connections": "--db-connections",
-             "password_file": "--password-file",
-             "access_file": "--access-file",
-             "cleanup_age": "--cleanup-age",
-             "log_file": "--log-file",
-             "detach": "--detach",
-             "prefork": "--pre-fork",
-             }
+    _args = {
+        "homedir": "--homedir",
+        "engine": "-e",
+        "dsn": "--dsn",
+        "address": "-a",
+        "port": "-p",
+        "threads": "--threads",
+        "max_threads": "--max-threads",
+        "processes": "--processes",
+        "max_processes": "--max-processes",
+        "db_connections": "--db-connections",
+        "password_file": "--password-file",
+        "access_file": "--access-file",
+        "cleanup_age": "--cleanup-age",
+        "log_file": "--log-file",
+        "detach": "--detach",
+        "prefork": "--pre-fork",
+    }
     homedir = "./pyzor-test/"
     threads = "False"
     access_file = "pyzord.access"
@@ -134,13 +141,14 @@ class PyzorTestBase(unittest.TestCase):
 
     def setUp(self):
         unittest.TestCase.setUp(self)
-        self.client_args = {"--homedir": self.homedir,
-                            "--servers-file": "servers",
-                            "-t": None,  # timeout
-                            "-r": None,  # report threshold
-                            "-w": None,  # whitelist threshold
-                            "-s": None,  # style
-                            }
+        self.client_args = {
+            "--homedir": self.homedir,
+            "--servers-file": "servers",
+            "-t": None,  # timeout
+            "-r": None,  # report threshold
+            "-w": None,  # whitelist threshold
+            "-s": None,  # style
+        }
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
@@ -154,8 +162,7 @@ class PyzorTestBase(unittest.TestCase):
         shutil.rmtree(cls.homedir, True)
         redis.StrictRedis(db=10).flushdb()
 
-    def check_pyzor(self, cmd, user, input=None,
-                    code=None, exit_code=None, counts=()):
+    def check_pyzor(self, cmd, user, input=None, code=None, exit_code=None, counts=()):
         """Call the pyzor client with the specified args from self.client_args
         and verifies the response.
         """
@@ -168,10 +175,9 @@ class PyzorTestBase(unittest.TestCase):
                 args.append(key)
                 args.append(value)
         args.append(cmd)
-        pyzor = subprocess.Popen(args,
-                                 stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+        pyzor = subprocess.Popen(
+            args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         if input:
             stdout, stderr = pyzor.communicate(input.encode("utf8"))
         else:
@@ -195,8 +201,9 @@ class PyzorTestBase(unittest.TestCase):
             self.assertEqual(exit_code, pyzor.returncode)
         return stdout
 
-    def check_pyzor_multiple(self, cmd, user, input=None,
-                             code=None, exit_code=None, counts=()):
+    def check_pyzor_multiple(
+        self, cmd, user, input=None, code=None, exit_code=None, counts=()
+    ):
         """Call the pyzor client with the specified args from self.client_args
         and verifies the response.
         """
@@ -209,10 +216,9 @@ class PyzorTestBase(unittest.TestCase):
                 args.append(key)
                 args.append(value)
         args.append(cmd)
-        pyzor = subprocess.Popen(args,
-                                 stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+        pyzor = subprocess.Popen(
+            args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         if input:
             stdout, stderr = pyzor.communicate(input.encode("utf8"))
         else:
@@ -237,8 +243,7 @@ class PyzorTestBase(unittest.TestCase):
                     self.fail("Parsing error: %s of %r" % (e, stdout))
                 self.assertEqual(status[0], code[i], status)
             if counts:
-                self.assertEqual((int(results[2]), int(results[3])),
-                                 counts[i])
+                self.assertEqual((int(results[2]), int(results[3])), counts[i])
 
         if exit_code is not None:
             self.assertEqual(exit_code, pyzor.returncode)
@@ -246,8 +251,7 @@ class PyzorTestBase(unittest.TestCase):
 
     def check_digest(self, digest, address, counts=(0, 0)):
         result = self.client.check(digest, address)
-        self.assertEqual((int(result["Count"]), int(result["WL-Count"])),
-                          counts)
+        self.assertEqual((int(result["Count"]), int(result["WL-Count"])), counts)
         return result
 
     def get_record(self, input, user="bob"):
@@ -273,30 +277,35 @@ class PyzorTestBase(unittest.TestCase):
             date2 = datetime.now()
         delta = abs((date2 - date1).total_seconds())
         if delta > seconds:
-            self.fail("Delta %s is too big: %s, %s" % (delta , date1, date2))
+            self.fail("Delta %s is too big: %s, %s" % (delta, date1, date2))
+
 
 class PyzorTest(object):
     """MixIn class for PyzorTestBase that performs a series of basic tests."""
+
     def test_ping(self):
         self.check_pyzor("ping", "bob")
 
     def test_pong(self):
         input = "Test1 pong1 Test2"
-        self.check_pyzor("pong", "bob", input=input, code=200, exit_code=0,
-                         counts=(sys.maxsize, 0))
+        self.check_pyzor(
+            "pong", "bob", input=input, code=200, exit_code=0, counts=(sys.maxsize, 0)
+        )
 
     def test_check(self):
         input = "Test1 check1 Test2"
-        self.check_pyzor("check", "bob", input=input, code=200, exit_code=1,
-                         counts=(0, 0))
+        self.check_pyzor(
+            "check", "bob", input=input, code=200, exit_code=1, counts=(0, 0)
+        )
         r = self.get_record(input)
         self.assertEqual(r["Count"], "0")
 
     def test_report(self):
         input = "Test1 report1 Test2"
         self.check_pyzor("report", "bob", input=input, code=200, exit_code=0)
-        self.check_pyzor("check", "bob", input=input, code=200, exit_code=0,
-                         counts=(1, 0))
+        self.check_pyzor(
+            "check", "bob", input=input, code=200, exit_code=0, counts=(1, 0)
+        )
         r = self.get_record(input)
         self.assertEqual(r["Count"], "1")
         self.check_fuzzy_date(r["Entered"])
@@ -304,12 +313,14 @@ class PyzorTest(object):
     def test_report_update(self):
         input = "Test1 report update1 Test2"
         self.check_pyzor("report", "bob", input=input, code=200, exit_code=0)
-        self.check_pyzor("check", "bob", input=input, code=200, exit_code=0,
-                         counts=(1, 0))
+        self.check_pyzor(
+            "check", "bob", input=input, code=200, exit_code=0, counts=(1, 0)
+        )
         time.sleep(1)
         self.check_pyzor("report", "bob", input=input, code=200, exit_code=0)
-        self.check_pyzor("check", "bob", input=input, code=200, exit_code=0,
-                         counts=(2, 0))
+        self.check_pyzor(
+            "check", "bob", input=input, code=200, exit_code=0, counts=(2, 0)
+        )
         r = self.get_record(input)
         self.assertEqual(r["Count"], "2")
         self.assertNotEqual(r["Entered"], r["Updated"])
@@ -318,8 +329,9 @@ class PyzorTest(object):
     def test_whitelist(self):
         input = "Test1 white list1 Test2"
         self.check_pyzor("whitelist", "bob", input=input, code=200, exit_code=0)
-        self.check_pyzor("check", "bob", input=input, code=200, exit_code=1,
-                         counts=(0, 1))
+        self.check_pyzor(
+            "check", "bob", input=input, code=200, exit_code=1, counts=(0, 1)
+        )
         r = self.get_record(input)
         self.assertEqual(r["WL-Count"], "1")
         self.check_fuzzy_date(r["WL-Entered"])
@@ -327,12 +339,14 @@ class PyzorTest(object):
     def test_whitelist_update(self):
         input = "Test1 white list update1 Test2"
         self.check_pyzor("whitelist", "bob", input=input, code=200, exit_code=0)
-        self.check_pyzor("check", "bob", input=input, code=200, exit_code=1,
-                         counts=(0, 1))
+        self.check_pyzor(
+            "check", "bob", input=input, code=200, exit_code=1, counts=(0, 1)
+        )
         time.sleep(1)
         self.check_pyzor("whitelist", "bob", input=input, code=200, exit_code=0)
-        self.check_pyzor("check", "bob", input=input, code=200, exit_code=1,
-                         counts=(0, 2))
+        self.check_pyzor(
+            "check", "bob", input=input, code=200, exit_code=1, counts=(0, 2)
+        )
         r = self.get_record(input)
         self.assertEqual(r["WL-Count"], "2")
         self.assertNotEqual(r["WL-Entered"], r["WL-Updated"])
@@ -342,8 +356,9 @@ class PyzorTest(object):
         input = "Test1 white list report1 Test2"
         self.check_pyzor("whitelist", "bob", input=input, code=200, exit_code=0)
         self.check_pyzor("report", "bob", input=input, code=200, exit_code=0)
-        self.check_pyzor("check", "bob", input=input, code=200, exit_code=1,
-                         counts=(1, 1))
+        self.check_pyzor(
+            "check", "bob", input=input, code=200, exit_code=1, counts=(1, 1)
+        )
         r = self.get_record(input)
         self.assertEqual(r["Count"], "1")
         self.check_fuzzy_date(r["Entered"])
@@ -354,13 +369,15 @@ class PyzorTest(object):
         input = "Test1 white list report update1 Test2"
         self.check_pyzor("whitelist", "bob", input=input, code=200, exit_code=0)
         self.check_pyzor("report", "bob", input=input, code=200, exit_code=0)
-        self.check_pyzor("check", "bob", input=input, code=200, exit_code=1,
-                         counts=(1, 1))
+        self.check_pyzor(
+            "check", "bob", input=input, code=200, exit_code=1, counts=(1, 1)
+        )
         time.sleep(1)
         self.check_pyzor("whitelist", "bob", input=input, code=200, exit_code=0)
         self.check_pyzor("report", "bob", input=input, code=200, exit_code=0)
-        self.check_pyzor("check", "bob", input=input, code=200, exit_code=1,
-                         counts=(2, 2))
+        self.check_pyzor(
+            "check", "bob", input=input, code=200, exit_code=1, counts=(2, 2)
+        )
         r = self.get_record(input)
         self.assertEqual(r["Count"], "2")
         self.assertNotEqual(r["Entered"], r["Updated"])
@@ -369,4 +386,3 @@ class PyzorTest(object):
         self.assertEqual(r["WL-Count"], "2")
         self.assertNotEqual(r["WL-Entered"], r["WL-Updated"])
         self.check_fuzzy_date(r["WL-Updated"])
-

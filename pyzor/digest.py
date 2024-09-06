@@ -13,18 +13,19 @@ except ImportError:
     import html.parser as HTMLParser
 
 # Hard-coded for the moment.
-digest_spec = ([(20, 3), (60, 3)])
+digest_spec = [(20, 3), (60, 3)]
 
 HASH = hashlib.sha1
 HASH_SIZE = len(HASH(b"").hexdigest())
 
 
 if sys.version_info[0] == 2:
-    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+    sys.stdout = codecs.getwriter("utf8")(sys.stdout)
 
 
 class HTMLStripper(HTMLParser.HTMLParser):
     """Strip all tags from the HTML."""
+
     def __init__(self, collector):
         HTMLParser.HTMLParser.__init__(self)
         self.reset()
@@ -50,7 +51,8 @@ class HTMLStripper(HTMLParser.HTMLParser):
 
 class DataDigester(object):
     """The major workhouse class."""
-    __slots__ = ['value', 'digest']
+
+    __slots__ = ["value", "digest"]
 
     # Minimum line length for it to be included as part of the digest.
     min_line_length = 8
@@ -62,20 +64,20 @@ class DataDigester(object):
     # We're not going to try to match email addresses as per the spec
     # because it's too difficult.  Plus, regular expressions don't work well
     # for them. (BNF is better at balanced parens and such).
-    email_ptrn = re.compile(r'\S+@\S+')
+    email_ptrn = re.compile(r"\S+@\S+")
 
     # Same goes for URLs.
-    url_ptrn = re.compile(r'[a-z]+:\S+', re.IGNORECASE)
+    url_ptrn = re.compile(r"[a-z]+:\S+", re.IGNORECASE)
 
     # We also want to remove anything that is so long it looks like possibly
     # a unique identifier.
-    longstr_ptrn = re.compile(r'\S{10,}')
+    longstr_ptrn = re.compile(r"\S{10,}")
 
-    ws_ptrn = re.compile(r'\s')
+    ws_ptrn = re.compile(r"\s")
 
     # String that the above patterns will be replaced with.
     # Note that an empty string will always be used to remove whitespace.
-    unwanted_txt_repl = ''
+    unwanted_txt_repl = ""
 
     def __init__(self, msg, spec=None):
         if spec is None:
@@ -131,7 +133,7 @@ class DataDigester(object):
         s = cls.url_ptrn.sub(repl, s)
         # Make sure we do the whitespace last because some of the previous
         # patterns rely on whitespace.
-        return cls.ws_ptrn.sub('', s).strip()
+        return cls.ws_ptrn.sub("", s).strip()
 
     @staticmethod
     def normalize_html_part(s):
@@ -160,8 +162,12 @@ class DataDigester(object):
                 errors = "ignore"
                 if not charset:
                     charset = "ascii"
-                elif (charset.lower().replace("_", "-") in ("quopri-codec",
-                      "quopri", "quoted-printable", "quotedprintable")):
+                elif charset.lower().replace("_", "-") in (
+                    "quopri-codec",
+                    "quopri",
+                    "quoted-printable",
+                    "quotedprintable",
+                ):
                     errors = "strict"
 
                 try:
@@ -185,6 +191,7 @@ class DataDigester(object):
 
 class PrintingDataDigester(DataDigester):
     """Extends DataDigester: prints out what we're digesting."""
+
     def handle_line(self, line):
         print(line.decode("utf8"))
         super(PrintingDataDigester, self).handle_line(line)

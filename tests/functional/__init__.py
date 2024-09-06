@@ -30,5 +30,6 @@ def suite():
     test_suite.addTest(test_forwarder.suite())
     return test_suite
 
-if __name__ == '__main__':
-    unittest.main(defaultTest='suite')
+
+if __name__ == "__main__":
+    unittest.main(defaultTest="suite")

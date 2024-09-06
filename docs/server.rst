@@ -69,8 +69,8 @@ For more information about GDBM see `<http://www.gnu.org.ua/software/gdbm/>`_.
 MySQL
 ^^^^^^
 
-This will require the `MySQL-python <https://pypi.python.org/pypi/MySQL-
-python>`_ library. 
+This will require the `mysqlclient <https://pypi.org/project/mysqlclient/>`_ library and
+subsequently the `libmariadb-dev` package.
 
 .. note::
    `MySQL-python` does not currently support Python 3

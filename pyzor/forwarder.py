@@ -12,8 +12,7 @@ except ImportError:
 class Forwarder(object):
     """Forwards digest to remote pyzor servers"""
 
-    def __init__(self, forwarding_client, remote_servers,
-                 max_queue_size=10000):
+    def __init__(self, forwarding_client, remote_servers, max_queue_size=10000):
         """
         forward_client: a pyzor.client.Client instance to use as
                         forwarding client
@@ -30,8 +29,7 @@ class Forwarder(object):
         """read forwarding requests from the queue"""
         while True:
             try:
-                digest, whitelist = self.forward_queue.get(block=True,
-                                                           timeout=2)
+                digest, whitelist = self.forward_queue.get(block=True, timeout=2)
             except Queue.Empty:
                 # If the forwarding client has been deleted we should
                 # end the thread
@@ -47,8 +45,9 @@ class Forwarder(object):
                     else:
                         self.forwarding_client.report(digest, server)
                 except Exception as ex:
-                    self.log.warn('Forwarding digest %s to %s failed: %s',
-                                  digest, server, ex)
+                    self.log.warn(
+                        "Forwarding digest %s to %s failed: %s", digest, server, ex
+                    )
 
     def queue_forward_request(self, digest, whitelist=False):
         """If forwarding is enabled, insert a digest into the forwarding queue
@@ -59,7 +58,9 @@ class Forwarder(object):
             return
 
         try:
-            self.forward_queue.put_nowait((digest, whitelist),)
+            self.forward_queue.put_nowait(
+                (digest, whitelist),
+            )
         except Queue.Full:
             pass
 
