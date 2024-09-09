@@ -6,6 +6,7 @@ import subprocess
 
 import redis
 
+
 class ForwardSetup(object):
     """Setup forwarding client and 'remote' pyzord"""
 
@@ -22,21 +23,48 @@ class ForwardSetup(object):
         except OSError:
             pass
 
-@unittest.skip("This fails randomly on PyPy.")
+
 class ForwarderTest(unittest.TestCase):
-
     def setUp(self):
-        self.localserver = ForwardSetup('./pyzor-test-forwardserver')  # we also use this dir for the local client
-        self.localserver.write_homedir_file('servers', '127.0.0.1:9999\n')
+        self.localserver = ForwardSetup(
+            "./pyzor-test-forwardserver"
+        )  # we also use this dir for the local client
+        self.localserver.write_homedir_file("servers", "127.0.0.1:9999\n")
 
-        self.fwdclient = ForwardSetup('./pyzor-test-forwardingclient')
-        self.fwdclient.write_homedir_file('servers', '127.0.0.1:9998\n')
+        self.fwdclient = ForwardSetup("./pyzor-test-forwardingclient")
+        self.fwdclient.write_homedir_file("servers", "127.0.0.1:9998\n")
 
-        args = ["pyzord", "--homedir", self.localserver.homedir, '-e', 'redis', '--dsn', 'localhost,,,10', '-a', '127.0.0.1', '-p', '9999', '--forward-client-homedir', self.fwdclient.homedir]
+        args = [
+            "pyzord",
+            "--homedir",
+            self.localserver.homedir,
+            "-e",
+            "redis",
+            "--dsn",
+            "localhost,,,10",
+            "-a",
+            "127.0.0.1",
+            "-p",
+            "9999",
+            "--forward-client-homedir",
+            self.fwdclient.homedir,
+        ]
         self.local_pyzord_proc = subprocess.Popen(args)
 
-        self.remoteserver = ForwardSetup('./pyzor-test-remoteserver')
-        args = ["pyzord", "--homedir", self.remoteserver.homedir, '-e', 'redis', '--dsn', 'localhost,,,9', '-a', '127.0.0.1', '-p', '9998']
+        self.remoteserver = ForwardSetup("./pyzor-test-remoteserver")
+        args = [
+            "pyzord",
+            "--homedir",
+            self.remoteserver.homedir,
+            "-e",
+            "redis",
+            "--dsn",
+            "localhost,,,9",
+            "-a",
+            "127.0.0.1",
+            "-p",
+            "9998",
+        ]
         self.remote_pyzord_proc = subprocess.Popen(args)
         time.sleep(0.3)
 
@@ -75,11 +103,10 @@ class ForwarderTest(unittest.TestCase):
     def check_pyzor(self, cmd, homedir, counts=None, msg=None):
         """simplified check_pyzor version from PyzorTestBase"""
         msg = "This is a test message for the forwading feature"
-        args = ["pyzor", '--homedir', homedir, cmd]
-        pyzor = subprocess.Popen(args,
-                                 stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE)
+        args = ["pyzor", "--homedir", homedir, cmd]
+        pyzor = subprocess.Popen(
+            args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
 
         stdout, stderr = pyzor.communicate(msg.encode("utf8"))
 
@@ -99,11 +126,13 @@ class ForwarderTest(unittest.TestCase):
             self.assertEqual(counts, (int(results[2]), int(results[3])))
         return stdout
 
+
 def suite():
     """Gather all the tests from this module in a test suite."""
     test_suite = unittest.TestSuite()
     test_suite.addTest(unittest.makeSuite(ForwarderTest))
     return test_suite
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -29,45 +29,45 @@ class Message(email.message.Message):
 
 class ThreadedMessage(Message):
     def init_for_sending(self):
-        if 'Thread' not in self:
+        if "Thread" not in self:
             self.set_thread(ThreadId.generate())
-        assert 'Thread' in self
+        assert "Thread" in self
         self["PV"] = str(pyzor.proto_version)
         Message.init_for_sending(self)
 
     def ensure_complete(self):
-        if 'PV' not in self or 'Thread' not in self:
-            raise pyzor.IncompleteMessageError("Doesn't have fields for a "
-                                               "ThreadedMessage.")
+        if "PV" not in self or "Thread" not in self:
+            raise pyzor.IncompleteMessageError(
+                "Doesn't have fields for a " "ThreadedMessage."
+            )
         Message.ensure_complete(self)
 
     def get_protocol_version(self):
-        return float(self['PV'])
+        return float(self["PV"])
 
     def get_thread(self):
-        return ThreadId(self['Thread'])
+        return ThreadId(self["Thread"])
 
     def set_thread(self, i):
-        self['Thread'] = str(i)
+        self["Thread"] = str(i)
 
 
 class Response(ThreadedMessage):
     ok_code = 200
 
     def ensure_complete(self):
-        if 'Code' not in self or 'Diag' not in self:
-            raise pyzor.IncompleteMessageError("doesn't have fields for a "
-                                               "Response")
+        if "Code" not in self or "Diag" not in self:
+            raise pyzor.IncompleteMessageError("doesn't have fields for a " "Response")
         ThreadedMessage.ensure_complete(self)
 
     def is_ok(self):
         return self.get_code() == self.ok_code
 
     def get_code(self):
-        return int(self['Code'])
+        return int(self["Code"])
 
     def get_diag(self):
-        return self['Diag']
+        return self["Diag"]
 
     def head_tuple(self):
         return self.get_code(), self.get_diag()
@@ -79,12 +79,11 @@ class Request(ThreadedMessage):
     message,"""
 
     def get_op(self):
-        return self['Op']
+        return self["Op"]
 
     def ensure_complete(self):
-        if 'Op' not in self:
-            raise pyzor.IncompleteMessageError("doesn't have fields for a "
-                                               "Request")
+        if "Op" not in self:
+            raise pyzor.IncompleteMessageError("doesn't have fields for a " "Request")
         ThreadedMessage.ensure_complete(self)
 
 
@@ -142,7 +141,7 @@ class WhitelistRequest(SimpleDigestSpecBasedRequest):
 
 class ThreadId(int):
     # (0, 1024) is reserved
-    full_range = (0, 2 ** 16)
+    full_range = (0, 2**16)
     ok_range = (1024, full_range[1])
     error_value = 0
 

@@ -1,4 +1,5 @@
 import unittest
+
 try:
     import configparser as ConfigParser
 except ImportError:
@@ -8,6 +9,7 @@ from tests.util import *
 
 try:
     import MySQLdb
+
     has_mysql = True
 except ImportError:
     has_mysql = False
@@ -25,45 +27,52 @@ schema = """
     )
 """
 
-@unittest.skipIf(not os.path.exists("./test.conf"),
-                 "test.conf is not available")
+
+@unittest.skipIf(not os.path.exists("./test.conf"), "test.conf is not available")
 @unittest.skipIf(not has_mysql, "MySQLdb library not available")
 class MySQLdbPyzorTest(PyzorTest, PyzorTestBase):
     """Test the mysql engine."""
+
     dsn = None
     engine = "mysql"
 
     @classmethod
     def setUpClass(cls):
-        conf = ConfigParser.ConfigParser()    
+        conf = ConfigParser.ConfigParser()
         conf.read("./test.conf")
-        table = conf.get("test", "table")        
-        db = MySQLdb.Connect(host=conf.get("test", "host"),
-                             user=conf.get("test", "user"),
-                             passwd=conf.get("test", "passwd"),
-                             db=conf.get("test", "db")) 
+        table = conf.get("test", "table")
+        db = MySQLdb.Connect(
+            host=conf.get("test", "host"),
+            user=conf.get("test", "user"),
+            passwd=conf.get("test", "passwd"),
+            db=conf.get("test", "db"),
+        )
         c = db.cursor()
         c.execute(schema % table)
         c.close()
         db.close()
-        cls.dsn = "%s,%s,%s,%s,%s" % (conf.get("test", "host"),
-                                      conf.get("test", "user"),
-                                      conf.get("test", "passwd"),
-                                      conf.get("test", "db"),
-                                      conf.get("test", "table"))
+        cls.dsn = "%s,%s,%s,%s,%s" % (
+            conf.get("test", "host"),
+            conf.get("test", "user"),
+            conf.get("test", "passwd"),
+            conf.get("test", "db"),
+            conf.get("test", "table"),
+        )
         super(MySQLdbPyzorTest, cls).setUpClass()
-        
+
     @classmethod
     def tearDownClass(cls):
         super(MySQLdbPyzorTest, cls).tearDownClass()
         try:
-            conf = ConfigParser.ConfigParser()    
+            conf = ConfigParser.ConfigParser()
             conf.read("./test.conf")
-            table = conf.get("test", "table")        
-            db = MySQLdb.Connect(host=conf.get("test", "host"),
-                                 user=conf.get("test", "user"),
-                                 passwd=conf.get("test", "passwd"),
-                                 db=conf.get("test", "db"))
+            table = conf.get("test", "table")
+            db = MySQLdb.Connect(
+                host=conf.get("test", "host"),
+                user=conf.get("test", "user"),
+                passwd=conf.get("test", "passwd"),
+                db=conf.get("test", "db"),
+            )
             c = db.cursor()
             c.execute("DROP TABLE %s" % table)
             c.close()
@@ -74,12 +83,14 @@ class MySQLdbPyzorTest(PyzorTest, PyzorTestBase):
 
 class ThreadsMySQLdbPyzorTest(MySQLdbPyzorTest):
     """Test the mysql engine with threads activated."""
+
     threads = "True"
     max_threads = "0"
 
 
 class BoundedThreadsMySQLdbPyzorTest(MySQLdbPyzorTest):
     """Test the mysql engine with threads and DBConnections set."""
+
     threads = "True"
     max_threads = "0"
     db_connections = "10"
@@ -87,12 +98,14 @@ class BoundedThreadsMySQLdbPyzorTest(MySQLdbPyzorTest):
 
 class MaxThreadsMySQLdbPyzorTest(MySQLdbPyzorTest):
     """Test the mysql engine with threads and MaxThreads set."""
+
     threads = "True"
     max_threads = "10"
 
 
 class BoundedMaxThreadsMySQLdbPyzorTest(MySQLdbPyzorTest):
     """Test the mysql engine with threads, MaxThreads and DBConnections set."""
+
     threads = "True"
     max_threads = "10"
     db_connections = "10"
@@ -118,6 +131,7 @@ def suite():
     test_suite.addTest(unittest.makeSuite(ProcessesMySQLdbPyzorTest))
     test_suite.addTest(unittest.makeSuite(PreForkMySQLdbPyzorTest))
     return test_suite
-        
-if __name__ == '__main__':
+
+
+if __name__ == "__main__":
     unittest.main()

@@ -21,35 +21,47 @@ class EncodingRedisTest(unittest.TestCase):
     def setUp(self):
         unittest.TestCase.setUp(self)
 
-        self.record = pyzor.engines.common.Record(self.r_count, self.wl_count,
-                                                  self.entered, self.updated,
-                                                  self.wl_entered, self.wl_updated)
+        self.record = pyzor.engines.common.Record(
+            self.r_count,
+            self.wl_count,
+            self.entered,
+            self.updated,
+            self.wl_entered,
+            self.wl_updated,
+        )
 
     def compare_records(self, r1, r2):
-        attrs = ("r_count", "r_entered", "r_updated",
-                 "wl_count", "wl_entered", "wl_updated")
-        self.assertTrue(all(getattr(r1, attr) == getattr(r2, attr)
-                            for attr in attrs))
+        attrs = (
+            "r_count",
+            "r_entered",
+            "r_updated",
+            "wl_count",
+            "wl_entered",
+            "wl_updated",
+        )
+        self.assertTrue(all(getattr(r1, attr) == getattr(r2, attr) for attr in attrs))
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
 
     def test_encode_record(self):
-        expected = ("24,2014-04-23 15:41:30,2014-04-25 17:22:25,"
-                    "42,2014-02-12 11:10:55,2014-03-25 05:01:50").encode()
+        expected = (
+            "24,2014-04-23 15:41:30,2014-04-25 17:22:25,"
+            "42,2014-02-12 11:10:55,2014-03-25 05:01:50"
+        ).encode()
         result = pyzor.engines.redis_v0.RedisDBHandle._encode_record(self.record)
         self.assertEqual(result, expected)
 
     def test_encode_record_no_date(self):
-        expected = ("24,2014-04-23 15:41:30,,"
-                    "42,2014-02-12 11:10:55,2014-03-25 05:01:50").encode()
+        expected = (
+            "24,2014-04-23 15:41:30,," "42,2014-02-12 11:10:55,2014-03-25 05:01:50"
+        ).encode()
         self.record.r_updated = None
         result = pyzor.engines.redis_v0.RedisDBHandle._encode_record(self.record)
         self.assertEqual(result, expected)
 
     def test_encode_record_no_white(self):
-        expected = ("24,2014-04-23 15:41:30,2014-04-25 17:22:25,"
-                    "0,,").encode()
+        expected = ("24,2014-04-23 15:41:30,2014-04-25 17:22:25," "0,,").encode()
         self.record.wl_count = 0
         self.record.wl_entered = None
         self.record.wl_updated = None
@@ -57,58 +69,71 @@ class EncodingRedisTest(unittest.TestCase):
         self.assertEqual(result, expected)
 
     def test_decode_record(self):
-        encoded = ("24,2014-04-23 15:41:30,2014-04-25 17:22:25,"
-                   "42,2014-02-12 11:10:55,2014-03-25 05:01:50").encode()
+        encoded = (
+            "24,2014-04-23 15:41:30,2014-04-25 17:22:25,"
+            "42,2014-02-12 11:10:55,2014-03-25 05:01:50"
+        ).encode()
         result = pyzor.engines.redis_v0.RedisDBHandle._decode_record(encoded)
         self.compare_records(result, self.record)
 
     def test_decode_record_no_date(self):
-        encoded = ("24,2014-04-23 15:41:30,,"
-                   "42,2014-02-12 11:10:55,2014-03-25 05:01:50").encode()
+        encoded = (
+            "24,2014-04-23 15:41:30,," "42,2014-02-12 11:10:55,2014-03-25 05:01:50"
+        ).encode()
         result = pyzor.engines.redis_v0.RedisDBHandle._decode_record(encoded)
         self.record.r_updated = None
         self.compare_records(result, self.record)
 
     def test_decode_record_no_white(self):
-        encoded = ("24,2014-04-23 15:41:30,2014-04-25 17:22:25,"
-                   "0,,").encode()
+        encoded = ("24,2014-04-23 15:41:30,2014-04-25 17:22:25," "0,,").encode()
         result = pyzor.engines.redis_v0.RedisDBHandle._decode_record(encoded)
         self.record.wl_count = 0
         self.record.wl_entered = None
         self.record.wl_updated = None
         self.compare_records(result, self.record)
 
+
 def make_MockRedis(commands):
-    class MockStrictRedis():
+    class MockStrictRedis:
         def __init__(self, *args, **kwargs):
             commands.append(("init", args, kwargs))
+
         def set(self, *args, **kwargs):
             commands.append(("set", args, kwargs))
+
         def setex(self, *args, **kwargs):
             commands.append(("setex", args, kwargs))
+
         def get(self, *args, **kwargs):
             commands.append(("get", args, kwargs))
+
         def delete(self, *args, **kwargs):
             commands.append(("delete", args, kwargs))
+
         def keys(self, *args, **kwargs):
             commands.append(("keys", args, kwargs))
             yield "pyzord.digest.2aedaac999d71421c9ee49b9d81f627a7bc570aa"
+
     class MockError(Exception):
         pass
-    class exceptions():
+
+    class exceptions:
         def __init__(self):
             self.RedisError = MockError
-    class MockRedis():
+
+    class MockRedis:
         def __init__(self):
             self.StrictRedis = MockStrictRedis
             self.exceptions = exceptions()
+
     return MockRedis()
+
 
 mock_encode_record = lambda s, x: x
 mock_decode_record = lambda s, x: x
 
-class RedisTest(unittest.TestCase):
 
+class RedisTest(unittest.TestCase):
     max_age = 60 * 60
 
     def setUp(self):
@@ -134,21 +159,22 @@ class RedisTest(unittest.TestCase):
         pyzor.engines.redis_v0.RedisDBHandle._decode_record = self.real_decode
 
     def test_init(self):
-        expected = {"host": "example.com",
-                    "port": 6387,
-                    "password": "passwd",
-                    "db": 5,
-                    }
-        db = pyzor.engines.redis_v0.RedisDBHandle("example.com,6387,passwd,5",
-                                                None)
+        expected = {
+            "host": "example.com",
+            "port": 6387,
+            "password": "passwd",
+            "db": 5,
+        }
+        db = pyzor.engines.redis_v0.RedisDBHandle("example.com,6387,passwd,5", None)
         self.assertEqual(self.commands[0], ("init", (), expected))
 
     def test_init_defaults(self):
-        expected = {"host": "localhost",
-                    "port": 6379,
-                    "password": None,
-                    "db": 0,
-                    }
+        expected = {
+            "host": "localhost",
+            "port": 6379,
+            "password": None,
+            "db": 0,
+        }
         db = pyzor.engines.redis_v0.RedisDBHandle(",,,", None)
         self.assertEqual(self.commands[0], ("init", (), expected))
 
@@ -166,8 +192,7 @@ class RedisTest(unittest.TestCase):
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
         value = "record test"
 
-        db = pyzor.engines.redis_v0.RedisDBHandle(",,,", None,
-                                                max_age=self.max_age)
+        db = pyzor.engines.redis_v0.RedisDBHandle(",,,", None, max_age=self.max_age)
         db[digest] = value
 
         expected = ("pyzord.digest.%s" % digest, self.max_age, value)
@@ -201,6 +226,7 @@ class RedisTest(unittest.TestCase):
         expected = ("pyzord.digest.%s" % digest,)
         self.assertEqual(self.commands[1], ("delete", expected, {}))
 
+
 def suite():
     """Gather all the tests from this module in a test suite."""
     test_suite = unittest.TestSuite()
@@ -208,5 +234,6 @@ def suite():
     test_suite.addTest(unittest.makeSuite(RedisTest))
     return test_suite
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

@@ -2,10 +2,12 @@
 
 try:
     import gdbm as gdbm
+
     _has_gdbm = True
 except ImportError:
     try:
         import dbm.gnu as gdbm
+
         _has_gdbm = True
     except ImportError:
         _has_gdbm = False
@@ -20,7 +22,7 @@ from pyzor.engines.common import Record, DBHandle, BaseEngine
 
 def _dt_decode(datetime_str):
     """Decode a string into a datetime object."""
-    if datetime_str == 'None':
+    if datetime_str == "None":
         return None
     try:
         return datetime.datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S.%f")
@@ -34,15 +36,23 @@ class GdbmDBHandle(BaseEngine):
 
     sync_period = 60
     reorganize_period = 3600 * 24  # 1 day
-    fields = ('r_count', 'r_entered', 'r_updated',
-              'wl_count', 'wl_entered', 'wl_updated')
-    _fields = [('r_count', int),
-               ('r_entered', _dt_decode),
-               ('r_updated', _dt_decode),
-               ('wl_count', int),
-               ('wl_entered', _dt_decode),
-               ('wl_updated', _dt_decode)]
-    this_version = '1'
+    fields = (
+        "r_count",
+        "r_entered",
+        "r_updated",
+        "wl_count",
+        "wl_entered",
+        "wl_updated",
+    )
+    _fields = [
+        ("r_count", int),
+        ("r_entered", _dt_decode),
+        ("r_updated", _dt_decode),
+        ("wl_count", int),
+        ("wl_entered", _dt_decode),
+        ("wl_updated", _dt_decode),
+    ]
+    this_version = "1"
     log = logging.getLogger("pyzord")
 
     def __init__(self, fn, mode, max_age=None):
@@ -98,8 +108,7 @@ class GdbmDBHandle(BaseEngine):
     def start_syncing(self):
         if self.db:
             self.apply_method(self._really_sync)
-        self.sync_timer = threading.Timer(self.sync_period,
-                                          self.start_syncing)
+        self.sync_timer = threading.Timer(self.sync_period, self.start_syncing)
         self.sync_timer.setDaemon(True)
         self.sync_timer.start()
 
@@ -111,8 +120,9 @@ class GdbmDBHandle(BaseEngine):
             return
         if self.db:
             self.apply_method(self._really_reorganize)
-        self.reorganize_timer = threading.Timer(self.reorganize_period,
-                                                self.start_reorganizing)
+        self.reorganize_timer = threading.Timer(
+            self.reorganize_period, self.start_reorganizing
+        )
         self.reorganize_timer.setDaemon(True)
         self.reorganize_timer.start()
 
@@ -142,24 +152,22 @@ class GdbmDBHandle(BaseEngine):
         try:
             s = s.decode("utf8")
         except UnicodeError:
-            raise StandardError("don't know how to handle db value %s" %
-                                repr(s))
-        parts = s.split(',')
+            raise StandardError("don't know how to handle db value %s" % repr(s))
+        parts = s.split(",")
         version = parts[0]
         if len(parts) == 3:
             dispatch = cls.decode_record_0
-        elif version == '1':
+        elif version == "1":
             dispatch = cls.decode_record_1
         else:
-            raise StandardError("don't know how to handle db value %s" %
-                                repr(s))
+            raise StandardError("don't know how to handle db value %s" % repr(s))
         return dispatch(s)
 
     @staticmethod
     def decode_record_0(s):
         r = Record()
-        parts = s.split(',')
-        fields = ('r_count', 'r_entered', 'r_updated')
+        parts = s.split(",")
+        fields = ("r_count", "r_entered", "r_updated")
         assert len(parts) == len(fields)
         for i in range(len(parts)):
             setattr(r, fields[i], int(parts[i]))
@@ -168,7 +176,7 @@ class GdbmDBHandle(BaseEngine):
     @classmethod
     def decode_record_1(cls, s):
         r = Record()
-        parts = s.split(',')[1:]
+        parts = s.split(",")[1:]
         assert len(parts) == len(cls.fields)
         for part, field in zip(parts, cls._fields):
             f, decode = field
@@ -187,8 +195,10 @@ class ThreadedGdbmDBHandle(GdbmDBHandle):
         if kwargs is None:
             kwargs = {}
         with self.db_lock:
-            return GdbmDBHandle.apply_method(self, method, varargs=varargs,
-                                             kwargs=kwargs)
+            return GdbmDBHandle.apply_method(
+                self, method, varargs=varargs, kwargs=kwargs
+            )
+
 
 # This won't work because the gdbm object needs to be in shared memory of the
 # spawned processes.
@@ -199,12 +209,13 @@ class ThreadedGdbmDBHandle(GdbmDBHandle):
 #         self.db_lock = multiprocessing.Lock()
 
 if not _has_gdbm:
-    handle = DBHandle(single_threaded=None,
-                      multi_threaded=None,
-                      multi_processing=None,
-                      prefork=None)
+    handle = DBHandle(
+        single_threaded=None, multi_threaded=None, multi_processing=None, prefork=None
+    )
 else:
-    handle = DBHandle(single_threaded=GdbmDBHandle,
-                      multi_threaded=ThreadedGdbmDBHandle,
-                      multi_processing=None,
-                      prefork=None)
+    handle = DBHandle(
+        single_threaded=GdbmDBHandle,
+        multi_threaded=ThreadedGdbmDBHandle,
+        multi_processing=None,
+        prefork=None,
+    )

@@ -692,25 +692,29 @@ Content-Type: text/plain; charset="iso-8859-1\x00\x00\x00"
 This is a test mailing
 --f46d040a62c49bb1c804f027e8cc--"""
 
+
 class PyzorPreDigestTest(PyzorTestBase):
     # we don't need the pyzord server to test this
     @classmethod
     def setUpClass(cls):
         pass
+
     @classmethod
     def tearDownClass(cls):
         pass
+
     def setUp(self):
         # no argument necessary
         self.client_args = {}
 
     def test_predigest_email(self):
         """Test email removal in the predigest process"""
-        emails = ["t@abc.ro",
-                  "t1@abc.ro",
-                  "t+@abc.ro",
-                  "t.@abc.ro",
-                  ]
+        emails = [
+            "t@abc.ro",
+            "t1@abc.ro",
+            "t+@abc.ro",
+            "t.@abc.ro",
+        ]
         message = "Test %s Test2"
         expected = b"TestTest2\n"
         for email in emails:
@@ -720,9 +724,7 @@ class PyzorPreDigestTest(PyzorTestBase):
 
     def test_predigest_long(self):
         """Test long "words" removal in the predigest process"""
-        strings = ["0A2D3f%a#S",
-                   "3sddkf9jdkd9",
-                   "@@#@@@@@@@@@"]
+        strings = ["0A2D3f%a#S", "3sddkf9jdkd9", "@@#@@@@@@@@@"]
         message = "Test %s Test2"
         expected = b"TestTest2\n"
         for s in strings:
@@ -732,9 +734,7 @@ class PyzorPreDigestTest(PyzorTestBase):
 
     def test_predigest_line_length(self):
         """Test small lines removal in the predigest process"""
-        msg = "This line is included\n"\
-              "not this\n"\
-              "This also"
+        msg = "This line is included\n" "not this\n" "This also"
         expected = b"Thislineisincluded\nThisalso\n"
         res = self.check_pyzor("predigest", None, input=TEXT % msg)
         self.assertEqual(res, expected)
@@ -764,14 +764,18 @@ byemail.Clickingonlinksinspamemailmaysendusersto
 byemail.Clickingonlinksinspamemailmaysendusersto
 phishingwebsitesorsitesthatarehostingmalware.
 Emailspam.Emailspam,alsoknownasjunkemailorbulkemail,isasubsetofspaminvolvingnearlyidenticalmessagessenttonumerousbyemail.Clickingonlinksinspamemailmaysenduserstophishingwebsitesorsitesthatarehostingmalware.
-""".encode("utf8")
+""".encode(
+            "utf8"
+        )
         res = self.check_pyzor("predigest", None, input=HTML_TEXT)
         self.assertEqual(res, expected)
 
     def test_predigest_html_style_script(self):
         expected = """Thisisatest.
 Thisisatest.
-""".encode("utf8")
+""".encode(
+            "utf8"
+        )
         res = self.check_pyzor("predigest", None, input=HTML_TEXT_STYLE_SCRIPT)
         self.assertEqual(res, expected)
 
@@ -780,63 +784,67 @@ Thisisatest.
         res = self.check_pyzor("predigest", None, input=TEXT_ATTACHMENT)
         self.assertEqual(res, expected)
 
+
 class PyzorDigestTest(PyzorTestBase):
     # we don't need the pyzord server to test this
     @classmethod
     def setUpClass(cls):
         pass
+
     @classmethod
     def tearDownClass(cls):
         pass
+
     def setUp(self):
         # no argument necessary
         self.client_args = {}
 
     def test_digest_email(self):
         """Test email removal in the digest process"""
-        emails = ["t@abc.ro",
-                  "t1@abc.ro",
-                  "t+@abc.ro",
-                  "t.@abc.ro",
-                  ]
+        emails = [
+            "t@abc.ro",
+            "t1@abc.ro",
+            "t+@abc.ro",
+            "t.@abc.ro",
+        ]
         message = "Test %s Test2"
         expected = b"TestTest2"
         for email in emails:
             msg = message % email
             res = self.check_pyzor("digest", None, input=TEXT % msg)
-            self.assertEqual(res.decode("utf8"),
-                             hashlib.sha1(expected).hexdigest().lower() + "\n")
+            self.assertEqual(
+                res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+            )
 
     def test_digest_long(self):
         """Test long "words" removal in the digest process"""
-        strings = ["0A2D3f%a#S",
-                   "3sddkf9jdkd9",
-                   "@@#@@@@@@@@@"]
+        strings = ["0A2D3f%a#S", "3sddkf9jdkd9", "@@#@@@@@@@@@"]
         message = "Test %s Test2"
         expected = b"TestTest2"
         for s in strings:
             msg = message % s
             res = self.check_pyzor("digest", None, input=TEXT % msg)
-            self.assertEqual(res.decode("utf8"),
-                             hashlib.sha1(expected).hexdigest().lower() + "\n")
+            self.assertEqual(
+                res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+            )
 
     def test_digest_line_length(self):
         """Test small lines removal in the digest process"""
-        msg = "This line is included\n"\
-              "not this\n"\
-              "This also"
+        msg = "This line is included\n" "not this\n" "This also"
         expected = b"ThislineisincludedThisalso"
         res = self.check_pyzor("digest", None, input=TEXT % msg)
-        self.assertEqual(res.decode("utf8"),
-                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(
+            res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+        )
 
     def test_digest_atomic(self):
         """Test atomic messages (lines <= 4) in the digest process"""
         msg = "All this message\nShould be included\nIn the digest"
         expected = b"AllthismessageShouldbeincludedInthedigest"
         res = self.check_pyzor("digest", None, input=TEXT % msg)
-        self.assertEqual(res.decode("utf8"),
-                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(
+            res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+        )
 
     def test_digest_pieced(self):
         """Test pieced messages (lines > 4) in the digest process"""
@@ -847,8 +855,9 @@ class PyzorDigestTest(PyzorTestBase):
         for i in [20, 21, 22, 60, 61, 62]:
             expected += ("Line%dtesttesttest" % i).encode("utf8")
         res = self.check_pyzor("digest", None, input=TEXT % msg)
-        self.assertEqual(res.decode("utf8"),
-                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(
+            res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+        )
 
     def test_digest_html(self):
         expected = """Emailspam,alsoknownasjunkemailorbulkemail,isasubset
@@ -857,46 +866,58 @@ byemail.Clickingonlinksinspamemailmaysendusersto
 byemail.Clickingonlinksinspamemailmaysendusersto
 phishingwebsitesorsitesthatarehostingmalware.
 Emailspam.Emailspam,alsoknownasjunkemailorbulkemail,isasubsetofspaminvolvingnearlyidenticalmessagessenttonumerousbyemail.Clickingonlinksinspamemailmaysenduserstophishingwebsitesorsitesthatarehostingmalware.
-""".replace("\n", "").encode("utf8")
+""".replace(
+            "\n", ""
+        ).encode(
+            "utf8"
+        )
         res = self.check_pyzor("digest", None, input=HTML_TEXT)
-        self.assertEqual(res.decode("utf8"),
-                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(
+            res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+        )
 
     def test_digest_html_style_script(self):
         expected = """Thisisatest.Thisisatest.""".encode("utf8")
         res = self.check_pyzor("digest", None, input=HTML_TEXT_STYLE_SCRIPT)
-        self.assertEqual(res.decode("utf8"),
-                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(
+            res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+        )
 
     def test_digest_attachment(self):
         expected = b"Thisisatestmailing"
         res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT)
-        self.assertEqual(res.decode("utf8"),
-                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(
+            res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+        )
 
     def test_digest_attachment_w_null(self):
         expected = b"Thisisatestmailing"
         res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT_W_NULL)
-        self.assertEqual(res.decode("utf8"),
-                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(
+            res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+        )
 
     def test_digest_attachment_w_multiple_nulls(self):
         expected = b"Thisisatestmailing"
         res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT_W_MULTIPLE_NULLS)
-        self.assertEqual(res.decode("utf8"),
-                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(
+            res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+        )
 
     def test_digest_attachment_w_subject_null(self):
         expected = b"Thisisatestmailing"
         res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT_W_SUBJECT_NULL)
-        self.assertEqual(res.decode("utf8"),
-                     hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(
+            res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+        )
 
     def test_digest_attachment_w_contenttype_null(self):
         expected = b"Thisisatestmailing"
         res = self.check_pyzor("digest", None, input=TEXT_ATTACHMENT_W_CONTENTTYPE_NULL)
-        self.assertEqual(res.decode("utf8"),
-                         hashlib.sha1(expected).hexdigest().lower() + "\n")
+        self.assertEqual(
+            res.decode("utf8"), hashlib.sha1(expected).hexdigest().lower() + "\n"
+        )
+
 
 ENCODING_TEST_EMAIL = """From nobody Tue Apr  1 13:18:54 2014
 Content-Type: multipart/related;
@@ -956,9 +977,11 @@ class PyzorEncodingTest(PyzorTestBase):
     @classmethod
     def setUpClass(cls):
         pass
+
     @classmethod
     def tearDownClass(cls):
         pass
+
     def setUp(self):
         # no argument necessary
         self.client_args = {}
@@ -982,6 +1005,6 @@ def suite():
     test_suite.addTest(unittest.makeSuite(PyzorEncodingTest))
     return test_suite
 
-if __name__ == '__main__':
-    unittest.main()
 
+if __name__ == "__main__":
+    unittest.main()

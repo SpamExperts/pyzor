@@ -5,6 +5,7 @@ import sys
 import time
 import logging
 import unittest
+
 try:
     import socketserver as SocketServer
 except ImportError:
@@ -21,7 +22,7 @@ import pyzor.server
 import pyzor.engines.common
 
 
-class MockServer():
+class MockServer:
     """Mocks the pyzor.server.Server class"""
 
     def __init__(self):
@@ -33,8 +34,8 @@ class MockServer():
         self.one_step = False
 
 
-class MockDatagramRequestHandler():
-    """ Mock the SocketServer.DatagramRequestHand."""
+class MockDatagramRequestHandler:
+    """Mock the SocketServer.DatagramRequestHand."""
 
     def __init__(self, headers, database=None, acl=None, accounts=None):
         """Initiates an request handler and set's the data in `headers` as
@@ -57,9 +58,16 @@ class MockDatagramRequestHandler():
         if acl:
             self.server.acl = acl
         else:
-            self.server.acl = {pyzor.anonymous_user: ("check", "report",
-                                                      "ping", "pong", "info",
-                                                      "whitelist",)}
+            self.server.acl = {
+                pyzor.anonymous_user: (
+                    "check",
+                    "report",
+                    "ping",
+                    "pong",
+                    "info",
+                    "whitelist",
+                )
+            }
         self.server.accounts = accounts
 
         self.handle()
@@ -69,7 +77,6 @@ class MockDatagramRequestHandler():
 
 
 class RequestHandlerTest(unittest.TestCase):
-
     def setUp(self):
         unittest.TestCase.setUp(self)
         self.real_drh = SocketServer.DatagramRequestHandler
@@ -77,14 +84,18 @@ class RequestHandlerTest(unittest.TestCase):
         pyzor.server.RequestHandler.__bases__ = (MockDatagramRequestHandler,)
 
         # setup the basic values for request and response
-        self.request = {"User": pyzor.anonymous_user,
-                        "Time": str(int(time.time())),
-                        "PV": str(pyzor.proto_version),
-                        "Thread": "3597"}
-        self.expected_response = {"Code": "200",
-                                  "Diag": "OK",
-                                  "PV": str(pyzor.proto_version),
-                                  "Thread": "3597"}
+        self.request = {
+            "User": pyzor.anonymous_user,
+            "Time": str(int(time.time())),
+            "PV": str(pyzor.proto_version),
+            "Thread": "3597",
+        }
+        self.expected_response = {
+            "Code": "200",
+            "Diag": "OK",
+            "PV": str(pyzor.proto_version),
+            "Thread": "3597",
+        }
 
     def tearDown(self):
         unittest.TestCase.tearDown(self)
@@ -171,8 +182,11 @@ class RequestHandlerTest(unittest.TestCase):
         wl_updated = datetime.now() - timedelta(days=2)
 
         digest = "2aedaac999d71421c9ee49b9d81f627a7bc570aa"
-        database = {digest: pyzor.engines.common.Record(24, 42, entered, updated,
-                                                        wl_entered, wl_updated)}
+        database = {
+            digest: pyzor.engines.common.Record(
+                24, 42, entered, updated, wl_entered, wl_updated
+            )
+        }
         self.request["Op"] = "info"
         self.request["Op-Digest"] = digest
         handler = pyzor.server.RequestHandler(self.request, database)
@@ -300,8 +314,9 @@ class RequestHandlerTest(unittest.TestCase):
         real_vs = pyzor.account.verify_signature
         pyzor.account.verify_signature = mock_vs
         try:
-            handler = pyzor.server.RequestHandler(self.request, acl=acl,
-                                                  accounts=accounts)
+            handler = pyzor.server.RequestHandler(
+                self.request, acl=acl, accounts=accounts
+            )
             self.check_response(handler)
         finally:
             pyzor.account.verify_signature = real_vs
@@ -318,11 +333,13 @@ class RequestHandlerTest(unittest.TestCase):
 
         def mock_vs(x, y):
             pass
+
         real_vs = pyzor.account.verify_signature
         pyzor.account.verify_signature = mock_vs
         try:
-            handler = pyzor.server.RequestHandler(self.request, acl=acl,
-                                                  accounts=accounts)
+            handler = pyzor.server.RequestHandler(
+                self.request, acl=acl, accounts=accounts
+            )
             self.check_response(handler)
         finally:
             pyzor.account.verify_signature = real_vs
@@ -339,11 +356,13 @@ class RequestHandlerTest(unittest.TestCase):
 
         def mock_vs(x, y):
             raise pyzor.SignatureError("Invalid signature.")
+
         real_vs = pyzor.account.verify_signature
         pyzor.account.verify_signature = mock_vs
         try:
-            handler = pyzor.server.RequestHandler(self.request, acl=acl,
-                                                  accounts=accounts)
+            handler = pyzor.server.RequestHandler(
+                self.request, acl=acl, accounts=accounts
+            )
             self.check_response(handler)
         finally:
             pyzor.account.verify_signature = real_vs
@@ -359,8 +378,9 @@ class RequestHandlerTest(unittest.TestCase):
         self.check_response(handler)
 
     def test_uncaught_exception(self):
-        patch("pyzor.server.RequestHandler._really_handle",
-              side_effect=Exception("test")).start()
+        patch(
+            "pyzor.server.RequestHandler._really_handle", side_effect=Exception("test")
+        ).start()
 
         self.request["Op"] = "ping"
 
@@ -383,8 +403,7 @@ class ServerTest(unittest.TestCase):
         patch.stopall()
 
     def test_server(self):
-        pyzor.server.Server(("127.0.0.1", 24441), {}, "passwd_fn", "access_fn",
-                            None)
+        pyzor.server.Server(("127.0.0.1", 24441), {}, "passwd_fn", "access_fn", None)
 
 
 def suite():
@@ -394,5 +413,6 @@ def suite():
     test_suite.addTest(unittest.makeSuite(ServerTest))
     return test_suite
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

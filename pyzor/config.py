@@ -7,6 +7,7 @@ import collections
 
 try:
     import sentry_sdk
+
     _has_sentry = True
 except ImportError:
     _has_sentry = False
@@ -50,32 +51,32 @@ def load_access_file(access_fn, accounts):
     # implicit rule.
     acl = collections.defaultdict(set)
     if not os.path.exists(access_fn):
-        log.info("Using default ACL: the anonymous user may use the check, "
-                 "report, ping and info commands.")
-        acl[pyzor.anonymous_user] = set(("check", "report", "ping", "pong",
-                                         "info"))
+        log.info(
+            "Using default ACL: the anonymous user may use the check, "
+            "report, ping and info commands."
+        )
+        acl[pyzor.anonymous_user] = set(("check", "report", "ping", "pong", "info"))
         return acl
     accessf = open(access_fn)
     for line in accessf:
         if not line.strip() or line[0] == "#":
             continue
         try:
-            operations, users, allowed = [part.lower().strip()
-                                          for part in line.split(":")]
+            operations, users, allowed = [
+                part.lower().strip() for part in line.split(":")
+            ]
         except ValueError:
-            log.warn("Invalid ACL line: %r", line)
+            log.warning("Invalid ACL line: %r", line)
             continue
         try:
             allowed = {"allow": True, "deny": False}[allowed]
         except KeyError:
-            log.warn("Invalid ACL line: %r", line)
+            log.warning("Invalid ACL line: %r", line)
             continue
         if operations == "all":
-            operations = ("check", "report", "ping", "pong", "info",
-                          "whitelist")
+            operations = ("check", "report", "ping", "pong", "info", "whitelist")
         else:
-            operations = [operation.strip()
-                          for operation in operations.split()]
+            operations = [operation.strip() for operation in operations.split()]
         if users == "all":
             users = accounts
         else:
@@ -108,8 +109,10 @@ def load_passwd_file(passwd_fn):
     log = logging.getLogger("pyzord")
     accounts = {}
     if not os.path.exists(passwd_fn):
-        log.info("Accounts file does not exist - only the anonymous user "
-                 "will be available.")
+        log.info(
+            "Accounts file does not exist - only the anonymous user "
+            "will be available."
+        )
         return accounts
     passwdf = open(passwd_fn)
     for line in passwdf:
@@ -118,7 +121,7 @@ def load_passwd_file(passwd_fn):
         try:
             user, key = line.split(":")
         except ValueError:
-            log.warn("Invalid accounts line: %r", line)
+            log.warning("Invalid accounts line: %r", line)
             continue
         user = user.strip()
         key = key.strip()
@@ -139,36 +142,40 @@ def load_accounts(filepath):
         accountsf = open(filepath)
         for lineno, orig_line in enumerate(accountsf):
             line = orig_line.strip()
-            if not line or line.startswith('#'):
+            if not line or line.startswith("#"):
                 continue
             try:
-                host, port, username, key = [x.strip()
-                                             for x in line.split(":")]
+                host, port, username, key = [x.strip() for x in line.split(":")]
             except ValueError:
-                log.warn("account file: invalid line %d: wrong number of "
-                         "parts", lineno)
+                log.warning(
+                    "account file: invalid line %d: wrong number of " "parts", lineno
+                )
                 continue
             try:
                 port = int(port)
             except ValueError as ex:
-                log.warn("account file: invalid line %d: %s", lineno, ex)
+                log.warning("account file: invalid line %d: %s", lineno, ex)
                 continue
             address = (host, port)
             try:
                 salt, key = pyzor.account.key_from_hexstr(key)
             except ValueError as ex:
-                log.warn("account file: invalid line %d: %s", lineno, ex)
+                log.warning("account file: invalid line %d: %s", lineno, ex)
                 continue
             if not salt and not key:
-                log.warn("account file: invalid line %d: keystuff can't be "
-                         "all None's", lineno)
+                log.warning(
+                    "account file: invalid line %d: keystuff can't be " "all None's",
+                    lineno,
+                )
                 continue
             accounts[address] = pyzor.account.Account(username, salt, key)
         accountsf.close()
 
     else:
-        log.warn("No accounts are setup.  All commands will be executed by "
-                 "the anonymous user.")
+        log.warning(
+            "No accounts are setup.  All commands will be executed by "
+            "the anonymous user."
+        )
     return accounts
 
 
@@ -208,13 +215,11 @@ def load_local_whitelist(filepath):
 
 
 # Common configurations
-def setup_logging(log_name, filepath, debug, sentry_dsn=None,
-                  sentry_lvl="WARN"):
+def setup_logging(log_name, filepath, debug, sentry_dsn=None, sentry_lvl="WARN"):
     """Setup logging according to the specified options. Return the Logger
     object.
     """
-    fmt = logging.Formatter('%(asctime)s (%(process)d) %(levelname)s '
-                            '%(message)s')
+    fmt = logging.Formatter("%(asctime)s (%(process)d) %(levelname)s " "%(message)s")
 
     stream_handler = logging.StreamHandler()
 

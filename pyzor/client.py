@@ -77,8 +77,9 @@ class Client(object):
     def __init__(self, accounts=None, timeout=None, spec=None):
         if accounts is None:
             accounts = {}
-        self.accounts = dict(((host, int(port)), account)
-                             for (host, port), account in accounts.items())
+        self.accounts = dict(
+            ((host, int(port)), account) for (host, port), account in accounts.items()
+        )
         if spec is None:
             spec = pyzor.digest.digest_spec
         self.spec = spec
@@ -89,37 +90,50 @@ class Client(object):
     def ping(self, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.PingRequest()
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def pong(self, digest, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.PongRequest(digest)
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def info(self, digest, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.InfoRequest(digest)
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def report(self, digest, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.ReportRequest(digest, self.spec)
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def whitelist(self, digest, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.WhitelistRequest(digest, self.spec)
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def check(self, digest, address=("public.pyzor.org", 24441)):
         msg = pyzor.message.CheckRequest(digest)
         sock = self.send(msg, address)
-        return self.read_response(sock, msg.get_thread())
+        response = self.read_response(sock, msg.get_thread())
+        sock.close()
+        return response
 
     def _mock_check(self, digests, address=None):
-        msg = (u"Code: %s\nDiag: OK\nPV: %s\nThread: 1024\nCount: 0\n"
-               u"WL-Count: 0" % (pyzor.message.Response.ok_code,
-                                 pyzor.proto_version)).encode('ascii')
+        msg = (
+            "Code: %s\nDiag: OK\nPV: %s\nThread: 1024\nCount: 0\n"
+            "WL-Count: 0" % (pyzor.message.Response.ok_code, pyzor.proto_version)
+        ).encode("ascii")
         return email.message_from_bytes(msg, _class=pyzor.message.Response)
 
     def send(self, msg, address=("public.pyzor.org", 24441)):
@@ -132,16 +146,18 @@ class Client(object):
         timestamp = int(time.time())
         msg["User"] = account.username
         msg["Time"] = str(timestamp)
-        msg["Sig"] = pyzor.account.sign_msg(pyzor.account.hash_key(
-            account.key, account.username), timestamp, msg)
+        msg["Sig"] = pyzor.account.sign_msg(
+            pyzor.account.hash_key(account.key, account.username), timestamp, msg
+        )
         self.log.debug("sending: %r", msg.as_string())
         return self._send(msg, address)
 
     @staticmethod
     def _send(msg, addr):
         sock = None
-        for res in socket.getaddrinfo(addr[0], addr[1], 0, socket.SOCK_DGRAM,
-                                      socket.IPPROTO_UDP):
+        for res in socket.getaddrinfo(
+            addr[0], addr[1], 0, socket.SOCK_DGRAM, socket.IPPROTO_UDP
+        ):
             af, socktype, proto, _, sa = res
             try:
                 sock = socket.socket(af, socktype, proto)
@@ -171,8 +187,7 @@ class Client(object):
             raise pyzor.TimeoutError("Reading response timed-out.")
         except socket.error as ex:
             sock.close()
-            raise pyzor.CommError("Socket error while reading response: %s" %
-                                  ex)
+            raise pyzor.CommError("Socket error while reading response: %s" % ex)
 
         self.log.debug("received: %r/%r", packet, address)
         msg = email.message_from_bytes(packet, _class=pyzor.message.Response)
@@ -182,10 +197,12 @@ class Client(object):
             if thread_id != expected_id:
                 if thread_id.in_ok_range():
                     raise pyzor.ProtocolError(
-                        "received unexpected thread id %d (expected %d)" %
-                        (thread_id, expected_id))
-                self.log.warn("received error thread id %d (expected %d)",
-                              thread_id, expected_id)
+                        "received unexpected thread id %d (expected %d)"
+                        % (thread_id, expected_id)
+                    )
+                self.log.warn(
+                    "received error thread id %d (expected %d)", thread_id, expected_id
+                )
         except KeyError:
             self.log.warn("no thread id received")
         return msg
@@ -202,10 +219,14 @@ class BatchClient(Client):
         self.flush()
 
     def report(self, digest, address=("public.pyzor.org", 24441)):
-        self._add_digest(digest, address, self.r_requests)
+        socket = self._add_digest(digest, address, self.r_requests)
+        if socket:
+            socket.close()
 
     def whitelist(self, digest, address=("public.pyzor.org", 24441)):
-        self._add_digest(digest, address, self.w_requests)
+        socket = self._add_digest(digest, address, self.w_requests)
+        if socket:
+            socket.close()
 
     def _add_digest(self, digest, address, requests):
         address = (address[0], int(address[1]))
@@ -221,20 +242,24 @@ class BatchClient(Client):
     def flush(self):
         """Deleting any saved digest reports."""
         self.r_requests = collections.defaultdict(
-            functools.partial(pyzor.message.ReportRequest, spec=self.spec))
+            functools.partial(pyzor.message.ReportRequest, spec=self.spec)
+        )
         self.w_requests = collections.defaultdict(
-            functools.partial(pyzor.message.WhitelistRequest, spec=self.spec))
+            functools.partial(pyzor.message.WhitelistRequest, spec=self.spec)
+        )
 
     def force(self):
         """Force send any remaining reports."""
         for address, msg in self.r_requests.items():
             try:
-                self.send(msg, address)
+                ret = self.send(msg, address)
+                ret.close()
             except:
                 continue
         for address, msg in self.w_requests.items():
             try:
-                self.send(msg, address)
+                ret = self.send(msg, address)
+                ret.close()
             except:
                 continue
 
@@ -282,8 +307,8 @@ class CheckClientRunner(ClientRunner):
     def handle_response(self, response, message):
         message += "%s\t" % str(response.head_tuple())
         if response.is_ok():
-            self.hit_count = int(response['Count'])
-            self.whitelist_count = int(response['WL-Count'])
+            self.hit_count = int(response["Count"])
+            self.whitelist_count = int(response["WL-Count"])
             if self.whitelist_count > self.wl_count_clears:
                 self.whitelisted = True
             elif self.hit_count > self.r_count_found:
@@ -299,17 +324,23 @@ class InfoClientRunner(ClientRunner):
         message += "%s\n" % str(response.head_tuple())
 
         if response.is_ok():
-            for key in ('Count', 'Entered', 'Updated', 'WL-Count',
-                        'WL-Entered', 'WL-Updated'):
+            for key in (
+                "Count",
+                "Entered",
+                "Updated",
+                "WL-Count",
+                "WL-Entered",
+                "WL-Updated",
+            ):
                 if key in response:
                     val = int(response[key])
-                    if 'Count' in key:
+                    if "Count" in key:
                         stringed = str(val)
                     elif val == -1:
-                        stringed = 'Never'
+                        stringed = "Never"
                     else:
                         stringed = time.ctime(val)
-                    message += ("\t%s: %s\n" % (key, stringed))
+                    message += "\t%s: %s\n" % (key, stringed)
         else:
             self.all_ok = False
         self.results.append(message + "\n")

@@ -7,6 +7,7 @@ import functools
 
 try:
     import redis
+
     _has_redis = True
 except ImportError:
     redis = None
@@ -42,8 +43,7 @@ def safe_call(f):
         try:
             return f(self, *args, **kwargs)
         except redis.exceptions.RedisError as e:
-            self.log.error("Redis error while calling %s: %s",
-                           f.__name__, e)
+            self.log.error("Redis error while calling %s: %s", f.__name__, e)
             raise DatabaseError("Database temporarily unavailable.")
 
     return wrapped_f
@@ -71,24 +71,27 @@ class RedisDBHandle(BaseEngine):
 
     @staticmethod
     def _encode_record(r):
-        return {"r_count": r.r_count,
-                "r_entered": encode_date(r.r_entered),
-                "r_updated": encode_date(r.r_updated),
-                "wl_count": r.wl_count,
-                "wl_entered": encode_date(r.wl_entered),
-                "wl_updated": encode_date(r.wl_updated)
-                }
+        return {
+            "r_count": r.r_count,
+            "r_entered": encode_date(r.r_entered),
+            "r_updated": encode_date(r.r_updated),
+            "wl_count": r.wl_count,
+            "wl_entered": encode_date(r.wl_entered),
+            "wl_updated": encode_date(r.wl_updated),
+        }
 
     @staticmethod
     def _decode_record(r):
         if not r:
             return Record()
-        return Record(r_count=int(r.get(b"r_count", 0)),
-                      r_entered=decode_date(r.get(b"r_entered", 0)),
-                      r_updated=decode_date(r.get(b"r_updated", 0)),
-                      wl_count=int(r.get(b"wl_count", 0)),
-                      wl_entered=decode_date(r.get(b"wl_entered", 0)),
-                      wl_updated=decode_date(r.get(b"wl_updated", 0)))
+        return Record(
+            r_count=int(r.get(b"r_count", 0)),
+            r_entered=decode_date(r.get(b"r_entered", 0)),
+            r_updated=decode_date(r.get(b"r_updated", 0)),
+            wl_count=int(r.get(b"wl_count", 0)),
+            wl_entered=decode_date(r.get(b"wl_entered", 0)),
+            wl_updated=decode_date(r.get(b"wl_updated", 0)),
+        )
 
     def __iter__(self):
         for key in self.db.keys(self._real_key("*")):
@@ -114,10 +117,15 @@ class RedisDBHandle(BaseEngine):
     @safe_call
     def _get_new_connection(self):
         if "/" in self.host:
-            return redis.StrictRedis(unix_socket_path=self.host,
-                                     db=int(self.db_name), password=self.passwd)
-        return redis.StrictRedis(host=self.host, port=int(self.port),
-                                 db=int(self.db_name), password=self.passwd)
+            return redis.StrictRedis(
+                unix_socket_path=self.host, db=int(self.db_name), password=self.passwd
+            )
+        return redis.StrictRedis(
+            host=self.host,
+            port=int(self.port),
+            db=int(self.db_name),
+            password=self.passwd,
+        )
 
     @safe_call
     def __getitem__(self, key):
@@ -168,10 +176,14 @@ class RedisDBHandle(BaseEngine):
         """Check if there are deprecated records and warn the user."""
         old_keys = len(self.db.keys("pyzord.digest.*"))
         if old_keys:
-            cmd = ("pyzor-migrate --delete --se=redis_v0 --sd=%s "
-                   "--de=redis --dd=%s" % (self._dsn, self._dsn))
-            self.log.critical("You have %s records in the deprecated version "
-                              "of the redis engine.", old_keys)
+            cmd = (
+                "pyzor-migrate --delete --se=redis_v0 --sd=%s "
+                "--de=redis --dd=%s" % (self._dsn, self._dsn)
+            )
+            self.log.critical(
+                "You have %s records in the deprecated version " "of the redis engine.",
+                old_keys,
+            )
             self.log.critical("Please migrate the records with: %r", cmd)
 
 
@@ -181,12 +193,13 @@ class ThreadedRedisDBHandle(RedisDBHandle):
 
 
 if not _has_redis:
-    handle = DBHandle(single_threaded=None,
-                      multi_threaded=None,
-                      multi_processing=None,
-                      prefork=None)
+    handle = DBHandle(
+        single_threaded=None, multi_threaded=None, multi_processing=None, prefork=None
+    )
 else:
-    handle = DBHandle(single_threaded=RedisDBHandle,
-                      multi_threaded=ThreadedRedisDBHandle,
-                      multi_processing=None,
-                      prefork=RedisDBHandle)
+    handle = DBHandle(
+        single_threaded=RedisDBHandle,
+        multi_threaded=ThreadedRedisDBHandle,
+        multi_processing=None,
+        prefork=RedisDBHandle,
+    )
