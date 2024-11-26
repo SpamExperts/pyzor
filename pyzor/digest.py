@@ -79,6 +79,9 @@ class DataDigester(object):
     # Note that an empty string will always be used to remove whitespace.
     unwanted_txt_repl = ""
 
+    # The GTUBE standard spam test string https://spamassassin.apache.org/gtube/
+    gtube_pattern = 'XJS*C4JDBQADN1.NSBN3*2IDNEN*GTUBE-STANDARD-ANTI-UBE-TEST-EMAIL*C.34X'
+
     def __init__(self, msg, spec=None):
         if spec is None:
             spec = digest_spec
@@ -89,6 +92,10 @@ class DataDigester(object):
         lines = []
         for payload in self.digest_payloads(msg):
             for line in payload.splitlines():
+                # Any email containing the GTUBE pattern will be forced to the same digest hash
+                if self.gtube_pattern in line:
+                    lines = [self.gtube_pattern.encode("utf8", "ignore")]
+                    break
                 norm = self.normalize(line)
                 if self.should_handle_line(norm):
                     try:

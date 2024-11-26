@@ -351,6 +351,12 @@ class RequestHandler(SocketServer.DatagramRequestHandler):
         This command returns the spam/ham counts for the specified digest.
         """
         digest = digests[0]
+        # Special case the digest for the GTUBE spam test message
+        gtube_digest = 'c13086867f444d503829044f504826177e3eb438'
+        if digest == gtube_digest:
+            self.server.log.debug("Request to check digest for GTUBE %s", digest)
+            self.response["Count"] = "%d" % sys.maxsize
+            self.response["WL-Count"] = "%d" % 0
         try:
             record = self.server.database[digest]
         except KeyError:
