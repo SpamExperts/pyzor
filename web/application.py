@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 
 import os
 import email
@@ -17,14 +17,13 @@ except ImportError:
     import ConfigParser
 
 import flask
-
 from flask_wtf.form import Form
 from flask.views import MethodView
-from wtforms.fields.simple import TextField, SubmitField, TextAreaField
-from flask_wtf.html5 import EmailField
+from wtforms import StringField, SubmitField, TextAreaField
+from wtforms.fields import EmailField
 from flask_wtf.file import FileField
 from flask_wtf.recaptcha.fields import RecaptchaField
-from wtforms.validators import required, length
+from wtforms.validators import DataRequired, Length
 
 try:
     import sentry_sdk
@@ -50,14 +49,10 @@ Whitelist request:
 ===============
 
 Pyzor Version: %s
-""" % (
-    datetime.datetime.utcnow(),
-    pyzor.__version__,
-)
+""" % (datetime.datetime.utcnow(), pyzor.__version__)
 
 
 def load_configuration():
-    """Load server-specific configuration settings."""
     conf = ConfigParser.ConfigParser()
     defaults = {
         "captcha": {
@@ -78,60 +73,46 @@ def load_configuration():
             "level": "INFO",
             "sentry": "",
             "sentry_level": "WARNING",
-        },
+        }
     }
-    # Load in default values.
     for section, values in defaults.items():
         conf.add_section(section)
         for option, value in values.items():
             conf.set(section, option, value)
     if os.path.exists("/etc/pyzor/web.conf"):
-        # Overwrite with local values.
         conf.read("/etc/pyzor/web.conf")
     return conf
 
 
-def setup_logging():
-    logger = app.logger
-    file_handler = logging.FileHandler(CONF.get("logging", "file"))
-    file_handler.setFormatter(
-        logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+CONF = load_configuration()
+SENTRY_DSN = CONF.get("logging", "sentry")
+
+FlaskIntegration()]
     )
+
+app.config.update({
+    "RECAPTCHA_USE_SSL": CONF.get("captcha", "ssl").lower() == "true",
+    "RECAPTCHA_PUBLIC_KEY": CONF.get("captcha", "public_key"),
+    "RECAPTCHA_PRIVATE_KEY": CONF.get("captcha", "private_key"),
+})
+
+
+def setup_logging)s %(message)s'))
     log_level = getattr(logging, CONF.get("logging", "level"))
     logger.setLevel(log_level)
     logger.addHandler(file_handler)
 
 
-CONF = load_configuration()
-SENTRY_DSN = CONF.get("logging", "sentry")
-if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn="https://b23e6ec6b4e14bdfb44dcfa5e9a8ba16@sentry.io/1207622",
-        integrations=[FlaskIntegration()],
-    )
-setup_logging()
-app = flask.Flask(__name__)
-app.config.update(
-    {
-        "RECAPTCHA_USE_SSL": CONF.get("captcha", "ssl").lower() == "true",
-        "RECAPTCHA_PUBLIC_KEY": CONF.get("captcha", "public_key"),
-        "RECAPTCHA_PRIVATE_KEY": CONF.get("captcha", "private_key"),
-    }
-)
-
-
 class MessageForm(Form):
-    digest = TextField(
-        "Pyzor digest*", validators=[length(40, 40, "Invalid Digest"), required()]
-    )
-    message = FileField("Raw message*")
-    name = TextField("Name")
-    email = EmailField("Email")
-    comment = TextAreaField("Other details")
+    digest = StringField("Pyzor digest*", validators=[Length(40, 40, "Invalid Digest"), DataRequired()])
+    message = FileField('Raw message*')
+    name = StringField('Name')
+    email = EmailField('Email')
+    comment = TextAreaField('Other details')
     recaptcha = RecaptchaField()
     submit = SubmitField()
 
-    def __init___(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(MessageForm, self).__init__(*args, **kwargs)
         self.msg = None
         self.raw_message = None
@@ -143,25 +124,20 @@ class MessageForm(Form):
         self.raw_message = flask.request.files["message"].stream.read()
         try:
             digest = pyzor.digest.DataDigester(
-                email.message_from_string(self.raw_message)
-            ).value
+                email.message_from_string(self.raw_message)).value
             if digest != self.digest.data:
-                self.add_error("digest", "Digest does not match message.")
+                self.addDigest does not match message.")
                 return False
             client = pyzor.client.Client(timeout=20)
             try:
                 response = client.check(digest)
             except pyzor.TimeoutError as e:
                 self.add_error("message", "Temporary error please try again.")
-                self.logger.warn("Timeout: %s", e)
+                self.logger.warning("Timeout: %s", e)
                 return False
             except pyzor.CommError as e:
-                self.add_error("message", "Temporary error please try again.")
-                self.logger.warn("Error: %s", e)
-                return False
-            if not response.is_ok():
-                self.add_error("message", "Temporary error please try again.")
-                self.logger.warn("Invalid response from server: %s", response)
+                self.add_error("message.add_error("message", "Temporary error please try again.")
+                self.logger.warning("Invalid response from server: %s", response)
                 return False
             if int(response["Count"]) == 0:
                 self.add_error("message", "Message not reported as spam.")
@@ -187,7 +163,7 @@ class WhitelistMessage(MethodView):
         self.logger = app.logger
 
     def get(self):
-        return flask.render_template("whitelist.html", form=self.form, error=None)
+        return flask.render_template('whitelist.html', form=self.form, error=None)
 
     def post(self):
         success = False
@@ -195,7 +171,7 @@ class WhitelistMessage(MethodView):
             msg = self.build_notification()
             self.send_email(msg)
             success = True
-        return flask.render_template("whitelist.html", form=self.form, success=success)
+        return flask.render_template('whitelist.html', form=self.form, success=success)
 
     def build_notification(self):
         data = {
@@ -203,14 +179,14 @@ class WhitelistMessage(MethodView):
             "email": self.form.email.data,
             "digest": self.form.digest.data,
             "comment": self.form.comment.data,
-            "ip": flask.request.remote_addr,
+            "ip": flask.request.remote_addr
         }
 
         msg = email.mime.multipart.MIMEMultipart()
         msg["Date"] = email.utils.formatdate(localtime=True)
         msg["Subject"] = "[Pyzor] Whitelist request"
         msg["From"] = CONF.get("email", "sender")
-        msg["To"] = CONF.get("email", "recipients")
+        msg["To"] = ", ".join(CONF.get("email", "recipients").split(","))
         msg.preamble = "This is a multi-part message in MIME format."
         msg.epilogue = ""
         msg.attach(email.mime.text.MIMEText(MSG_TEMPLATE_TXT % data))
@@ -221,9 +197,7 @@ class WhitelistMessage(MethodView):
         return msg
 
     def send_email(self, msg):
-        smtp = smtplib.SMTP(
-            host=CONF.get("email", "host"), port=CONF.get("email", "port")
-        )
+        smtp = smtplib.SMTP(host=CONF.get("email", "host"), port=CONF.get("email", "port"))
         smtp.ehlo()
         try:
             code, err = smtp.mail(CONF.get("email", "sender"))
@@ -233,7 +207,7 @@ class WhitelistMessage(MethodView):
             for rcpt in CONF.get("email", "recipients").split(","):
                 code, err = smtp.rcpt(rcpt)
                 if code not in (250, 251):
-                    rcpterrs[rcpt] = (code, err)
+                   )
             if rcpterrs:
                 raise smtplib.SMTPRecipientsRefused(rcpterrs)
             code, err = smtp.data(msg.as_string())
@@ -251,12 +225,6 @@ app.add_url_rule("/whitelist/", view_func=WhitelistMessage.as_view("whitelist"))
 
 @app.errorhandler(500)
 def unhandled_exception(error):
-    """Generic error message."""
     setup_logging()
     app.logger.error("Unhandled Exception: %s", error, exc_info=True)
-    return flask.render_template("error.html", error=error)
-
-
-if __name__ == "__main__":
-    app.debug = True
-    app.run()
+    return flask.render_template('error.html', error=error)
