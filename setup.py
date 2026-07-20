@@ -1,6 +1,5 @@
 import sys
 import setuptools
-import distutils.core
 
 import pyzor
 
@@ -24,7 +23,7 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v2 (" "GPLv2)",
 ]
 
-distutils.core.setup(
+setuptools.setup(
     name="pyzor",
     version=pyzor.__version__,
     description="networked spam-signature detection",
